@@ -19,4 +19,6 @@
   list(extend = 'excel', text = 'Download Excel')
 )
 
-.captiontext <- div(strong("Loading"), br(), "Please wait")
+.captiontext <- shiny::div(shiny::strong("Loading"), shiny::br(), "Please wait")
+
+

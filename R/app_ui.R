@@ -1,67 +1,96 @@
+#' @title Application UI
+#' @description Define the user interface for the SUF-Explorer Shiny application.
+#' This includes the main navbar, sidebar, and all modules for dataset exploration and transformation.
+#'
+app_ui <- function() {
 
-app_ui <- function() { # define UI function
-  page_navbar( # use bslibs page_navbar layout for the app
-    header = tags$head(
-      shinyFeedback::useShinyFeedback(),
-      shinyjs::useShinyjs(),
-      includeCSS("www/styles.css"),
-      tags$script(src = "js_snippets.js")
-    ),
-    id = "nav",
-    theme = bs_theme(
-      bootswatch = "minty",
-      base_font = font_google("Fira Sans"),
-      code_font =  font_google("Fira Sans"),
-      heading_font = font_google("Fira Code")
-    ),
-    navbar_options = navbar_options(bg = "lightblue"),
-    sidebar = sidebar(
-      id = "sidebar",
-      # in the sidebar we use conditional panels, that are only enabled when a valid datapath is provided. In the cond.-panels we call all the different sidebar_UI Modules
-      conditionalPanel(
-        condition = "input.nav === 'Start'",
-        title = "Starting Page",
-        settings_ui("settings")
-      ),
-      conditionalPanel(
-        condition = "input.nav === 'Explore Datasets  '",
-        title = "Click here to select dataset",
-        dataset_ui("explore_dataset")
-      ),
-      conditionalPanel(
-        condition = "input.nav === 'Transform Data'",
-        data_transformation_sidebar_ui("data_transformation")
-      ),
-      open = F
-    ),
-
-    nav_panel(
-      title = "Start",
-      HTML(
-        "<div style='display: flex; align-items: center;'>
-       <img src='neps_logo.jpg' width='200' height='100' style='margin-right: 10px;'>
-       <p style='font-size:22px; margin: 0;'><b>SUF-Explorer</b>
-       <span style='font-size:14px'><b>Beta</b></span></p>
-     </div> <br> - Dataset Exploration (SC1-SC6): Search for keywords in specific or across all datasets in directory and have a first glance at the actual data sheets with filter possibility. <br> - Variable Exploration (SC1-SC6): Inspect frequency tables, meta-data and plots of selected variables. <br> - Life Course Vizualisation (SC3-SC6): Visualise life course trajectories with sequence plots. <br> - Dataset Transformation (SC3-SC6): Dynamically generate STATA or R scripts which transform multiple NEPS data files into one file with a person-year-format. <br><br> <b>Before getting started, please provide the filepath to your local NEPS-SUF directory.</b> - Make sure that this directory contains only NEPS SUF data files (not the zipped download file).
-       <br> - Note that some features may not function properly with older SUF versions, so it is recommended to use the latest SUF release."
-
-      ),
-      p(""),
-      datapath_ui("datapath"), # call the module "datapath_ui"
-      , icon = icon("door-open")
-    ),
-    nav_panel(title = "Explore Datasets  ", dataset_exploration_card, icon = icon("table")),
-    nav_panel(title = "Transform Data", cards_data_trans, icon = icon("wrench")),
-    nav_spacer(),
-    nav_menu(
-      title = "Help",
-      align = "right",
-      nav_item(tags$a("NEPS Website", href = "https://www.neps-data.de/", target="_blank")),
-      nav_item(tags$a("NEPS Documentation", href = "https://www.neps-data.de/Data-Center/Data-and-Documentation", target="_blank")),
-      nav_item(tags$a("SUF-Explorer Documentation", href = "", target="_blank")),
-      nav_item(tags$a("References", href = "", target="_blank")),
-      nav_item(tags$a("Contact Authors", href = "https://www.wzb.eu/de/personen/alexander-helbig", target="_blank")),
-      nav_item(tags$a("GitLab", href = "https://gitlab.wzb.eu/ahelbig/suf-explorer-production", target="_blank"))
-    )
+  # Make package www resources accessible in Shiny
+  shiny::addResourcePath(
+    "www",
+    system.file("www", package = "NEPScribe")
   )
+
+  fluidPage(
+    shinyjs::useShinyjs(),
+    dataset_exploration_card()  # Only this for now
+  )
+
+
+bslib::page_navbar(
+  # --- Header includes CSS and JS from package, plus shiny feedback/js initialization ---
+  header = htmltools::tags$head(
+    shinyFeedback::useShinyFeedback(),
+    shinyjs::useShinyjs(),
+    htmltools::includeCSS(system.file("www/styles.css", package = "NEPScribe")),
+    htmltools::tags$script(src = system.file("www/js_snippets.js", package = "NEPScribe"))
+  ),
+  id = "nav",
+  # --- Theme setup ---
+  theme = bslib::bs_theme(
+    bootswatch = "minty",
+    base_font = bslib::font_google("Fira Sans"),
+    code_font = bslib::font_google("Fira Sans"),
+    heading_font = bslib::font_google("Fira Code")
+  ),
+  navbar_options = bslib::navbar_options(bg = "lightblue"),
+
+  # --- Sidebar setup ---
+  sidebar = bslib::sidebar(
+    id = "sidebar",
+    shiny::conditionalPanel(
+      condition = "input.nav === 'Start'",
+      title = "Starting Page",
+      settings_ui("settings")
+    ),
+    shiny::conditionalPanel(
+      condition = "input.nav === 'Explore Datasets  '",
+      title = "Click here to select dataset",
+      dataset_ui("explore_dataset")
+    ),
+    # shiny::conditionalPanel(
+    #   condition = "input.nav === 'Transform Data'",
+    #   data_transformation_sidebar_ui("data_transformation")
+    # ),
+    open = FALSE
+  ),
+
+  # --- Main panels ---
+  bslib::nav_panel(
+    title = "Start",
+    htmltools::HTML(
+      "<div style='display: flex; align-items: center;'>
+         <img src='www/images/neps_logo.jpg' width='200' height='100' style='margin-right: 10px;'>
+         <p style='font-size:22px; margin: 0;'><b>NEPScripe</b>
+         <span style='font-size:14px'><b>Beta</b></span></p>
+       </div>
+       <br>
+       <ul>
+         <li><b>Dataset Exploration (SC3-SC6)</b>: Search for keywords in specific datasets and get an overview over variables and metadata</li>
+         <li><b>Dataset Transformation (SC3-SC6)</b>: Dynamically generate STATA or R scripts that transform multiple NEPS data files into a person-year-format.</li>
+       </ul>
+       <br>
+       <p><b>Before getting started, please select a starting cohort below:</b></p>
+       <p>This determines which datasets will be loaded in the app. You can explore and transform data for the chosen cohort.</p>"
+    ),
+    cohort_ui("cohort"),  # Module for choosing starting cohort
+    shiny::icon("door-open")
+  ),
+
+  bslib::nav_panel(title = "Explore Datasets  ", dataset_exploration_card(), shiny::icon("table")),
+  # bslib::nav_panel(title = "Transform Data", cards_data_trans(), shiny::icon("wrench")),
+
+  bslib::nav_spacer(),
+
+  # --- Help menu ---
+  bslib::nav_menu(
+    title = "Help",
+    align = "right",
+    bslib::nav_item(htmltools::tags$a("NEPS Website", href = "https://www.neps-data.de/", target="_blank")),
+    bslib::nav_item(htmltools::tags$a("NEPS Documentation", href = "https://www.neps-data.de/Data-Center/Data-and-Documentation", target="_blank")),
+    bslib::nav_item(htmltools::tags$a("SUF-Explorer Documentation", href = "", target="_blank")),
+    bslib::nav_item(htmltools::tags$a("References", href = "", target="_blank")),
+    bslib::nav_item(htmltools::tags$a("Contact Authors", href = "https://www.wzb.eu/de/personen/alexander-helbig", target="_blank")),
+    bslib::nav_item(htmltools::tags$a("GitHub", href = "https://github.com/a-helbig/nepscribe", target="_blank"))
+  )
+)
 }
