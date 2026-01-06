@@ -1,0 +1,64 @@
+/* this is for disable/enable nav_panels:
+css snippet that makes it look like we are/n't able click the tab (with outchanging functionality) */
+  .nav li a.disabled {
+    background-color: #ADD8E6 !important;
+    color: #333 !important;
+    cursor: not-allowed !important;
+    border-color: #ADD8E6 !important;
+  }
+  
+
+/* 1. For the resizable textarea */
+.resize-vertical {
+  resize: vertical;
+}
+
+/* 2. Styling DT buttons */
+.dt-buttons .btn {
+  background-color: #ADD8E6;   /* Light Blue background */
+  color: black;                /* Black text */
+  border-radius: 5px;          /* Rounded corners */
+  padding: 6px 8px;            /* Button padding */
+  font-size: 14px;             /* Font size */
+  border: 1px solid transparent; /* Added a border style */
+}
+
+.dt-buttons .btn:hover {
+  background-color: #0ec3e7;   /* Darker Light Blue on hover */
+}
+
+.dt-buttons .btn:active {
+  background-color: #10b7d8;   /* Even darker Light Blue green on click */
+}
+
+
+/* "show more/less" feature css*/
+.morecontent span {
+    display: none;
+}
+.morelink {
+    display: block;
+}
+
+/* css snippet that puts all quickfilters in one column with consistent alignment */
+ .switch-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px; /* Space between switches */
+    }
+
+    .switch-label-sidebar {
+      width: 150px;  /* Fixed width for consistent alignment */
+      display: inline-block;
+    }
+    
+    .switch-label-graphs {
+      width: 200px;  /* Fixed width for consistent alignment */
+      display: inline-block;
+    }
+
+    .hover-title {
+      display: block; /* Ensures titles are displayed as block elements */
+      margin-bottom: 2px; /* Adjust the space below the title */
+    }
+
