@@ -3,8 +3,8 @@
 # script function --------------------------------------------------------
 
 # function that generates the scripts
-gen_script <- function(datapath_conv, suf_version, suf_version_short, dataformat, format = "personyear", subformat, datalist, prio, english, set_missings, parallel, further_training, education, children){
-  prio_var <- as.numeric(str_extract_all(prio, "\\d{2}"))
+gen_script <- function(datapath_conv, datapath_local, suf_version, suf_version_short, dataformat, subformat, datalist, prio, english, set_missings, parallel, further_training, education, children){
+  prio_var <- as.numeric(stringr::str_extract_all(prio, "\\d{2}"))
   sc <- toupper(identify_sc(datapath_conv))
   if(dataformat== "R" & subformat == "Harmonized Spell Format (Recommended)"){
     scripts <- c(
@@ -58,7 +58,7 @@ gen_script <- function(datapath_conv, suf_version, suf_version_short, dataformat
       "list.of.packages <- append(list.of.packages, 'nepstools')",
       "invisible(lapply(list.of.packages, library, character.only = TRUE))",
       "",
-      paste0("datapath = ","'",datapath_conv,"/","'"),
+      paste0("datapath = ","'",datapath_local,"/","'"),
       paste0("suf_version = ", "'", suf_version,"'"),
       paste0("suf_version_short = ", "'", suf_version_short,"'"),
       paste0("english = ", english),
@@ -273,7 +273,7 @@ gen_script <- function(datapath_conv, suf_version, suf_version_short, dataformat
       "",
       "",
       "# Set working directory and define file paths (adjust as needed)",
-      paste0("datapath = ","'",datapath_conv,"/","'"),
+      paste0("datapath = ","'",datapath_local,"/","'"),
       paste0("suf_version = ", "'", suf_version,"'"),
       paste0("suf_version_short = ", "'", suf_version_short,"'"),
       paste0("english = ", english),
@@ -543,7 +543,7 @@ gen_script <- function(datapath_conv, suf_version, suf_version_short, dataformat
       if(english)"net install nepstools, from(http://nocrypt.neps-data.de/stata)",
       if(english)"",
       "* paths ",
-      paste0("global DATA = ","\"",datapath_conv,"/","\""),
+      paste0("global DATA = ","\"",datapath_local,"/","\""),
       paste0("global suf ", "\"",suf_version, "\""),
       paste0("global suf_short ", "\"",suf_version_short, "\""),
       "",
@@ -777,7 +777,7 @@ gen_script <- function(datapath_conv, suf_version, suf_version_short, dataformat
       if(english==T)"net install nepstools, from(http://nocrypt.neps-data.de/stata)",
       if(english==T)"",
       "* paths ",
-      paste0("global DATA = ","\"",datapath_conv,"/","\""),
+      paste0("global DATA = ","\"",datapath_local,"/","\""),
       paste0("global suf ", "\"",suf_version, "\""),
       paste0("global suf_short ", "\"",suf_version_short,"\""),
       "",

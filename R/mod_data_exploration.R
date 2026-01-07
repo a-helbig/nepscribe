@@ -48,30 +48,7 @@ dataset_ui <- function(id) {
 
 dataset_overview_ui <- function(id) {
   ns <- shiny::NS(id)
-  # shiny::tagList(
-  #     shinyWidgets::dropdown(
-        # inputId = "dropdown_ov",
-        # label = "Settings",
-        # icon = shiny::icon("gear"),
-        # width = "300px",
-        # tooltip = shinyWidgets::tooltipOptions(title = "Click to see Settings"),
-        # shinyWidgets::pickerInput(
-        #   inputId = ns("meta_selector"),
-        #   label = "Meta Selection",
-        #   choices = NULL,
-        #   selected = NULL,
-        #   multiple = TRUE,
-        #   options = list('actions-box' = TRUE)
-        # ),
-        # shinyWidgets::materialSwitch(
-        #   inputId = ns("ms_all_datasets"),
-        #   label = "Load all datasets",
-        #   value = FALSE,
-        #   status = "info"
-        # )
-      # ),
     shiny::fluidRow(shinycssloaders::withSpinner(DT::DTOutput(ns("data_overview")), caption = .captiontext))
-  # )
 }
 
 # Server
@@ -119,44 +96,10 @@ dataset_explorer_server <- function(id, cohort_path, settings_reactive) {
         shinyWidgets::updateMaterialSwitch(session = session, "ms_all_vars", value = F)
       })
 
-      # Show/hide value boxes depending on dataset selection
-      # shiny::observeEvent(input$dataset, {
-      #   if (!is.null(input$dataset) && input$dataset != "") {
-      #     shinyjs::show(selector = "[id^='value_box_short']")
-      #   } else {
-      #     shinyjs::hide(selector = "[id^='value_box_short']")
-      #   }
-      # })
-
       shiny::observeEvent(input$dataset, {
-      #   shinyjs::show(id = "ms_all_datasets")
-      #   shinyjs::show(id = "meta_selector")
-      #   shinyjs::show(id = "sw-drop-dropdown_ov", asis =T)
-      #   shinyjs::show(id = "sw-drop-dropdown_br", asis =T)
-      #   shinyjs::show(id = "ms_all_vars")
-      #   shinyjs::show(id = "var_selector")
-      #   if(input$ms_all_datasets==F){
-      #     shinyjs::show(selector = "[id^='value_box_short']") # show all objects with ids that start with that
-      #   }
         shinyWidgets::updateMaterialSwitch(session = session, "ms_all_datasets", value = F)
       }
       )
-
-      # shiny::observeEvent(input$ms_all_datasets == T, {
-      #   shinyjs::hide(selector = "[id^='value_box_short']")
-      # })
-
-      # observeEvent(input$ms_all_datasets == F, {
-      #   shinyjs::show(selector = "[id^='value_box_short']")
-      # })
-
-      # observe({
-      #   cat("namespaced meta_selector id:",
-      #       session$ns("meta_selector"), "\n")
-      # })
-
-
-
 
       # when a dataset is selected or all datasets ms is selected, update meta selector
       shiny::observeEvent(list(input$dataset, input$ms_all_datasets), {
@@ -190,12 +133,6 @@ dataset_explorer_server <- function(id, cohort_path, settings_reactive) {
         }
       }
       )
-
-      # observe({
-      #   cat("dataset =", input$dataset, "\n")
-      #   cat("ms_all_datasets =", input$ms_all_datasets, "\n")
-      # })
-
 
       # Available metadata for selected dataset
       available_meta <- shiny::reactive({
