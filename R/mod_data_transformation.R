@@ -15,10 +15,10 @@ data_transformation_add_variables_ui <- function(id) {
     shiny::fluidRow(
       shiny::column(shiny::selectizeInput(ns("dataset"), label = NULL, choices = NULL, multiple = TRUE, options = list(maxItems = 1)), width = 2),
       shiny::column(
-        shiny::actionButton(ns("confirm_variables"), "Confirm Vars", style = "width: 145px; height: 40px"), width = 2
+        shiny::actionButton(ns("confirm_variables"), "Confirm Vars", style = "width: 145px; height: 40px"), width = 2)
         ,
         htmltools::tags$b(shiny::div("2. Step: Select Variables"))
-      )
+
     ),
     shiny::fluidRow(
       shinyWidgets::multiInput(
@@ -79,8 +79,16 @@ data_transformation_sidebar_ui <- function(id) {
                         shiny::actionButton(ns("previewScript"), "Preview Script", shiny::icon("play-circle"))),
     htmltools::tags$div(title = "Download the script with the actual settings.",
                         shiny::downloadButton(ns("downloadScript"), "Download Script")),
-    htmltools::tags$div(title = "Generate the data according to the generated script",
-                        shiny::actionButton(ns("generateData"), "Generate Data", shiny::icon("database")))
+    shiny::p(""),
+    shiny::p(htmltools::HTML("<b>Optional: Local SUF datapath</b>")),
+    shinyFiles::shinyDirButton(ns("folder"), "Browse Computer", "Optional: Select a local NEPS data folder for the script", width = "35%"),
+    shiny::textInput(
+      inputId = ns("datapath"),
+      "Datapath",
+      value = "",
+      placeholder = "Optional: Paste local URL",
+      width = "100%"
+    )
   )
 }
 
@@ -90,6 +98,72 @@ data_transformation_server <- function(id, cohort_path, settings_reactive) {
   shiny::moduleServer(
     id,
     function(input, output, session) {
+
+# select local NEPS suf directory -----------------------------------------
+
+      # first, retrieve all windows drives with custom function
+      volumes <- getWindowsDrives()
+
+      # open input ui and feed the windows drives from vector volumes
+      shinyFiles::shinyDirChoose(input, "folder", roots = volumes, session = session)
+
+      # reactive that holds the datapath
+      folder_path <- shiny::reactive({
+        shiny::req(input$folder)
+        shinyFiles::parseDirPath(volumes, input$folder)
+      })
+
+      # when dataset is being selected, update the textInput with the datapath
+      observeEvent(input$folder, {
+        updateTextInput(
+          session = getDefaultReactiveDomain(),
+          "datapath",
+          value = folder_path()
+        )
+      })
+
+      valid_files <- reactive({
+        path <- input$datapath %||% ""
+        if (path == "" || !dir.exists(path)) {
+          return(character(0))
+        }
+        list.files(path, pattern = "^SC\\d+.*\\.dta$", full.names = TRUE)
+      })
+
+      # Reactive flag is TRUE when valid files found, FALSE otherwise
+      valid_path <- reactive({
+        length(valid_files()) > 0
+      })
+
+      # Feedback based on valid_path
+      observe({
+        path <- input$datapath %||% ""
+        if (path == "") {
+          shinyFeedback::hideFeedback("datapath")
+          return()
+        }
+
+        if (valid_path()) {
+          shinyFeedback::hideFeedback("datapath")
+          shinyFeedback::showFeedbackSuccess("datapath", "Success: NEPS SUF files found. Local datapath has been added to the script.")
+        } else {
+          shinyFeedback::hideFeedback("datapath")
+          shinyFeedback::feedbackWarning(
+            "datapath",
+            TRUE,
+            "Warning: this is either no filepath or no NEPS SUF files are being detected"
+          )
+        }
+      })
+
+
+      datapath_local <- reactive({
+        if (isTRUE(valid_path())) {
+          input$datapath
+        } else {
+          ""
+        }
+      })
 
       # Update dataset select input when cohort changes
       shiny::observeEvent(cohort_path(), {
@@ -192,6 +266,7 @@ data_transformation_server <- function(id, cohort_path, settings_reactive) {
           htmltools::HTML(base::paste(
             gen_script(
               datapath_conv = stringr::str_replace_all(cohort_path(), "\\\\", "/"),
+              datapath_local = stringr::str_replace_all(datapath_local(), "\\\\", "/"),
               suf_version = extract_suf_version(cohort_path()),
               suf_version_short = extract_suf_version(cohort_path(), short = TRUE),
               dataformat = input$stata_or_r,
@@ -211,34 +286,6 @@ data_transformation_server <- function(id, cohort_path, settings_reactive) {
         ))
       })
 
-      # Generate data
-      shiny::observeEvent(input$generateData, {
-        shiny::withProgress(message = 'Processing data, please wait...', value = 0, {
-          shiny::showModal(shiny::modalDialog(
-            title = "Note",
-            size = "s",
-            htmltools::HTML("Please wait while data is being processed. The resulting dataset is generated according to your settings and is identical to the dataset you would receive by downloading and executing the script."),
-            easyClose = TRUE,
-            footer = shiny::modalButton("Close")
-          ))
-          gen_data(
-            datapath = stringr::str_replace_all(cohort_path(), "\\\\", "/"),
-            suf_version = extract_suf_version(cohort_path()),
-            suf_version_short = extract_suf_version(cohort_path(), short = TRUE),
-            dataformat = input$stata_or_r,
-            subformat = input$sub_format_select,
-            datalist = filter_dataframes(varlist$data, stringr::str_replace_all(input$global_vars, " - .*", "")),
-            prio = input$prio_swap_list,
-            english = "Script: English Labels" %in% input$settings,
-            set_missings = "Set Missing Values" %in% input$settings,
-            parallel = "Include Parallel Spells" %in% input$settings,
-            further_training = "Further Training" %in% input$add_modules,
-            education = "Highest Education" %in% input$add_modules,
-            children = "Children" %in% input$add_modules
-          )
-        })
-      })
-
       # Download script
       output$downloadScript <- shiny::downloadHandler(
         filename = function() {
@@ -251,6 +298,7 @@ data_transformation_server <- function(id, cohort_path, settings_reactive) {
         content = function(file) {
           script_harm <- gen_script(
             datapath_conv = stringr::str_replace_all(cohort_path(), "\\\\", "/"),
+            datapath_local = stringr::str_replace_all(datapath_local(), "\\\\", "/"),
             suf_version = extract_suf_version(cohort_path()),
             suf_version_short = extract_suf_version(cohort_path(), short = TRUE),
             dataformat = input$stata_or_r,

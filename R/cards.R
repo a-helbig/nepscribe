@@ -117,9 +117,57 @@ cards_data_trans <- function() {
               )
             )
           )
+        ),
+        bslib::card(
+          shiny::div(
+          htmltools::HTML(
+            "<div style=max-width: 800px; margin: 0 auto; font-family: Arial, sans-serif; line-height: 1.6;>
+    <h4 style=font-size: 18px; color: #333;>How to use?</h4>
+    <br>
+
+    <h5 style=font-size: 16px; color: #007BFF;>Format</h5>
+    <p style=font-size: 18px; color: #555;>
+        First, you will need to choose between two format options in the sidebar:
+    </p>
+    <ol style=font-size: 18px; color: #555;>
+        <li><b>Harmonized Spell Format</b>: This option prepares data based on the edited and cleaned biography file to represent life-course trajectories.</li>
+        <li><b>Original Subspell Format</b>: This option uses the originally recorded subspell episodes. Please note that data cleaning and smoothing operations performed in the biography are not accounted for in this preparation.</li>
+    </ol>
+
+    <h5 style=font-size: 16px; color: #007BFF;>Script Type</h5>
+    <p style=font-size: 18px; color: #555;>
+        Next, you can select whether you want an R or STATA script.
+    </p>
+
+    <h5 style=font-size: 16px; color: #007BFF;>Settings</h5>
+    <p style=font-size: 18px; color: #555;>
+        Additionally, you may choose options to handle missing values, switch to English labels or add parallel spells information.
+    </p>
+
+    <h5 style=font-size: 16px; color: #007BFF;>Add exemplary data preparation</h5>
+    <p style=font-size: 18px; color: #555;>
+        On top of that,  you might add exemplary data preparation of variables from modules that cannot be directly merged with the person-year dataset.
+    </p>
+
+    <h5 style=font-size: 16px; color: #007BFF;>Spell Prioritization</h5>
+    <p style=font-size: 18px; color: #555;>
+        You can modify the spell prioritization order in the second tab located in the top right corner.
+    </p>
+
+    <h5 style=font-size: 16px; color: #007BFF;>Additional Variables</h5>
+    <p style=font-size: 18px; color: #555;>
+        In the third tab, you can add additional variables from various NEPS datasets to the script. Some datasets (e.g. further training related datasets) are excluded here though due to additional data preparation steps required for including variables from these datsets.
+    </p>
+
+    <h5 style=font-size: 16px; color: #007BFF;>Preview and Download</h5>
+    <p style=font-size: 18px; color: #555;>
+        Lastly, you have the option to preview or download the script incorporating all your adjusted settings. You can also generate a person-year dataset based on your settings. This dataset will be identical to the one produced by the script. It will be saved to the specified datapath, and you can view it in the 'Explore Variables' tab.
+    </p>
+</div>"
+          )
         )
       )
-    ),
+    )),
 
     # Spell Prioritization panel
     bslib::nav_panel(

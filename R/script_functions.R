@@ -1110,39 +1110,40 @@ generate_strings <- function(data_list, suf_version, english) {
     if(sum(!is.na(df$variable))>0){
 
       # Prepare the strings for the current dataframe
-      dataset_name <- str_match(df[1, "Dataset"], "SC\\d+_(.*?)_D")[, 2] # extract dataset basename
-      selected_variables <- paste0("\"", pull(df, variable), "\"", collapse = ", ")  # extract variables and put it into a string vector
+      dataset_name <- stringr::str_match(df[1, "Dataset"], "SC\\d+_(.*?)_S")[, 2] # extract dataset basename
+      selected_variables <- paste0("\"", dplyr::pull(df, variable), "\"", collapse = ", ")  # extract variables and put it into a string vector
 
       merge_vector <- unlist(gsub(" ", ", ",df[3][1,])) # take linkage keys from the list and put commas between them
 
       # Create the strings - in the read dta line in string3 we check if its one of the listed spell datasets, if yes, we add also the variable "spstat" because we need it to get rid of harmonized episodes in order to being able to merge it to the person year base file
       string1 <- paste0("# ",7+i,".", " Add selected variables from ", dataset_name," -------------")
       string2 <- ""
-      string3 <- paste0(dataset_name, " <- read_neps(paste0(datapath,\"", str_extract(df[1, "Dataset"], pattern= "SC\\d_.*_D_"), suf_version, ".dta\"), ", "col_select = c(", merge_vector, ", ", selected_variables, ifelse(str_detect(df[1, "Dataset"],  spstat_vars_regex),", \"spstat\"",""), "), english = ", english, ")")
+      # here we replace also _S_ in the dataset name with _D_ because this is pasted in the script but comes from the semantic files
+      string3 <- paste0(dataset_name, " <- read_neps(paste0(datapath,\"", stringr::str_replace_all(stringr::str_extract(df[1, "Dataset"], pattern= "SC\\d_.*_S_"), "_S_", "_D_"), suf_version, ".dta\"), ", "col_select = c(", merge_vector, ", ", selected_variables, ifelse(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex),", \"spstat\"",""), "), english = ", english, ")")
       string4 <- ""
       # now we filter for spstat < 30 and get rid of those episodes but only when spstat exists and if we have 3 linkage keys
-      string5 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) { "# filter for non-harmonized episodes in order to only merge the wave specific subspell information" }
-      string6 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) { paste0(dataset_name, " <- ",dataset_name," |>
+      string5 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) { "# filter for non-harmonized episodes in order to only merge the wave specific subspell information" }
+      string6 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) { paste0(dataset_name, " <- ",dataset_name," |>
          filter(spstat < 30)")
       }
-      string7 <- if(length(strsplit(merge_vector, " ")[[1]])==3) {""}
+      string7 <- if(length(base::strsplit(merge_vector, " ")[[1]])==3) {""}
       string8 <- paste0("bio <- left_join(bio, ", dataset_name, ", by = c(", merge_vector,"))")
       string9 <- ""
-      string10 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"# Note: Researchers often have to deal with missings values when preparing panel datasets. For variables in NEPS spell datasets however, it is even more important. Sometimes it might be advisable to use a 'carry-forward' approach — replacing missing values with the most recent non-missing value from previous waves — to address missing data caused by filtering (e.g., when spell information is collected only during the initial interview because it is assumed to be time-invariant), new items or data issues. However, it is important to carefully evaluate each spell-related variable to determine whether carrying information forward (or backward) is appropriate. Additionally, you may also want to examine variables in non-spell datasets for missing values and consider methods such as carry-forward imputation or multiple imputation. This whole process cannot be fully automated and must be performed thoughtfully by the researcher. Below we provide some routines for replacing missing values with valid values from rows before or after across ID_t and splink (Episodes). Uncomment if you want to use them."}
-      string11 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"# First, print the joined  spell-related variables (If its alot of variables, you should list only a few of them stepwise and decide for each variable if you want to carry forward non-missing information or not)"}
-      string12 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) {paste0("print(bio |> select(\"ID_t\", \"wave\", \"splink\", ", selected_variables, "), n = 40)")}
-      string13 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) {""}
-      string14 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"# Set Missings on selected variables."}
-      string15 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"bio <- replace_values_with_na(bio)"}
-      string16 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) {""}
-      string17 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"# Now use tidyr::fill to carry non-missing information forward and backward !!where approriate!!."}
-      string18 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) {paste0("vars_to_fill <- c(",selected_variables,")")}
-      string19 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"bio <- bio |>
+      string10 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"# Note: Researchers often have to deal with missings values when preparing panel datasets. For variables in NEPS spell datasets however, it is even more important. Sometimes it might be advisable to use a 'carry-forward' approach — replacing missing values with the most recent non-missing value from previous waves — to address missing data caused by filtering (e.g., when spell information is collected only during the initial interview because it is assumed to be time-invariant), new items or data issues. However, it is important to carefully evaluate each spell-related variable to determine whether carrying information forward (or backward) is appropriate. Additionally, you may also want to examine variables in non-spell datasets for missing values and consider methods such as carry-forward imputation or multiple imputation. This whole process cannot be fully automated and must be performed thoughtfully by the researcher. Below we provide some routines for replacing missing values with valid values from rows before or after across ID_t and splink (Episodes). Uncomment if you want to use them."}
+      string11 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"# First, print the joined  spell-related variables (If its alot of variables, you should list only a few of them stepwise and decide for each variable if you want to carry forward non-missing information or not)"}
+      string12 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {paste0("print(bio |> select(\"ID_t\", \"wave\", \"splink\", ", selected_variables, "), n = 40)")}
+      string13 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {""}
+      string14 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"# Set Missings on selected variables."}
+      string15 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"bio <- replace_values_with_na(bio)"}
+      string16 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {""}
+      string17 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"# Now use tidyr::fill to carry non-missing information forward and backward !!where approriate!!."}
+      string18 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {paste0("vars_to_fill <- c(",selected_variables,")")}
+      string19 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"bio <- bio |>
         arrange(ID_t, splink, wave) |> # sort ascending
         group_by(ID_t, splink) |>
         fill(all_of(vars_to_fill), .direction = 'downup') |> # forward then backward
         ungroup()"}
-      string20 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) {""}
+      string20 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {""}
 
 
 
@@ -1176,20 +1177,20 @@ generate_strings_stata <- function(data_list, suf_version) {
     if(sum(!is.na(df$variable))>0){
 
       # Prepare the strings for the dataframe by extracting dataset basename
-      dataset_name <- str_match(df[1, "Dataset"], "SC\\d+_(.*?)_D")[, 2]
+      dataset_name <- stringr::str_match(df[1, "Dataset"], "SC\\d+_(.*?)_S")[, 2]
       # Extract dataset full name
-      full_dataset_name <- str_extract(df[1, "Dataset"], pattern= "SC\\d_.*_D_")
+      full_dataset_name <- stringr::str_extract(df[1, "Dataset"], pattern= "SC\\d_.*_S_")
       # Extract variables and put it into a string vector
-      selected_variables <- paste(str_replace_all(pull(df, variable),"\"",""), collapse = " ")
+      selected_variables <- paste(stringr::str_replace_all(dplyr::pull(df, variable),"\"",""), collapse = " ")
       # Generate a string that holds the variables as 1 string for later listing in stata code
       selected_variables_collapsed <- paste(selected_variables, collapse = " ")
       # Extract sptype number for listing
       sptype_number <- df |>
-        filter(str_detect(Dataset, dataset_name)) |>
-        pull(Sptype)
+        dplyr::filter(stringr::str_detect(Dataset, dataset_name)) |>
+        dplyr::pull(Sptype)
 
       # Take linkage keys from the list and put commas between them
-      merge_vector <- unlist(str_replace_all(df[3][1,],"\"",""))
+      merge_vector <- unlist(stringr::str_replace_all(df[3][1,],"\"",""))
 
       # Create the strings - in the read dta line in string3 we check if its one of the listed spell datasets, if yes, we add also the variable "spstat" because we need it to get rid of harmonized episodes in order to being able to merge it to the person year base file
       string0 <- "*******************************************************************************"
@@ -1197,14 +1198,14 @@ generate_strings_stata <- function(data_list, suf_version) {
       string2 <- "*******************************************************************************"
       string3 <- ""
       string4 <- "preserve"
-      string5 <- paste0("use ", merge_vector," ", selected_variables, ifelse(str_detect(df[1, "Dataset"],  spstat_vars_regex),"  spstat "," "), "using \"$DATA\\",full_dataset_name, suf_version, ".dta\", clear")
+      string5 <- paste0("use ", merge_vector," ", selected_variables, ifelse(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex),"  spstat "," "), "using \"$DATA\\",stringr::str_replace_all(full_dataset_name, "_S_", "_D_"), suf_version, ".dta\", clear")
       string6 <- ""
-      string7 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) { "* filter for non-harmonized episodes in order to only merge the wave specific subspell information" }
+      string7 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) { "* filter for non-harmonized episodes in order to only merge the wave specific subspell information" }
       # now we filter for spstat < 30 and get rid of those episodes but only when spstat exists and if we have 3 linkage keys
-      string8 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) {
+      string8 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {
         "keep if spstat < 30"
       }
-      string9 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) {""}
+      string9 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {""}
       string10 <- "tempfile data"
       string11 <- "save `data'"
       string12 <- ""
@@ -1213,25 +1214,25 @@ generate_strings_stata <- function(data_list, suf_version) {
       # if we have unique identifier in both datasets we can merge 1:1 - this is the case when we have at least 2 merging variables, however if we only merge by ID_t (eg with Basics), we need to merge m:1
       string15 <- if(length(merge_vector) > 1) paste0("merge 1:1 ", merge_vector, " using `data', keep(1 3)  nogen") else if (length(merge_vector)==1) paste0("merge m:1 ", merge_vector, " using `data', keep(1 3) nogen")
       string16 <- ""
-      string17 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) { "*NOTE: Researchers often have to deal with missings values when preparing panel datasets. For variables in NEPS spell datasets however, it is even more important. Sometimes it might be advisable to use a 'carry-forward' approach — replacing missing values with the most recent non-missing value from previous waves — to address missing data caused by filtering (e.g., when spell information is collected only during the initial interview because it is assumed to be time-invariant), new items or data issues. However, it is important to carefully evaluate each spell-related variable to determine whether carrying information forward (or backward) is appropriate. Below are routines for filling missing values using valid values from preceding or following rows within each ID_t and splink (Episodes). Uncomment these lines to use them."}
-      string18 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"* First, list the merged spell-related variables (If its alot of variables, you should list only a few of them stepwise and decide for each variable if you want to carry forward non-missing information or not)"}
-      string19 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) {paste0("list ID_t wave splink ", selected_variables_collapsed, " if sptype == ", unique(sptype_number), " in 1/40, sepby(ID_t, splink) ") }
-      string20 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) {""}
-      string21 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"* Set Missings on selected variables. It is recommended to use the function nepsmiss from the nepstools ado to recode all missing values to specific missing codes. You may install it with: net install nepstools, from(http://nocrypt.neps-data.de/stata). If you want to exclude specific missings from being recoded you might use statas mvdecode function instead."}
-      string22 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"* nepsmiss _all"}
-      string23 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) {""}
-      string24 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"* Now carry forward existing information to rows with missings data. Please edit the varlist in order to only carry forward information on variables you are sure about"}
-      string25 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) {paste0("*foreach var of varlist ", selected_variables_collapsed, " {")}
-      string26 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"*bys ID_t splink (wave): replace `var' = `var'[_n-1] if missing(`var') & !missing(`var'[_n-1]) //fill missings from preceding rows"}
-      string27 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"*}"}
-      string28 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) {""}
-      string29 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"*Note: It might also make sence for some variables to carry information backward when there are missing values at the beginning an episode. If you want to do that, you can use the same procedure but flip the ordering of spells:"}
-      string30 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"*gsort ID_t splink -wave // Order subspells in descending order to easily access the last value of group ID_t and splink for the carry backwards operation"}
-      string31 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) {paste0("*foreach var of varlist ", selected_variables_collapsed, " {")}
-      string32 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"*by ID_t splink: replace `var' = `var'[_n-1] if missing(`var') & !missing(`var'[_n-1]) // now carry forward information again"}
-      string33 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"*}"}
-      string34 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) {""}
-      string35 <- if(str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"*sort ID_t splink wave // sort in natural way again"}
+      string17 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) { "*NOTE: Researchers often have to deal with missings values when preparing panel datasets. For variables in NEPS spell datasets however, it is even more important. Sometimes it might be advisable to use a 'carry-forward' approach — replacing missing values with the most recent non-missing value from previous waves — to address missing data caused by filtering (e.g., when spell information is collected only during the initial interview because it is assumed to be time-invariant), new items or data issues. However, it is important to carefully evaluate each spell-related variable to determine whether carrying information forward (or backward) is appropriate. Below are routines for filling missing values using valid values from preceding or following rows within each ID_t and splink (Episodes). Uncomment these lines if you want to use them."}
+      string18 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"* First, list the merged spell-related variables (If its alot of variables, you should list only a few of them stepwise and decide for each variable if you want to carry forward non-missing information or not)"}
+      string19 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {paste0("list ID_t wave splink ", selected_variables_collapsed, " if sptype == ", unique(sptype_number), " in 1/40, sepby(ID_t, splink) ") }
+      string20 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {""}
+      string21 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"* Set Missings on selected variables. It is recommended to use the function nepsmiss from the nepstools ado to recode all missing values to specific missing codes. You may install it with: net install nepstools, from(http://nocrypt.neps-data.de/stata). If you want to exclude specific missings from being recoded you might use statas mvdecode function instead."}
+      string22 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"* nepsmiss _all"}
+      string23 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {""}
+      string24 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"* Now carry forward existing information to rows with missings data. Please edit the varlist in order to only carry forward information on variables you are sure about"}
+      string25 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {paste0("*foreach var of varlist ", selected_variables_collapsed, " {")}
+      string26 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"*bys ID_t splink (wave): replace `var' = `var'[_n-1] if missing(`var') & !missing(`var'[_n-1]) //fill missings from preceding rows"}
+      string27 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"*}"}
+      string28 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {""}
+      string29 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"*Note: It might also make sence for some variables to carry information backward when there are missing values at the beginning an episode. If you want to do that, you can use the same procedure but flip the ordering of spells:"}
+      string30 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"*gsort ID_t splink -wave // Order subspells in descending order to easily access the last value of group ID_t and splink for the carry backwards operation"}
+      string31 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {paste0("*foreach var of varlist ", selected_variables_collapsed, " {")}
+      string32 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"*by ID_t splink: replace `var' = `var'[_n-1] if missing(`var') & !missing(`var'[_n-1]) // now carry forward information again"}
+      string33 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"*}"}
+      string34 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {""}
+      string35 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"*sort ID_t splink wave // sort in natural way again"}
 
       # Concatenate the current strings into the result vector
       result_vector <- c(result_vector, string0, string1, string2, string3, string4, string5, string6, string7, string8, string9, string10, string11, string12, string13, string14,string15,string16,string17,string18,string19,string20,string21,string22,string23, string24, string25, string26, string27, string28, string29, string30, string31, string32, string33, string34, string35)

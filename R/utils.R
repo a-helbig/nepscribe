@@ -1,5 +1,12 @@
 # Main Functions ---------------------------------------------------------
 
+getWindowsDrives <- function() {
+  drives <- sprintf("%s:/", LETTERS)
+  drives <- drives[file.exists(drives)]
+  names(drives) <- gsub(":/", "", drives)  # C, D, E
+  drives
+}
+
 # function that returns string about starting cohort in form: 'sc3':'sc6'
 identify_sc <- function(datapath) {
   # List files in the directory
@@ -90,20 +97,6 @@ fast_ifelse <- function(test, yes, no) {
   out
 }
 
-# function to create a list of valid dataset names for the dataset input field.
-create_dataset_names <- function(datapath){
-  linkage_keys <- base::read.csv(file = "SC6_linkage_keys.csv", sep=";")
-  datasetnames <- linkage_keys |>
-    dplyr::filter(Linkage != "") |>
-    dplyr::select(-Info, -Linkage) |>
-    dplyr::pull()
-
-  latest_suf_version <- extract_suf_version(datapath)
-
-  datasetnames <- stringr::str_replace(datasetnames, ".dta","")
-  datasetnames <- base::paste0(datasetnames, latest_suf_version, ".dta")
-  return(datasetnames)
-}
 
 # extracts the latest suf version from the datafiles name of the suf data in given datapath
 extract_suf_version <- function(datapath, short = FALSE){
@@ -306,10 +299,10 @@ move_variable_to_position <- function(df, var_to_move, after_var) {
 }
 
 gen_comb_char <- function(datapath, dataset, language){
-  data <- haven::read_dta(base::paste0(datapath,"/", dataset), n_max = 0)
+  data <- haven::read_dta(base::file.path(datapath,dataset), n_max = 0)
 
   if(language & stringr::str_detect(dataset, "SC.*\\d\\d-\\d-\\d\\.dta$")){
-    varlabels_en <- read_exp_fields(base::paste0(datapath,"/", dataset), attr_type="NEPS_varlabel_en") |> dplyr::select(-type)
+    varlabels_en <- read_exp_fields(base::file.path(datapath, dataset), attr_type="NEPS_varlabel_en") |> dplyr::select(-type)
     data <- assign_var_labels(data, varlabels_en)
   }
 
@@ -438,7 +431,13 @@ create_dataframe <- function(dataset, variable) {
 }
 
 create_linkage_data <- function(datapath){
-  linkage_keys <- read.csv(file = "SC6_linkage_keys.csv", sep=";")
+  linkage_keys_path <- system.file("extdata", "linkage_keys.csv", package = "NEPScribe")
+  if (linkage_keys_path == "") stop("linkage_keys.csv not found in NEPScribe/extdata")
+
+  linkage_keys <- utils::read.csv(
+    file = linkage_keys_path,
+    sep = ";"
+  )
   suf_version <- extract_suf_version(datapath)
   sc <- base::toupper(identify_sc(datapath))
 
@@ -451,8 +450,17 @@ create_linkage_data <- function(datapath){
   return(data)
 }
 
+# src = "www/js/js_snippets.js"
+
 create_dataset_names <- function(datapath){
-  linkage_keys <- read.csv(file = "SC6_linkage_keys.csv", sep=";")
+  linkage_keys_path <- system.file("extdata", "linkage_keys.csv", package = "NEPScribe")
+  linkage_keys_path
+  if (linkage_keys_path == "") stop("linkage_keys.csv not found in NEPScribe/extdata")
+
+  linkage_keys <- utils::read.csv(
+    file = linkage_keys_path,
+    sep = ";"
+  )
   suf_version <- extract_suf_version(datapath)
   sc <- base::toupper(identify_sc(datapath))
 
@@ -503,8 +511,8 @@ assign_var_labels <- function(data, en_labels){
 }
 
 gen_list_for_picker <-  function(dataset, vars){
-  dataset_name_short <- stringr::str_match(dataset, "SC\\d+_(.*?)_D")[, 2]
-  new_list <- base::setNames(base::as.list(vars), vars)
+  dataset_name_short <- stringr::str_match(dataset, "SC\\d+_(.*?)_S")[, 2]
+  new_list <- stats::setNames(base::as.list(vars), vars)
   base::assign(dataset_name_short, new_list, envir = .GlobalEnv)
   return(new_list)
 }

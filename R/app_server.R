@@ -29,9 +29,9 @@ app_server <- function(input, output, session) {
 
   # --- Data transformation module ---
   # Always uses a single cohort
-  # data_transformation_server(
-  #   "data_transformation",
-  #   cohort_path = cohort_path,
-  #   settings_reactive = settings_reactive
-  # )
+  data_transformation_server(
+    "data_transformation",
+    cohort_path = cohort_path,
+    settings_reactive = settings_reactive
+  )
 }
