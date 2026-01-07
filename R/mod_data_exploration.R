@@ -17,61 +17,61 @@ dataset_ui <- function(id) {
       multiple = TRUE,
       options = list(maxItems = 1)
     ),
-    shinyjs::hidden(bslib::value_box(
+    shinyWidgets::pickerInput(
+      inputId = ns("meta_selector"),
+      label = "Meta Selection",
+      choices = NULL,
+      selected = NULL,
+      multiple = TRUE,
+      options = list('actions-box' = TRUE)
+    ),
+    shinyWidgets::materialSwitch(
+      inputId = ns("ms_all_datasets"),
+      label = "Load all datasets",
+      value = FALSE,
+      status = "info"
+    ),
+    bslib::value_box(
       title = "Dataset",
       value = shiny::textOutput(ns("dataset")),
       theme = "primary",
       id = "value_box_short1"
-    )),
-    shinyjs::hidden(bslib::value_box(
-      title = "Observations",
-      value = shiny::textOutput(ns("obs")),
-      theme = "info",
-      id = "value_box_short2"
-    )),
-    shinyjs::hidden(bslib::value_box(
-      title = "Distinct ID_ts",
-      value = shiny::textOutput(ns("distinct_ID_ts")),
-      theme = "primary",
-      id = "value_box_short3"
-    )),
-    shinyjs::hidden(bslib::value_box(
+    ),
+    bslib::value_box(
       title = "Variables",
       value = shiny::textOutput(ns("vars")),
       theme = "info",
       id = "value_box_short4"
-    ))
+    )
   )
 }
 
 dataset_overview_ui <- function(id) {
   ns <- shiny::NS(id)
-  shiny::tagList(
-    shinyjs::hidden(
-      shinyWidgets::dropdown(
-        inputId = "dropdown_ov",
-        label = "Settings",
-        icon = shiny::icon("gear"),
-        width = "300px",
-        tooltip = shinyWidgets::tooltipOptions(title = "Click to see Settings"),
-        shinyWidgets::pickerInput(
-          inputId = ns("meta_selector"),
-          label = "Meta Selection",
-          choices = NULL,
-          selected = NULL,
-          multiple = TRUE,
-          options = list('actions-box' = TRUE)
-        ),
-        shinyWidgets::materialSwitch(
-          inputId = ns("ms_all_datasets"),
-          label = "Load all datasets",
-          value = FALSE,
-          status = "info"
-        )
-      )
-    ),
+  # shiny::tagList(
+  #     shinyWidgets::dropdown(
+        # inputId = "dropdown_ov",
+        # label = "Settings",
+        # icon = shiny::icon("gear"),
+        # width = "300px",
+        # tooltip = shinyWidgets::tooltipOptions(title = "Click to see Settings"),
+        # shinyWidgets::pickerInput(
+        #   inputId = ns("meta_selector"),
+        #   label = "Meta Selection",
+        #   choices = NULL,
+        #   selected = NULL,
+        #   multiple = TRUE,
+        #   options = list('actions-box' = TRUE)
+        # ),
+        # shinyWidgets::materialSwitch(
+        #   inputId = ns("ms_all_datasets"),
+        #   label = "Load all datasets",
+        #   value = FALSE,
+        #   status = "info"
+        # )
+      # ),
     shiny::fluidRow(shinycssloaders::withSpinner(DT::DTOutput(ns("data_overview")), caption = .captiontext))
-  )
+  # )
 }
 
 # Server
@@ -101,9 +101,6 @@ dataset_explorer_server <- function(id, cohort_path, settings_reactive) {
           full.names = TRUE
         )
 
-        # Replace '_D_' with '_S_' so the app works with semantic files
-        # paths <- stringr::str_replace_all(paths, "_S_", "_D_")
-
         # Remove folder path, keep only the file names
         if (length(paths) > 0) {
           substr(paths, nchar(dirname(paths[1])) + 2, nchar(paths))
@@ -112,21 +109,93 @@ dataset_explorer_server <- function(id, cohort_path, settings_reactive) {
         }
       })
 
-      observe(print(filenames()))
-
       # Update dataset select input when filenames change
       shiny::observeEvent(filenames(), {
         shiny::updateSelectInput(session, "dataset", choices = filenames(), selected = NULL)
       })
 
-      # Show/hide value boxes depending on dataset selection
-      shiny::observeEvent(input$dataset, {
-        if (!is.null(input$dataset) && input$dataset != "") {
-          shinyjs::show(selector = "[id^='value_box_short']")
-        } else {
-          shinyjs::hide(selector = "[id^='value_box_short']")
-        }
+      # when a datapath is provided, reset the materialswitch that loads all vars from all datasets to FALSE
+      shiny::observeEvent(cohort_path(), {
+        shinyWidgets::updateMaterialSwitch(session = session, "ms_all_vars", value = F)
       })
+
+      # Show/hide value boxes depending on dataset selection
+      # shiny::observeEvent(input$dataset, {
+      #   if (!is.null(input$dataset) && input$dataset != "") {
+      #     shinyjs::show(selector = "[id^='value_box_short']")
+      #   } else {
+      #     shinyjs::hide(selector = "[id^='value_box_short']")
+      #   }
+      # })
+
+      shiny::observeEvent(input$dataset, {
+      #   shinyjs::show(id = "ms_all_datasets")
+      #   shinyjs::show(id = "meta_selector")
+      #   shinyjs::show(id = "sw-drop-dropdown_ov", asis =T)
+      #   shinyjs::show(id = "sw-drop-dropdown_br", asis =T)
+      #   shinyjs::show(id = "ms_all_vars")
+      #   shinyjs::show(id = "var_selector")
+      #   if(input$ms_all_datasets==F){
+      #     shinyjs::show(selector = "[id^='value_box_short']") # show all objects with ids that start with that
+      #   }
+        shinyWidgets::updateMaterialSwitch(session = session, "ms_all_datasets", value = F)
+      }
+      )
+
+      # shiny::observeEvent(input$ms_all_datasets == T, {
+      #   shinyjs::hide(selector = "[id^='value_box_short']")
+      # })
+
+      # observeEvent(input$ms_all_datasets == F, {
+      #   shinyjs::show(selector = "[id^='value_box_short']")
+      # })
+
+      # observe({
+      #   cat("namespaced meta_selector id:",
+      #       session$ns("meta_selector"), "\n")
+      # })
+
+
+
+
+      # when a dataset is selected or all datasets ms is selected, update meta selector
+      shiny::observeEvent(list(input$dataset, input$ms_all_datasets), {
+
+        meta <- available_meta()
+        shiny::freezeReactiveValue(input, "meta_selector") # freeze here in order to stop execution of update before available_meta() is available
+        shinyWidgets::updatePickerInput(
+          session = session,
+          inputId = "meta_selector",
+          choices = meta,
+          selected = intersect(c("Varlabel", "Questiontext"), meta)
+        )
+
+        # text for the info boxes for specific dataset
+        if (input$ms_all_datasets == F) {
+          output$dataset <- shiny::renderText({
+            generate_info(cohort_path(), input$dataset)[[1]]
+          })
+          output$vars <- shiny::renderText({
+            generate_info(cohort_path(), input$dataset)[[4]]
+          })
+        }
+        # text for the info boxes for all datasets
+        else {
+          output$dataset <- shiny::renderText({
+            "All Datasets"
+          })
+          output$vars <- shiny::renderText({
+            nrow(data_overview_r())
+          })
+        }
+      }
+      )
+
+      # observe({
+      #   cat("dataset =", input$dataset, "\n")
+      #   cat("ms_all_datasets =", input$ms_all_datasets, "\n")
+      # })
+
 
       # Available metadata for selected dataset
       available_meta <- shiny::reactive({
@@ -135,22 +204,39 @@ dataset_explorer_server <- function(id, cohort_path, settings_reactive) {
         meta <- remove_prefix_suffix_capitalize_vec(meta)
         if ("Varlabel" %in% meta) meta <- move_string_to_position(meta, "Varlabel", 1)
         if ("Questiontext" %in% meta) meta <- move_string_to_position(meta, "Questiontext", 2)
-        meta
       })
 
-      # Generate dataset overview
+      # observe({
+      #   print(available_meta())
+      #   print(isTruthy(input$meta_selector))})
+
+
+      # reactive for the data variable table on dataset exploration. It either generates the table with all vars from selected dataset or from all datasets if the input materialswitch is TRUE
       data_overview_r <- shiny::reactive({
         shiny::req(input$dataset)
-        language <- ifelse(settings_reactive()$language, "en", "de")
-        gen_data_overview(cohort_path(), input$dataset, language = language)
+        # first determine language dependent on the materialswitch input "language"
+        if (settings_reactive()$language ==F) { language = "de" }
+        else {                    language = "en" }
+
+        # then determine if only the selected or all datasets should be loaded dependent on the materialswitch input "ms_all_datasets"
+        if(input$ms_all_datasets==F){
+          gen_data_overview(cohort_path(), input$dataset, language =language)
+        }
+        else {
+          dataframes <- purrr::map(filenames(),~ gen_data_overview(cohort_path(), .x, language =language)) # show all variables in all datasets by creating a list of dataframes that are the variable tables from all datasets - this will crash if there are datasets in the provided datapath that contain datasets witout the neps expansionfields - we should catch this
+          do.call(bind_rows,dataframes) # this appends all these dfs together and makes a huge table
+        }
       })
+
+      observe(print(head(data_overview_r())))
+
 
       # Render data overview table
       output$data_overview <- DT::renderDataTable({
-        print(paste("Dataset selected: ", input$dataset))
+
         shiny::req(input$dataset)
         data <- data_overview_r()
-        print(head(data))
+
         meta_selection <- input$meta_selector
         if (!settings_reactive()$language) meta_selection <- add_suffix(meta_selection, "de")
         else meta_selection <- add_suffix(meta_selection, "en")

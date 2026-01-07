@@ -218,7 +218,7 @@ remove_prefix_suffix_capitalize_vec <- function(var_names) {
 }
 
 process_meta_for_input_list <- function(datapath, dataset){
-  read_exp_fields(base::paste0(datapath, dataset)) |>
+  read_exp_fields(file.path(datapath, dataset)) |>
     dplyr::filter(
       variable != "_dta" &
         !stringr::str_detect(type, "^NEPSMISS") &
@@ -359,29 +359,29 @@ gen_data_overview <- function(datapath, dataset, language){
 
 gen_meta_var_table <- function(datapath, dataset, sel_var, language, value_labels){
   if(stringr::str_detect(dataset, "\\d{2}-\\d-\\d")){
-    data <- read_exp_fields(base::paste0(datapath, "/", dataset), cols = sel_var)
+    data <- read_exp_fields(file.path(datapath, dataset), cols = sel_var)
     data <- data[, -1]  # drop variable column
 
     if(!language){ # german labels
       rows_to_remove <- base::grepl("_en$", data$type)
       data <- data[!rows_to_remove, ]
 
-      val_labels <- base::attr(haven::read_dta(base::paste0(datapath,"/", dataset), n_max = 1)[[sel_var]], "labels")
-      unnamed_val_labels <- base::paste0(val_labels, ": ", names(val_labels), ";")
-      unnamed_val_labels <- base::paste(unnamed_val_labels, collapse = " ")
-      new_row <- base::data.frame(type = "Value Labels", value = unnamed_val_labels)
-      data <- base::rbind(new_row, data)
+      val_labels <- base::attr(haven::read_dta(file.path(datapath, dataset), n_max = 1)[[sel_var]], "labels")
+      unnamed_val_labels <- paste0(val_labels, ": ", names(val_labels), ";")
+      unnamed_val_labels <- paste(unnamed_val_labels, collapse = " ")
+      new_row <- data.frame(type = "Value Labels", value = unnamed_val_labels)
+      data <- rbind(new_row, data)
 
     } else { # english labels
       rows_to_remove <- base::grepl("_de$", data$type)
       data <- data[!rows_to_remove, ]
 
-      val_labels <- base::attr(assign_val_labels(base::paste0(datapath, dataset),
+      val_labels <- attr(assign_val_labels(base::paste0(datapath, dataset),
                                                  haven::read_dta(base::paste0(datapath,"/", dataset), n_max = 0))[[sel_var]], "labels")
-      unnamed_val_labels <- base::paste0(val_labels, ": ", names(val_labels), ";")
-      unnamed_val_labels <- base::paste(unnamed_val_labels, collapse = " ")
+      unnamed_val_labels <- paste0(val_labels, ": ", names(val_labels), ";")
+      unnamed_val_labels <- paste(unnamed_val_labels, collapse = " ")
       new_row <- base::data.frame(type = "Value Labels", value = unnamed_val_labels)
-      data <- base::rbind(new_row, data)
+      data <- rbind(new_row, data)
     }
 
     # remove prefix/suffix and capitalize
@@ -422,9 +422,9 @@ read_dta_eng_labels <- function(datasetpath, col_select = NULL) {
 
 generate_info <- function(datapath, dataset){
   dataset_name <- stringr::str_extract(dataset, "(?<=_)([^_]+)(?=_)")
-  data <- haven::read_dta(base::paste0(datapath, dataset), n_max = 1)
+  data <- haven::read_dta(base::file.path(datapath, dataset), n_max = 1)
   var_count <- base::length(data)
-  data2 <- haven::read_dta(base::paste0(datapath, dataset), col_select = 1)
+  data2 <- haven::read_dta(base::file.path(datapath, dataset), col_select = 1)
   obs_count <- base::nrow(data2)
   obs_count_distinct <- base::sum(!base::duplicated(data2$ID_t))
   base::list(dataset_name, obs_count, obs_count_distinct, var_count)

@@ -10,12 +10,6 @@ app_ui <- function() {
     system.file("www", package = "NEPScribe")
   )
 
-  fluidPage(
-    shinyjs::useShinyjs(),
-    dataset_exploration_card()  # Only this for now
-  )
-
-
 bslib::page_navbar(
   # --- Header includes CSS and JS from package, plus shiny feedback/js initialization ---
   header = htmltools::tags$head(
@@ -51,7 +45,7 @@ bslib::page_navbar(
     #   condition = "input.nav === 'Transform Data'",
     #   data_transformation_sidebar_ui("data_transformation")
     # ),
-    open = FALSE
+    open = TRUE
   ),
 
   # --- Main panels ---
@@ -60,7 +54,7 @@ bslib::page_navbar(
     htmltools::HTML(
       "<div style='display: flex; align-items: center;'>
          <img src='www/images/neps_logo.jpg' width='200' height='100' style='margin-right: 10px;'>
-         <p style='font-size:22px; margin: 0;'><b>NEPScripe</b>
+         <p style='font-size:22px; margin: 0;'><b>NEPScribe</b>
          <span style='font-size:14px'><b>Beta</b></span></p>
        </div>
        <br>
@@ -73,11 +67,10 @@ bslib::page_navbar(
        <p>This determines which datasets will be loaded in the app. You can explore and transform data for the chosen cohort.</p>"
     ),
     cohort_ui("cohort"),  # Module for choosing starting cohort
-    shiny::icon("door-open")
+    icon = shiny::icon("door-open")
   ),
-
-  bslib::nav_panel(title = "Explore Datasets  ", dataset_exploration_card(), shiny::icon("table")),
-  # bslib::nav_panel(title = "Transform Data", cards_data_trans(), shiny::icon("wrench")),
+  bslib::nav_panel(title = "Explore Datasets  ", dataset_exploration_card(), icon = shiny::icon("table")),
+  # bslib::nav_panel(title = "Transform Data", cards_data_trans(), bsicons::icon("wrench")),
 
   bslib::nav_spacer(),
 
