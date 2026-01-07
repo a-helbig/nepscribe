@@ -11,12 +11,22 @@ app_ui <- function() {
   )
 
 bslib::page_navbar(
-  # --- Header includes CSS and JS from package, plus shiny feedback/js initialization ---
+  # --- Header includes CSS and JS from package, plus Shiny feedback/js initialization ---
   header = htmltools::tags$head(
     shinyFeedback::useShinyFeedback(),
     shinyjs::useShinyjs(),
-    htmltools::includeCSS(system.file("www/styles.css", package = "NEPScribe")),
-    htmltools::tags$script(src = system.file("www/js_snippets.js", package = "NEPScribe"))
+
+    # Serve CSS from package via URL
+    htmltools::tags$link(
+      rel = "stylesheet",
+      type = "text/css",
+      href = "www/css/styles.css"
+    ),
+
+    # Serve JS from package via URL
+    htmltools::tags$script(
+      src = "www/js/js_snippets.js"
+    )
   ),
   id = "nav",
   # --- Theme setup ---
@@ -34,17 +44,18 @@ bslib::page_navbar(
     shiny::conditionalPanel(
       condition = "input.nav === 'Start'",
       title = "Starting Page",
-      settings_ui("settings")
+      cohort_ui("cohort"),  # Module for choosing starting cohort
+      settings_ui("settings"),
     ),
     shiny::conditionalPanel(
       condition = "input.nav === 'Explore Datasets  '",
       title = "Click here to select dataset",
       dataset_ui("explore_dataset")
     ),
-    # shiny::conditionalPanel(
-    #   condition = "input.nav === 'Transform Data'",
-    #   data_transformation_sidebar_ui("data_transformation")
-    # ),
+    shiny::conditionalPanel(
+      condition = "input.nav === 'Transform Data'",
+      data_transformation_sidebar_ui("data_transformation")
+    ),
     open = TRUE
   ),
 
@@ -66,11 +77,10 @@ bslib::page_navbar(
        <p><b>Before getting started, please select a starting cohort below:</b></p>
        <p>This determines which datasets will be loaded in the app. You can explore and transform data for the chosen cohort.</p>"
     ),
-    cohort_ui("cohort"),  # Module for choosing starting cohort
     icon = shiny::icon("door-open")
   ),
   bslib::nav_panel(title = "Explore Datasets  ", dataset_exploration_card(), icon = shiny::icon("table")),
-  # bslib::nav_panel(title = "Transform Data", cards_data_trans(), bsicons::icon("wrench")),
+  bslib::nav_panel(title = "Transform Data", cards_data_trans(), icon = shiny::icon("wrench")),
 
   bslib::nav_spacer(),
 

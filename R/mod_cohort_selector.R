@@ -3,9 +3,10 @@
 cohort_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
+    shiny::p(htmltools::HTML("<b>Global Settings</b>")),
     shiny::radioButtons(
       inputId = ns("cohort"),
-      label = "Select Starting Cohort",
+      label = htmltools::tags$b("Select Starting Cohort"),
       choices = c(
         "Starting Cohort 3" = "sc3_semantic_files",
         "Starting Cohort 4" = "sc4_semantic_files",
@@ -37,8 +38,6 @@ cohort_server <- function(id) {
 settings_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
-    shiny::p(htmltools::HTML("<b>Global Settings</b>")),
-    shiny::sliderInput(ns("sidebarWidth"), htmltools::tags$b("Sidebar Width"), min = 150, max = 600, value = 255),
     shiny::p(htmltools::HTML("<b>Variable Labels</b>")),
     shinyWidgets::switchInput(
       ns("language"),
@@ -49,7 +48,8 @@ settings_ui <- function(id) {
       onStatus = "info",
       offStatus = "warning",
       inline = FALSE
-    )
+    ),
+    shiny::sliderInput(ns("sidebarWidth"), htmltools::tags$b("Sidebar Width"), min = 150, max = 600, value = 255),
   )
 }
 

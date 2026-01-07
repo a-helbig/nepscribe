@@ -206,10 +206,6 @@ dataset_explorer_server <- function(id, cohort_path, settings_reactive) {
         if ("Questiontext" %in% meta) meta <- move_string_to_position(meta, "Questiontext", 2)
       })
 
-      # observe({
-      #   print(available_meta())
-      #   print(isTruthy(input$meta_selector))})
-
 
       # reactive for the data variable table on dataset exploration. It either generates the table with all vars from selected dataset or from all datasets if the input materialswitch is TRUE
       data_overview_r <- shiny::reactive({
@@ -224,11 +220,9 @@ dataset_explorer_server <- function(id, cohort_path, settings_reactive) {
         }
         else {
           dataframes <- purrr::map(filenames(),~ gen_data_overview(cohort_path(), .x, language =language)) # show all variables in all datasets by creating a list of dataframes that are the variable tables from all datasets - this will crash if there are datasets in the provided datapath that contain datasets witout the neps expansionfields - we should catch this
-          do.call(bind_rows,dataframes) # this appends all these dfs together and makes a huge table
+          do.call(dplyr::bind_rows,dataframes) # this appends all these dfs together and makes a huge table
         }
       })
-
-      observe(print(head(data_overview_r())))
 
 
       # Render data overview table
