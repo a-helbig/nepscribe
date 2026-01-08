@@ -60,6 +60,18 @@ data_transformation_prio_ui <- function(id) {
 data_transformation_sidebar_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
+    shiny::radioButtons(
+      inputId = ns("cohort_data_trans"),
+      label = htmltools::tags$b("Select Starting Cohort"),
+      choices = c(
+        "Starting Cohort 3" = "sc3_semantic_files",
+        "Starting Cohort 4" = "sc4_semantic_files",
+        "Starting Cohort 5" = "sc5_semantic_files",
+        "Starting Cohort 6" = "sc6_semantic_files"
+      ),
+      selected = "sc6_semantic_files",
+      inline = TRUE
+    ),
     htmltools::tags$div(title = "Harmonized Format: The data preparation of life-course trajectories is based on the edited and cleaned biography file. Subspell Format: The data preparation of life-course trajectories is based on the originally recorded subspell episodes.",
                         shiny::selectizeInput(
                           ns("sub_format_select"),
@@ -94,12 +106,18 @@ data_transformation_sidebar_ui <- function(id) {
 
 
 # Server
-data_transformation_server <- function(id, cohort_path, settings_reactive) {
+data_transformation_server <- function(id, settings_reactive) {
   shiny::moduleServer(
     id,
     function(input, output, session) {
 
 # select local NEPS suf directory -----------------------------------------
+
+      # selected starting cohort datapath (semantic files)
+      cohort_path <- shiny::reactive({
+        shiny::req(input$cohort_data_trans)
+        path <- system.file("extdata", input$cohort_data_trans, package = "NEPScribe")
+      })
 
       # first, retrieve all windows drives with custom function
       volumes <- getWindowsDrives()
@@ -121,7 +139,7 @@ data_transformation_server <- function(id, cohort_path, settings_reactive) {
           value = folder_path()
         )
       })
-
+      # check if there are NEPS SUF files in that folder
       valid_files <- reactive({
         path <- input$datapath %||% ""
         if (path == "" || !dir.exists(path)) {
@@ -156,7 +174,7 @@ data_transformation_server <- function(id, cohort_path, settings_reactive) {
         }
       })
 
-
+      # reactive datapath that will be added to the script
       datapath_local <- reactive({
         if (isTRUE(valid_path())) {
           input$datapath
@@ -239,24 +257,32 @@ data_transformation_server <- function(id, cohort_path, settings_reactive) {
         )
       })
 
-      # Reset variables
-      shiny::observeEvent(input$reset_variables, {
-        shinyjs::reset("dataset")
-        shinyWidgets::updatePickerInput(
-          session,
-          "global_vars",
-          choices = c(""),
-          selected = NULL
-        )
-        shinyWidgets::updateMultiInput(
-          session,
-          "multi_vars_input",
-          choices = c(""),
-          selected = NULL
-        )
-        varlist$data <- NULL
-        all_lists(list())
-      })
+      # Reset variables when either reset button is clicked or cohort changes
+      shiny::observeEvent(
+        list(input$reset_variables, input$cohort_data_trans),  # <-- list of triggers
+        {
+          # Reset the form / inputs
+          shinyjs::reset("dataset")
+
+          shinyWidgets::updatePickerInput(
+            session,
+            "global_vars",
+            choices = c(""),
+            selected = NULL
+          )
+
+          shinyWidgets::updateMultiInput(
+            session,
+            "multi_vars_input",
+            choices = c(""),
+            selected = NULL
+          )
+
+          # Reset internal reactive values
+          varlist$data <- NULL
+          all_lists(list())
+        }
+      )
 
       shiny::observeEvent(input$previewScript, {
 

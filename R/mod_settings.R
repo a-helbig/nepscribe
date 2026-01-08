@@ -1,0 +1,35 @@
+#' @title Settings UI Module
+#' @description Provides global settings for the app, including sidebar width and label language.
+settings_ui <- function(id) {
+  ns <- shiny::NS(id)
+  shiny::tagList(
+    shiny::p(htmltools::HTML("<b>Variable Labels</b>")),
+    shinyWidgets::switchInput(
+      ns("language"),
+      label = htmltools::tags$b("Labels"),
+      value = TRUE,
+      onLabel = "English",
+      offLabel = "German",
+      onStatus = "info",
+      offStatus = "warning",
+      inline = FALSE
+    ),
+    shiny::sliderInput(ns("sidebarWidth"), htmltools::tags$b("Sidebar Width"), min = 150, max = 600, value = 255),
+  )
+}
+
+#' @title Settings Server Module
+#' @description Provides a reactive list of global settings selected in the UI.
+settings_server <- function(id) {
+  shiny::moduleServer(
+    id,
+    function(input, output, session) {
+      shiny::reactive({
+        list(
+          sidebarWidth = input$sidebarWidth,
+          language = input$language
+        )
+      })
+    }
+  )
+}

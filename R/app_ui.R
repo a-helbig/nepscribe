@@ -53,7 +53,6 @@ bslib::page_navbar(
     shiny::conditionalPanel(
       condition = "input.nav === 'Start'",
       title = "Starting Page",
-      cohort_ui("cohort"),  # Module for choosing starting cohort
       settings_ui("settings"),
     ),
     shiny::conditionalPanel(
@@ -73,18 +72,42 @@ bslib::page_navbar(
     title = "Start",
     htmltools::HTML(
       "<div style='display: flex; align-items: center;'>
-         <img src='www/images/neps_logo.jpg' width='200' height='100' style='margin-right: 10px;'>
+       <img src='www/images/neps_logo.jpg' width='200' height='100' style='margin-right: 10px;'>
+       <div>
          <p style='font-size:22px; margin: 0;'><b>NEPScribe</b>
-         <span style='font-size:14px'><b>Beta</b></span></p>
+         <span style='font-size:14px; margin-left: 5px;'>Beta</span></p>
        </div>
-       <br>
-       <ul>
-         <li><b>Dataset Exploration (SC3-SC6)</b>: Search for keywords in specific datasets and get an overview over variables and metadata</li>
-         <li><b>Dataset Transformation (SC3-SC6)</b>: Dynamically generate STATA or R scripts that transform multiple NEPS data files into a person-year-format.</li>
+     </div>
+     <br>
+
+     <!-- Features Box -->
+     <div style='max-width: 900px; padding: 15px; border: 1px solid #ccc; border-radius: 8px; background-color: #f9f9f9;'>
+       <p style='font-size:18px; font-weight: bold; margin-bottom: 10px;'>Features</p>
+       <ul style='margin-left: 20px; line-height: 1.6;'>
+         <li>
+           <b>Dataset Exploration (SC1-SC8):</b> Browse available meta data in NEPS SUF data to get an overview of datasets and variables.
+           Search for keywords in specific or all datasets. Compare items and variables across starting cohorts.
+         </li>
+         <br>
+         <li>
+           <b>Dataset Transformation (SC3-SC6):</b> Create dynamic Stata or R scripts for person-year data preparation.
+           It will transform and merge multiple NEPS SUF data files into a person-year-format according to your specifications.
+           You will obtain a script that handles most of the complex restructuring and merging of the data.
+           However, further data preparation is still necessary.
+         </li>
        </ul>
-       <br>
-       <p><b>Before getting started, please select a starting cohort below:</b></p>
-       <p>This determines which datasets will be loaded in the app. You can explore and transform data for the chosen cohort.</p>"
+     </div>
+     <br>
+
+     <!-- Notes Box -->
+     <div style='max-width: 900px; padding: 15px; border: 1px solid #ccc; border-radius: 8px; background-color: #f1f8ff;'>
+       <p style='font-size:16px; margin: 0;'>
+         Note: The app's language is English only, but you can switch between English and German in the sidebar.
+       </p>
+       <p style='font-size:16px; margin: 5px 0 0 0;'>
+         There you may also change the sidebar width.
+       </p>
+     </div>"
     ),
     icon = shiny::icon("door-open")
   ),

@@ -8,9 +8,6 @@ app_server <- function(input, output, session) {
     shiny::stopApp()
   })
 
-  # --- Reactive path for selected cohort(s) ---
-  cohort_path <- cohort_server("cohort")
-
   # --- Settings reactive for sidebar width, language, etc. ---
   settings_reactive <- settings_server("settings")
 
@@ -23,7 +20,6 @@ app_server <- function(input, output, session) {
   # Uses cohort_path() reactive; can return single or multiple cohort folders
   dataset_explorer_server(
     id = "explore_dataset",
-    cohort_path = cohort_path,
     settings_reactive = settings_reactive
   )
 
@@ -31,7 +27,6 @@ app_server <- function(input, output, session) {
   # Always uses a single cohort
   data_transformation_server(
     "data_transformation",
-    cohort_path = cohort_path,
     settings_reactive = settings_reactive
   )
 }
