@@ -4,7 +4,8 @@
 #'
 #' @keywords internal
 
-# --- UI ---
+#' UI func
+#' @keywords internal
 dataset_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
@@ -81,6 +82,8 @@ dataset_ui <- function(id) {
   )
 }
 
+#' UI func for output
+#' @keywords internal
 dataset_overview_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::fluidRow(
@@ -91,7 +94,10 @@ dataset_overview_ui <- function(id) {
   )
 }
 
-# --- Server ---
+#' Server funcs
+#'
+#' @importFrom shiny reactive observe observeEvent req updateTextInput
+#' @keywords internal
 dataset_explorer_server <- function(id, settings_reactive) {
 
   shiny::moduleServer(
@@ -218,7 +224,7 @@ dataset_explorer_server <- function(id, settings_reactive) {
       line-height: 1.3;
     ",
           lapply(shown, tags$li),
-          if (n > 5) tags$li("…")
+          if (n > 5) tags$li("...")
         )
       })
 

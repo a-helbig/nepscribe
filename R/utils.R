@@ -1,5 +1,7 @@
 # Main Functions ---------------------------------------------------------
 
+#' # function that returns string about starting cohort in form: 'sc3':'sc6'
+#' @keywords internal
 getWindowsDrives <- function() {
   drives <- sprintf("%s:/", LETTERS)
   drives <- drives[file.exists(drives)]
@@ -7,7 +9,9 @@ getWindowsDrives <- function() {
   drives
 }
 
-# function that returns string about starting cohort in form: 'sc3':'sc6'
+
+#' inspects filenames in a dir and return sc cohort identifier
+#' @keywords internal
 identify_sc <- function(datapath) {
   # List files in the directory
   files <- base::list.files(datapath)
@@ -23,7 +27,7 @@ identify_sc <- function(datapath) {
     stop("No SC cohort identifier found in the dataset directory. Please provide datasets starting with 'SC' followed by a digit.")
   }
 
-  # Check if more than one unique SC found — throw error
+  # Check if more than one unique SC found, if yes, throw error
   if (length(sc_string) > 1) {
     stop(
       base::paste0(
@@ -36,7 +40,8 @@ identify_sc <- function(datapath) {
   return(base::tolower(sc_string))
 }
 
-# function that filters a dataset depending on variable type
+#' function that filters a dataset depending on variable type
+#' @keywords internal
 filter_var <- function(x, val) {
   if (base::is.numeric(x)) {
     !base::is.na(x) & x >= val[1] & x <= val[2]
@@ -49,7 +54,8 @@ filter_var <- function(x, val) {
   }
 }
 
-# function to check and transform variables to a factor if they are not of type factor or labelled doubles
+#' function to check and transform variables to a factor if they are not of type factor or labelled doubles
+#' @keywords internal
 transform_all_to_factors <- function(data) {
   for (variable in base::names(data)) {
     if (!base::is.factor(data[[variable]]) && !inherits(data[[variable]], "labelled")) {
@@ -59,7 +65,8 @@ transform_all_to_factors <- function(data) {
   return(data)
 }
 
-# helper function for "filter_data" function
+#' helper function for "filter_data" function
+#' @keywords internal
 cond_filter <- function(data, vars) {
   for (var in vars) {
     if (var %in% base::names(data)) {
@@ -70,7 +77,8 @@ cond_filter <- function(data, vars) {
   return(data)
 }
 
-# function to truncate strings to 15 chars and return as unnamed char vec
+#' function to truncate strings to 15 chars and return as unnamed char vec
+#' @keywords internal
 truncate_strings <- function(input_strings) {
   truncated <- base::ifelse(base::nchar(input_strings) > 15,
                             base::paste0(base::substr(input_strings, 1, 15), "..."),
@@ -78,7 +86,8 @@ truncate_strings <- function(input_strings) {
   return(base::unname(truncated))
 }
 
-# faster ifelse version:
+#' faster ifelse version:
+#' @keywords internal
 fast_ifelse <- function(test, yes, no) {
   stopifnot(identical(base::class(yes), base::class(no)))
 
@@ -90,7 +99,8 @@ fast_ifelse <- function(test, yes, no) {
   out
 }
 
-# extracts the latest suf version from the datafiles name of the suf data in given datapath
+#' extracts the latest suf version from the datafiles name of the suf data in given datapath
+#' @keywords internal
 extract_suf_version <- function(datapath, short = FALSE){
   distinct_strings <- base::unique(stringr::str_extract(base::list.files(datapath,pattern="\\d{1,2}-\\d-\\d"), "\\d{1,2}-\\d-\\d"))
   num_strings <- base::as.numeric(stringr::str_extract(distinct_strings,"\\d{1,2}"))
@@ -117,7 +127,8 @@ extract_suf_version <- function(datapath, short = FALSE){
   }
 }
 
-#function to read dta and assign variable labels (which are attracted but not yet assigned) to the variables
+#' function to read dta and assign variable labels (which are attracted but not yet assigned) to the variables
+#' @keywords internal
 readstata13_label <- function(x){
   data <- suppressWarnings(readstata13::read.dta13(x))
   data_meta_names <- base::as.vector(attr(data,"names"))
@@ -129,6 +140,8 @@ readstata13_label <- function(x){
   data
 }
 
+#' Generate question text for a variable
+#' @keywords internal
 gen_questiontext <- function(datapath, dataset, col_select, variable, language){
   if(stringr::str_detect(dataset, "SC.*\\d\\d-\\d-\\d\\.dta$")){
     if(!language){
@@ -158,7 +171,8 @@ gen_questiontext <- function(datapath, dataset, col_select, variable, language){
 }
 
 
-# function to bind vectors of different lengths and fill missings up with NA
+#' function to bind vectors of different lengths and fill missings up with NA
+#' @keywords internal
 bind_cols_fill <- function(df_list) {
   max_rows <- purrr::map_int(df_list, base::nrow) |> base::max()
 
@@ -169,12 +183,14 @@ bind_cols_fill <- function(df_list) {
   }) |> dplyr::bind_cols()
 }
 
-# Helper function to capitalize the first letter of a string
+#' Helper function to capitalize the first letter of a string
+#' @keywords internal
 capitalize_first_letter <- function(x) {
   base::paste0(base::toupper(base::substring(x, 1, 1)), base::substring(x, 2))
 }
 
-# helper function to remove neps prefix from variable names in df and capitalize first letter
+#' helper function to remove neps prefix from variable names in df and capitalize first letter
+#' @keywords internal
 remove_prefix_suffix_capitalize_df <- function(df, colnames = TRUE) {
   if (!base::is.data.frame(df)) stop("Input must be a dataframe")
 
@@ -191,7 +207,8 @@ remove_prefix_suffix_capitalize_df <- function(df, colnames = TRUE) {
   return(df)
 }
 
-# helper function to remove neps prefix from variable names in vector and capitalize first letter
+#' helper function to remove neps prefix from variable names in vector and capitalize first letter
+#' @keywords internal
 remove_prefix_suffix_capitalize_vec <- function(var_names) {
   if (!base::is.character(var_names)) stop("Input must be a character vector")
 
@@ -202,6 +219,8 @@ remove_prefix_suffix_capitalize_vec <- function(var_names) {
   return(var_names)
 }
 
+#' Process metadata for input selection list
+#' @keywords internal
 process_meta_for_input_list <- function(datapath, dataset){
   read_exp_fields(file.path(datapath, dataset)) |>
     dplyr::filter(
@@ -221,6 +240,8 @@ process_meta_for_input_list <- function(datapath, dataset){
     base::unique()
 }
 
+#' Read expansion fields from a dataset
+#' @keywords internal
 read_exp_fields <- function(datapath, cols = NULL, attr_type = NULL, only_value = FALSE) {
   data <- suppressWarnings(readstata13::read.dta13(datapath, select.cols = "ID_t", select.rows = 1))
   exp_fields <- base::attr(data, "expansion.fields")
@@ -250,7 +271,8 @@ read_exp_fields <- function(datapath, cols = NULL, attr_type = NULL, only_value 
   return(fields_df)
 }
 
-# helper function to switch labels between english and german for specific variables
+#' helper function to switch labels between english and german for specific variables
+#' @keywords internal
 add_suffix <- function(strings, language = "de") {
   specific_strings <- c(
     "_lang_v", "_lang_l", "NEPS_varlabel",
@@ -266,7 +288,8 @@ add_suffix <- function(strings, language = "de") {
                strings)
 }
 
-# helper function to change order of strings in vector
+#' helper function to change order of strings in vector
+#' @keywords internal
 move_string_to_position <- function(vec, string_to_move, target_position) {
   if (!base::is.character(vec)) stop("Input must be a character vector")
   if (!(string_to_move %in% vec)) stop(base::paste("String", string_to_move, "does not exist in the vector"))
@@ -277,7 +300,8 @@ move_string_to_position <- function(vec, string_to_move, target_position) {
   base::append(vec, string_to_move, after = target_position - 1)
 }
 
-# helper function to change order of vars in dataframe
+#' helper function to change order of vars in dataframe
+#' @keywords internal
 move_variable_to_position <- function(df, var_to_move, after_var) {
   if (!base::is.data.frame(df)) stop("Input must be a dataframe")
   if (!(var_to_move %in% colnames(df))) stop(base::paste("Variable", var_to_move, "does not exist in the dataframe"))
@@ -290,6 +314,8 @@ move_variable_to_position <- function(df, var_to_move, after_var) {
   df[new_order]
 }
 
+#' Generate char vector of variable labels with dataset
+#' @keywords internal
 gen_comb_char <- function(datapath, dataset, language){
   data <- haven::read_dta(base::file.path(datapath,dataset), n_max = 0)
 
@@ -302,7 +328,8 @@ gen_comb_char <- function(datapath, dataset, language){
 }
 
 
-# generates table with meta info
+#' generates table with meta info
+#' @keywords internal
 gen_data_overview <- function(datapath, dataset, language){
   datasetpath <- base::file.path(datapath, dataset)
 
@@ -342,6 +369,8 @@ gen_data_overview <- function(datapath, dataset, language){
   return(data)
 }
 
+#' Generate metadata table for a single variable
+#' @keywords internal
 gen_meta_var_table <- function(datapath, dataset, sel_var, language, value_labels){
   if(stringr::str_detect(dataset, "\\d{2}-\\d-\\d")){
     data <- read_exp_fields(file.path(datapath, dataset), cols = sel_var)
@@ -381,6 +410,8 @@ gen_meta_var_table <- function(datapath, dataset, sel_var, language, value_label
   }
 }
 
+#' Read Stata dataset with English labels assigned
+#' @keywords internal
 read_dta_eng_labels <- function(datasetpath, col_select = NULL) {
   data <- if(base::is.null(col_select)) {
     haven::read_dta(datasetpath)
@@ -405,6 +436,8 @@ read_dta_eng_labels <- function(datasetpath, col_select = NULL) {
   return(data)
 }
 
+#' Generate basic dataset info
+#' @keywords internal
 generate_info <- function(datapath, dataset){
   dataset_name <- stringr::str_extract(dataset, "(?<=_)([^_]+)(?=_)")
   data <- haven::read_dta(base::file.path(datapath, dataset), n_max = 1)
@@ -415,6 +448,8 @@ generate_info <- function(datapath, dataset){
   base::list(dataset_name, obs_count, obs_count_distinct, var_count)
 }
 
+#' Create dataframe from dataset and variable names
+#' @keywords internal
 create_dataframe <- function(dataset, variable) {
   variable <- base::trimws(base::unlist(base::strsplit(variable, ",")))
   dataframe <- base::data.frame(variable = variable, stringsAsFactors = FALSE)
@@ -422,6 +457,8 @@ create_dataframe <- function(dataset, variable) {
   return(dataframe)
 }
 
+#' Create linkage dataset for merging in data transformation
+#' @keywords internal
 create_linkage_data <- function(datapath){
   linkage_keys_path <- system.file("extdata", "linkage_keys.csv", package = "NEPScribe")
   if (linkage_keys_path == "") stop("linkage_keys.csv not found in NEPScribe/extdata")
@@ -442,6 +479,8 @@ create_linkage_data <- function(datapath){
   return(data)
 }
 
+#' Create dataset names from linkage keys
+#' @keywords internal
 create_dataset_names <- function(datapath){
   linkage_keys_path <- system.file("extdata", "linkage_keys.csv", package = "NEPScribe")
   linkage_keys_path
@@ -464,12 +503,16 @@ create_dataset_names <- function(datapath){
   return(datasetnames)
 }
 
+#' Create variable labels for multi-variable selections
+#' @keywords internal
 gen_labels_for_multi <- function(datapath, dataset) {
   data <- haven::read_dta(base::paste0(datapath,"/", dataset), n_max = 1)
   varlabels <- base::paste(names(data), "-", base::unname(base::sapply(data, base::attr, which="label")))
   return(varlabels[!varlabels %in% c("wave - Welle","ID_t - Target-ID","splink - Link für Spell-Merging")])
 }
 
+#' Assign value labels to dataset
+#' @keywords internal
 assign_val_labels <- function(datasetpath, data){
   suppressWarnings(expfields <- read_exp_fields(datasetpath, attr_type = '_lang_l_en'))
   suppressWarnings(label_table <- base::attr(readstata13::read.dta13(datasetpath, select.rows = 1), 'label.table'))
@@ -492,6 +535,8 @@ assign_val_labels <- function(datasetpath, data){
   return(data)
 }
 
+#' Assign variable labels to dataset
+#' @keywords internal
 assign_var_labels <- function(data, en_labels){
   for(var in base::names(data)){
     label <- en_labels |> dplyr::filter(variable == var) |> dplyr::pull(value)
@@ -500,6 +545,8 @@ assign_var_labels <- function(data, en_labels){
   return(data)
 }
 
+#' Generate list for picker UI
+#' @keywords internal
 gen_list_for_picker <-  function(dataset, vars){
   dataset_name_short <- stringr::str_match(dataset, "SC\\d+_(.*?)_S")[, 2]
   new_list <- stats::setNames(base::as.list(vars), vars)
@@ -507,6 +554,8 @@ gen_list_for_picker <-  function(dataset, vars){
   return(new_list)
 }
 
+#' Filter a list of dataframes by variable names
+#' @keywords internal
 filter_dataframes <- function(list_of_dfs, vars){
   base::lapply(list_of_dfs, function(df){
     dplyr::filter(df, variable %in% vars)

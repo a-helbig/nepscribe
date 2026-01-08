@@ -1,8 +1,7 @@
-# regex to use in rstudio to remove all starting and ending quot marks and commas: ^"|"$|,$
-
-# script function --------------------------------------------------------
-
-# function that generates the scripts
+#' function that generates the scripts
+#'
+#' @param datapath_conv
+#' @keywords internal
 gen_script <- function(datapath_conv, datapath_local, suf_version, suf_version_short, dataformat, subformat, datalist, prio, english, set_missings, parallel, further_training, education, children){
   prio_var <- as.numeric(stringr::str_extract_all(prio, "\\d{2}"))
   sc <- toupper(identify_sc(datapath_conv))
@@ -324,7 +323,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, suf_version_s
       if(english)"attr(bio$spell, 'label') <- 'Spell number'",
       if(english)"attr(bio$sptype, 'label') <- 'Spell type'",
       if(!english)"attr(bio$ID_t, 'label') <- 'Target-ID '",
-      if(!english)"attr(bio$splink, 'label') <- 'Link für Spell-Merging'",
+      if(!english)"attr(bio$splink, 'label') <- 'Link fuer Spell-Merging'",
       if(!english)"attr(bio$subspell, 'label') <- 'Teilepisodennummer'",
       if(!english)"attr(bio$spell, 'label') <- 'Spell Nummer'",
       if(!english)"attr(bio$sptype, 'label') <- 'Spell Typ'",
@@ -915,7 +914,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, suf_version_s
       "recode prio 24= 31 if inrange(vt_typ,13,14)",
       "",
       paste0("recode prio ","(",prio_var[1],  " = 1)"," (",prio_var[2]," = 2)"," (",prio_var[3]," = 3)"," (",prio_var[4]," = 4)"," (",prio_var[5]," = 5)"," (",prio_var[6]," = 6)"," (",prio_var[7]," = 7)"," (",prio_var[8]," = 8)"," (",prio_var[9]," = 9)"," (",prio_var[10]," = 10)",",gen(prio_temp)"),
-      "* for sorting set nebenbeschäftigungen und missings to 0",
+      "* for sorting set nebenbeschaeftigungen und missings to 0",
       "recode spms (1 = 1) (2 . = 0)",
       "",
       if(sc=="SC6")"clonevar worktime = ts23223_g1",

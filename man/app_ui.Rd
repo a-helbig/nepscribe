@@ -8,4 +8,7 @@ app_ui()
 }
 \description{
 Define the user interface for the SUF-Explorer Shiny application.
+This includes the main navbar, sidebar, and all modules for dataset exploration and transformation.
+
+#' @keywords internal
 }
