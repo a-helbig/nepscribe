@@ -10,6 +10,21 @@
 dataset_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
+    shiny::radioButtons(
+      inputId = ns("cohort_data_explore"),
+      label = htmltools::tags$b("Select Starting Cohort"),
+      choices = c(
+        "Starting Cohort 1" = "sc1_semantic_files",
+        "Starting Cohort 2" = "sc2_semantic_files",
+        "Starting Cohort 3" = "sc3_semantic_files",
+        "Starting Cohort 4" = "sc4_semantic_files",
+        "Starting Cohort 5" = "sc5_semantic_files",
+        "Starting Cohort 6" = "sc6_semantic_files",
+        "Starting Cohort 8" = "sc8_semantic_files"
+      ),
+      selected = "sc6_semantic_files",
+      inline = TRUE
+    ),
     shiny::selectizeInput(
       inputId = ns("dataset"),
       label = htmltools::tags$b("Dataset"),
@@ -19,7 +34,7 @@ dataset_ui <- function(id) {
     ),
     shinyWidgets::pickerInput(
       inputId = ns("meta_selector"),
-      label = "Meta Selection",
+      label = htmltools::tags$b("Meta Selection"),
       choices = NULL,
       selected = NULL,
       multiple = TRUE,
@@ -27,7 +42,7 @@ dataset_ui <- function(id) {
     ),
     shinyWidgets::materialSwitch(
       inputId = ns("ms_all_datasets"),
-      label = "Load all datasets",
+      label = htmltools::tags$b("Load all datasets"),
       value = FALSE,
       status = "info"
     ),
@@ -67,6 +82,12 @@ dataset_explorer_server <- function(id, cohort_path, settings_reactive) {
     id,
     function(input, output, session) {
 
+      # selected starting cohort datapath (semantic files)
+      cohort_path <- shiny::reactive({
+        shiny::req(input$cohort_data_explore)
+        path <- system.file("extdata", input$cohort_data_explore, package = "NEPScribe")
+      })
+
       # Reactive: list of files in selected cohort folder
       filenames <- shiny::reactive({
         shiny::req(cohort_path())
@@ -86,9 +107,13 @@ dataset_explorer_server <- function(id, cohort_path, settings_reactive) {
         }
       })
 
-      # Update dataset select input when filenames change
-      shiny::observeEvent(filenames(), {
-        shiny::updateSelectInput(session, "dataset", choices = filenames(), selected = NULL)
+      # Observer to clear dataset input when "Load all datasets" is ON
+      shiny::observe({
+        if (isTRUE(input$ms_all_datasets)) {
+          shiny::updateSelectInput(session, "dataset",
+                                   choices = character(0),
+                                   selected = NULL)
+        }
       })
 
       # when a datapath is provided, reset the materialswitch that loads all vars from all datasets to FALSE
@@ -100,6 +125,16 @@ dataset_explorer_server <- function(id, cohort_path, settings_reactive) {
         shinyWidgets::updateMaterialSwitch(session = session, "ms_all_datasets", value = F)
       }
       )
+
+      # Observer to update dataset choices ONLY if "Load all datasets" is OFF
+      shiny::observe({
+        req(filenames())                # filenames must be available
+        if (isFALSE(input$ms_all_datasets)) {
+          shiny::updateSelectInput(session, "dataset",
+                                   choices = filenames(),
+                                   selected = NULL)
+        }
+      })
 
       # when a dataset is selected or all datasets ms is selected, update meta selector
       shiny::observeEvent(list(input$dataset, input$ms_all_datasets), {
@@ -116,11 +151,32 @@ dataset_explorer_server <- function(id, cohort_path, settings_reactive) {
         # text for the info boxes for specific dataset
         if (input$ms_all_datasets == F) {
           output$dataset <- shiny::renderText({
+            # Dataset must be selected
+            req(input$dataset)
+
+            # Get full file path
+            file_path <- file.path(cohort_path(), input$dataset)
+
+            # Only generate info if file exists
+            if (!file.exists(file_path)) {
+              return("Dataset not available in this cohort")
+            }
+
+            # Safe to call generate_info
             generate_info(cohort_path(), input$dataset)[[1]]
           })
+
           output$vars <- shiny::renderText({
+            req(input$dataset)
+            file_path <- file.path(cohort_path(), input$dataset)
+
+            if (!file.exists(file_path)) {
+              return("-")
+            }
+
             generate_info(cohort_path(), input$dataset)[[4]]
           })
+
         }
         # text for the info boxes for all datasets
         else {
@@ -144,29 +200,35 @@ dataset_explorer_server <- function(id, cohort_path, settings_reactive) {
       })
 
 
-      # reactive for the data variable table on dataset exploration. It either generates the table with all vars from selected dataset or from all datasets if the input materialswitch is TRUE
       data_overview_r <- shiny::reactive({
-        shiny::req(input$dataset)
-        # first determine language dependent on the materialswitch input "language"
-        if (settings_reactive()$language ==F) { language = "de" }
-        else {                    language = "en" }
+        # Wait until dataset or cohort_path is available
+        shiny::req(input$dataset, cohort_path())
 
-        # then determine if only the selected or all datasets should be loaded dependent on the materialswitch input "ms_all_datasets"
+        language <- if (settings_reactive()$language) "en" else "de"
+
+        # Single dataset
         if(input$ms_all_datasets==F){
-          gen_data_overview(cohort_path(), input$dataset, language =language)
-        }
-        else {
-          dataframes <- purrr::map(filenames(),~ gen_data_overview(cohort_path(), .x, language =language)) # show all variables in all datasets by creating a list of dataframes that are the variable tables from all datasets - this will crash if there are datasets in the provided datapath that contain datasets witout the neps expansionfields - we should catch this
-          do.call(dplyr::bind_rows,dataframes) # this appends all these dfs together and makes a huge table
+          file_path <- file.path(cohort_path(), input$dataset)
+          if (!file.exists(file_path)) return(NULL)
+          gen_data_overview(cohort_path(), input$dataset, language = language)
+
+        } else {
+          # All datasets: filter only files that exist
+          existing_files <- filenames()[file.exists(file.path(cohort_path(), filenames()))]
+          if (length(existing_files) == 0) return(NULL)
+
+          dataframes <- purrr::map(existing_files, ~ gen_data_overview(cohort_path(), .x, language = language))
+          do.call(dplyr::bind_rows, dataframes)
         }
       })
+
 
 
       # Render data overview table
       output$data_overview <- DT::renderDataTable({
 
-        shiny::req(input$dataset)
         data <- data_overview_r()
+        shiny::req(data)  # stop here if NULL
 
         meta_selection <- input$meta_selector
         if (!settings_reactive()$language) meta_selection <- add_suffix(meta_selection, "de")
@@ -191,6 +253,7 @@ dataset_explorer_server <- function(id, cohort_path, settings_reactive) {
           )
         )
       })
+
     }
   )
 }
