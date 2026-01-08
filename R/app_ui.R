@@ -23,6 +23,15 @@ bslib::page_navbar(
       href = "www/css/styles.css"
     ),
 
+    # highlight.js (syntax highlighting)
+    htmltools::tags$link(
+      rel = "stylesheet",
+      href = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"
+    ),
+    htmltools::tags$script(
+      src = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"
+    ),
+
     # Serve JS from package via URL
     htmltools::tags$script(
       src = "www/js/js_snippets.js"

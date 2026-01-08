@@ -6,7 +6,7 @@ css snippet that makes it look like we are/n't able click the tab (with outchang
     cursor: not-allowed !important;
     border-color: #ADD8E6 !important;
   }
-  
+
 
 /* 1. For the resizable textarea */
 .resize-vertical {
@@ -51,7 +51,7 @@ css snippet that makes it look like we are/n't able click the tab (with outchang
       width: 150px;  /* Fixed width for consistent alignment */
       display: inline-block;
     }
-    
+
     .switch-label-graphs {
       width: 200px;  /* Fixed width for consistent alignment */
       display: inline-block;
@@ -61,4 +61,10 @@ css snippet that makes it look like we are/n't able click the tab (with outchang
       display: block; /* Ensures titles are displayed as block elements */
       margin-bottom: 2px; /* Adjust the space below the title */
     }
+
+pre code .hljs-comment {
+  color: #2a9d8f !important;
+  font-style: italic !important;
+}le: italic !important;
+}
 
