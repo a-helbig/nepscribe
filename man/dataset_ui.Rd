@@ -7,10 +7,8 @@
 dataset_ui(id)
 }
 \description{
-Internal Shiny module for exploring datasets.
+Internal Shiny module for exploring datasets with multiple cohort selection.
 }
-\details{
-This module provides UI and server components for selecting datasets, viewing dataset summaries.
-It uses reactive programming to handle multiple datasets and cohort paths.
-}
+\keyword{UI}
+\keyword{func}
 \keyword{internal}

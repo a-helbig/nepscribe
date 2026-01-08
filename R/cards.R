@@ -92,7 +92,7 @@ cards_data_trans <- function() {
     </p>
     <div style=background-color: #f9f9f9; border-left: 4px solid #007BFF; padding: 10px; margin: 20px 0;>
         <strong>Important Note:</strong><br>
-        This feature is restricted to Starting Cohorts 3-6.
+        This feature applies only to Starting Cohorts 3,4,5,6. However, it has only been tested for SC6; scripts for SC3, sc4 and SC5 may need substantial adjustments.
     </div>
 </div>"
               )

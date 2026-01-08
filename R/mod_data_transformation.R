@@ -44,6 +44,8 @@ data_transformation_add_variables_ui <- function(id) {
   )
 }
 
+#' UI func for priorisation tab
+#' @keywords internal
 data_transformation_prio_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
@@ -57,6 +59,8 @@ data_transformation_prio_ui <- function(id) {
   )
 }
 
+#' UI func for sidebar
+#' @keywords internal
 data_transformation_sidebar_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
@@ -105,7 +109,9 @@ data_transformation_sidebar_ui <- function(id) {
 }
 
 
-# Server
+#' func for server
+#' @importFrom shiny reactive observe observeEvent req updateTextInput
+#' @keywords internal
 data_transformation_server <- function(id, settings_reactive) {
   shiny::moduleServer(
     id,
@@ -286,7 +292,7 @@ data_transformation_server <- function(id, settings_reactive) {
 
       shiny::observeEvent(input$previewScript, {
 
-        # 1️⃣ Generate script (vector of lines)
+        # Generate script (vector of lines)
         script_vector <- gen_script(
           datapath_conv = stringr::str_replace_all(cohort_path(), "\\\\", "/"),
           datapath_local = stringr::str_replace_all(datapath_local(), "\\\\", "/"),
@@ -307,10 +313,10 @@ data_transformation_server <- function(id, settings_reactive) {
           children = "Children" %in% input$add_modules
         )
 
-        # 2️⃣ Determine language class
+        # Determine language class
         lang_class <- if (toupper(input$stata_or_r) == "R") "language-r" else ""
 
-        # 3️⃣ Wrap comment lines in <span class='hljs-comment'>
+        # Wrap comment lines in <span class='hljs-comment'>
         script_text <- sapply(script_vector, function(line) {
           if (toupper(input$stata_or_r) == "R" && grepl("^\\s*#", line)) {
             paste0("<span class='hljs-comment'>", line, "</span>")
@@ -321,10 +327,10 @@ data_transformation_server <- function(id, settings_reactive) {
           }
         })
 
-        # 4️⃣ Keep line breaks using \n
+        # Keep line breaks using \n
         script_text <- paste(script_text, collapse = "\n")
 
-        # 5️⃣ Show modal
+        # Show modal
         shiny::showModal(
           shiny::modalDialog(
             title = "Preview of script",
@@ -349,7 +355,7 @@ data_transformation_server <- function(id, settings_reactive) {
         "
             ),
 
-            # 6️⃣ Run highlight.js only for R (optional)
+            # Run highlight.js only for R (optional)
             tags$script(
               HTML(
                 if (toupper(input$stata_or_r) == "R") {
@@ -376,41 +382,6 @@ data_transformation_server <- function(id, settings_reactive) {
         )
 
       })
-
-
-
-
-
-
-
-      # shiny::observeEvent(input$previewScript, {
-      #   shiny::showModal(shiny::modalDialog(
-      #     title = "Preview of script",
-      #     size = "l",
-      #     htmltools::HTML(base::paste(
-      #       gen_script(
-      #         datapath_conv = stringr::str_replace_all(cohort_path(), "\\\\", "/"),
-      #         datapath_local = stringr::str_replace_all(datapath_local(), "\\\\", "/"),
-      #         suf_version = extract_suf_version(cohort_path()),
-      #         suf_version_short = extract_suf_version(cohort_path(), short = TRUE),
-      #         dataformat = input$stata_or_r,
-      #         subformat = input$sub_format_select,
-      #         datalist = filter_dataframes(varlist$data, stringr::str_replace_all(input$global_vars, " - .*", "")),
-      #         prio = input$prio_swap_list,
-      #         english = "Script: English Labels" %in% input$settings,
-      #         set_missings = "Set Missing Values" %in% input$settings,
-      #         parallel = "Include Parallel Spells" %in% input$settings,
-      #         further_training = "Further Training" %in% input$add_modules,
-      #         education = "Highest Education" %in% input$add_modules,
-      #         children = "Children" %in% input$add_modules
-      #       ), collapse = "<br>"
-      #     )),
-      #     easyClose = TRUE,
-      #     footer = shiny::modalButton("Close")
-      #   ))
-      # })
-
-
 
       # Download script
       output$downloadScript <- shiny::downloadHandler(

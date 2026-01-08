@@ -10,3 +10,4 @@ app_server(input, output, session)
 Define the server logic for the SUF-Explorer Shiny application.
 Manages reactive modules, dataset exploration, data transformation, and sidebar updates.
 }
+\keyword{internal}
