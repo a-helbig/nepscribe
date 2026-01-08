@@ -506,8 +506,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, suf_version_s
 
   }
   if(dataformat == "STATA" & subformat == "Harmonized Spell Format (Recommended)") {
-    scripts <- c(
-      paste0("* Base Dofile to transform NEPS ", sc, " SUF data into a person-year format"),
+    scripts <- c(paste0("* Base Dofile to transform NEPS ", sc," SUF data into a person-year format"),
       "* It uses the harmonized spells (subspell==0) from the biography data as a base for this transformation process.",
       "* If you want acess to within spell variation across waves, spell related longitudinal information should be merged via 'ID_t', 'wave' and 'splink' after step 7, when the person-year structure has been generated and after dropping harmonized episodes in the spellfiles via 'keep if spstat < 30'. When you use the 'Additional variables' function in the app, this process is used. It ensures that timevariant spell information is not being lost. However it requires a handling of various missing value codes due to filtering or data issues. Examples are provided when using the 'Additional variables' function",
       "",

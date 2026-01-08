@@ -14,7 +14,7 @@ settings_ui <- function(id) {
       offStatus = "warning",
       inline = FALSE
     ),
-    shiny::sliderInput(ns("sidebarWidth"), htmltools::tags$b("Sidebar Width"), min = 150, max = 600, value = 255),
+    shiny::sliderInput(ns("sidebarWidth"), htmltools::tags$b("Sidebar Width"), min = 150, max = 600, value = 320),
   )
 }
 

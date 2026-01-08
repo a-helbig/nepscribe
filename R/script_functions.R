@@ -1129,28 +1129,29 @@ generate_strings <- function(data_list, suf_version, english) {
       string7 <- if(length(base::strsplit(merge_vector, " ")[[1]])==3) {""}
       string8 <- paste0("bio <- left_join(bio, ", dataset_name, ", by = c(", merge_vector,"))")
       string9 <- ""
-      string10 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"# Note: Researchers often have to deal with missings values when preparing panel datasets. For variables in NEPS spell datasets however, it is even more important. Sometimes it might be advisable to use a 'carry-forward' approach — replacing missing values with the most recent non-missing value from previous waves — to address missing data caused by filtering (e.g., when spell information is collected only during the initial interview because it is assumed to be time-invariant), new items or data issues. However, it is important to carefully evaluate each spell-related variable to determine whether carrying information forward (or backward) is appropriate. Additionally, you may also want to examine variables in non-spell datasets for missing values and consider methods such as carry-forward imputation or multiple imputation. This whole process cannot be fully automated and must be performed thoughtfully by the researcher. Below we provide some routines for replacing missing values with valid values from rows before or after across ID_t and splink (Episodes). Uncomment if you want to use them."}
-      string11 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"# First, print the joined  spell-related variables (If its alot of variables, you should list only a few of them stepwise and decide for each variable if you want to carry forward non-missing information or not)"}
-      string12 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {paste0("print(bio |> select(\"ID_t\", \"wave\", \"splink\", ", selected_variables, "), n = 40)")}
-      string13 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {""}
-      string14 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"# Set Missings on selected variables."}
-      string15 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"bio <- replace_values_with_na(bio)"}
-      string16 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {""}
-      string17 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"# Now use tidyr::fill to carry non-missing information forward and backward !!where approriate!!."}
-      string18 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {paste0("vars_to_fill <- c(",selected_variables,")")}
-      string19 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"bio <- bio |>
-        arrange(ID_t, splink, wave) |> # sort ascending
-        group_by(ID_t, splink) |>
-        fill(all_of(vars_to_fill), .direction = 'downup') |> # forward then backward
-        ungroup()"}
-      string20 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {""}
+      string10 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"# Note: Researchers often have to deal with missings values when preparing panel datasets. For variables in NEPS spell datasets however, it is even more important. Sometimes it might be advisable to use a 'carry-forward' approach — replacing missing values with the most recent non-missing value from previous waves — to address missing data caused by filtering (e.g., when spell information is collected only during the initial interview because it is assumed to be time-invariant), new items or data issues. However, it is important to carefully evaluate each spell-related variable to determine whether carrying information forward (or backward) is appropriate. Additionally, you may also want to examine variables in non-spell datasets for missing values and consider methods such as carry-forward imputation or multiple imputation. This process cannot be fully automated and must be performed thoughtfully by the researcher. Below we provide some routines for replacing missing values with valid values from rows before or after across ID_t and splink (Episodes). Uncomment if you want to use them."}
+      string11 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {""}
+      string12 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"# First, print the joined  spell-related variables (If its alot of variables, you should list only a few of them stepwise and decide for each variable if you want to carry forward non-missing information or not)"}
+      string13 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {paste0("# print(bio |> select(\"ID_t\", \"wave\", \"splink\", ", selected_variables, "), n = 40)")}
+      string14 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {""}
+      string15 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"# Set Missings on selected variables."}
+      string16 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"# bio <- replace_values_with_na(bio)"}
+      string17 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {""}
+      string18 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"# Now use tidyr::fill to carry non-missing information forward and backward !!where approriate!!."}
+      string19 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {paste0("# vars_to_fill <- c(",selected_variables,")")}
+      string20 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {"# bio <- bio |>
+        # arrange(ID_t, splink, wave) |> # sort ascending
+        # group_by(ID_t, splink) |>
+        # fill(all_of(vars_to_fill), .direction = 'downup') |> # forward then backward
+        # ungroup()"}
+      string21 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {""}
 
 
 
 
 
       # Concatenate the current strings into the result vector
-      result_vector <- c(result_vector, string1, string2, string3, string4, string5, string6, string7, string8, string9,string10,string11,string12,string13,string14,string15,string16,string17,string18,string19,string20)
+      result_vector <- c(result_vector, string1, string2, string3, string4, string5, string6, string7, string8, string9,string10,string11,string12,string13,string14,string15,string16,string17,string18,string19,string20,string21)
     }
 
     else {
