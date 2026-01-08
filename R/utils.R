@@ -36,13 +36,6 @@ identify_sc <- function(datapath) {
   return(base::tolower(sc_string))
 }
 
-getWindowsDrives <- function() {
-  drives <- base::sprintf("%s:/", base::LETTERS)
-  drives <- drives[base::file.exists(drives)]
-  names(drives) <- base::gsub(":/", "", drives)  # C, D, E
-  drives
-}
-
 # function that filters a dataset depending on variable type
 filter_var <- function(x, val) {
   if (base::is.numeric(x)) {
@@ -97,7 +90,6 @@ fast_ifelse <- function(test, yes, no) {
   out
 }
 
-
 # extracts the latest suf version from the datafiles name of the suf data in given datapath
 extract_suf_version <- function(datapath, short = FALSE){
   distinct_strings <- base::unique(stringr::str_extract(base::list.files(datapath,pattern="\\d{1,2}-\\d-\\d"), "\\d{1,2}-\\d-\\d"))
@@ -127,7 +119,7 @@ extract_suf_version <- function(datapath, short = FALSE){
 
 #function to read dta and assign variable labels (which are attracted but not yet assigned) to the variables
 readstata13_label <- function(x){
-  data <- readstata13::read.dta13(x)
+  data <- suppressWarnings(readstata13::read.dta13(x))
   data_meta_names <- base::as.vector(attr(data,"names"))
   data_meta_labels <- base::as.vector(attr(data,"var.labels"))
   base::names(data_meta_labels) <- data_meta_names
@@ -230,7 +222,7 @@ process_meta_for_input_list <- function(datapath, dataset){
 }
 
 read_exp_fields <- function(datapath, cols = NULL, attr_type = NULL, only_value = FALSE) {
-  data <- readstata13::read.dta13(datapath, select.cols = "ID_t", select.rows = 1)
+  data <- suppressWarnings(readstata13::read.dta13(datapath, select.cols = "ID_t", select.rows = 1))
   exp_fields <- base::attr(data, "expansion.fields")
 
   if(base::is.null(exp_fields) | base::length(exp_fields) == 0){
@@ -449,8 +441,6 @@ create_linkage_data <- function(datapath){
   data$Dataset <- base::paste0(data$Dataset, suf_version, ".dta")
   return(data)
 }
-
-# src = "www/js/js_snippets.js"
 
 create_dataset_names <- function(datapath){
   linkage_keys_path <- system.file("extdata", "linkage_keys.csv", package = "NEPScribe")

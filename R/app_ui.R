@@ -22,8 +22,17 @@ bslib::page_navbar(
       type = "text/css",
       href = "www/css/styles.css"
     ),
-
-    # highlight.js (syntax highlighting)
+    # make green ticks in picker inputs appear on the left side instead of right
+      tags$style(HTML("
+    .bootstrap-select .dropdown-menu li a span.check-mark {
+      left: 10px;         /* distance from left */
+      right: auto;         /* remove right alignment */
+    }
+    .bootstrap-select .dropdown-menu li a {
+      padding-left: 30px;  /* add space for tick on the left */
+    }
+  ")),
+    # highlight.js (syntax highlighting) for preview in data trans
     htmltools::tags$link(
       rel = "stylesheet",
       href = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"
