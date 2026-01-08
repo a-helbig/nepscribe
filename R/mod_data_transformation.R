@@ -73,14 +73,14 @@ data_transformation_sidebar_ui <- function(id) {
                         shiny::radioButtons(ns("stata_or_r"), htmltools::tags$b("Script file format"), c("STATA", "R"), selected = "R")),
     shiny::checkboxGroupInput(ns("settings"), htmltools::tags$b("Settings"), choices = c("Set Missing Values","Script: English Labels", "Include Parallel Spells")),
     shiny::p(""),
-    shiny::checkboxGroupInput(ns("add_modules"), htmltools::tags$b("Add exemplary data preparation"), choices = c("Further Training","Partner","Children", "Highest Education")),
+    shiny::checkboxGroupInput(ns("add_modules"), htmltools::tags$b("Add exemplary data preparation"), choices = c("Further Training","Children", "Highest Education")),
     shiny::p(""),
     htmltools::tags$div(title = "Show a preview of the script with the actual settings.",
                         shiny::actionButton(ns("previewScript"), "Preview Script", shiny::icon("play-circle"))),
     htmltools::tags$div(title = "Download the script with the actual settings.",
                         shiny::downloadButton(ns("downloadScript"), "Download Script")),
     shiny::p(""),
-    shiny::p(htmltools::HTML("<b>Optional: Local SUF datapath</b>")),
+    shiny::p(htmltools::HTML("<b>Optional: Add local SUF URL</b>")),
     shinyFiles::shinyDirButton(ns("folder"), "Browse Computer", "Optional: Select a local NEPS data folder for the script", width = "35%"),
     shiny::textInput(
       inputId = ns("datapath"),
@@ -258,33 +258,133 @@ data_transformation_server <- function(id, cohort_path, settings_reactive) {
         all_lists(list())
       })
 
-      # Preview script modal
       shiny::observeEvent(input$previewScript, {
-        shiny::showModal(shiny::modalDialog(
-          title = "Preview of script",
-          size = "l",
-          htmltools::HTML(base::paste(
-            gen_script(
-              datapath_conv = stringr::str_replace_all(cohort_path(), "\\\\", "/"),
-              datapath_local = stringr::str_replace_all(datapath_local(), "\\\\", "/"),
-              suf_version = extract_suf_version(cohort_path()),
-              suf_version_short = extract_suf_version(cohort_path(), short = TRUE),
-              dataformat = input$stata_or_r,
-              subformat = input$sub_format_select,
-              datalist = filter_dataframes(varlist$data, stringr::str_replace_all(input$global_vars, " - .*", "")),
-              prio = input$prio_swap_list,
-              english = "Script: English Labels" %in% input$settings,
-              set_missings = "Set Missing Values" %in% input$settings,
-              parallel = "Include Parallel Spells" %in% input$settings,
-              further_training = "Further Training" %in% input$add_modules,
-              education = "Highest Education" %in% input$add_modules,
-              children = "Children" %in% input$add_modules
-            ), collapse = "<br>"
-          )),
-          easyClose = TRUE,
-          footer = shiny::modalButton("Close")
-        ))
+
+        # 1️⃣ Generate script (vector of lines)
+        script_vector <- gen_script(
+          datapath_conv = stringr::str_replace_all(cohort_path(), "\\\\", "/"),
+          datapath_local = stringr::str_replace_all(datapath_local(), "\\\\", "/"),
+          suf_version = extract_suf_version(cohort_path()),
+          suf_version_short = extract_suf_version(cohort_path(), short = TRUE),
+          dataformat = input$stata_or_r,
+          subformat = input$sub_format_select,
+          datalist = filter_dataframes(
+            varlist$data,
+            stringr::str_replace_all(input$global_vars, " - .*", "")
+          ),
+          prio = input$prio_swap_list,
+          english = "Script: English Labels" %in% input$settings,
+          set_missings = "Set Missing Values" %in% input$settings,
+          parallel = "Include Parallel Spells" %in% input$settings,
+          further_training = "Further Training" %in% input$add_modules,
+          education = "Highest Education" %in% input$add_modules,
+          children = "Children" %in% input$add_modules
+        )
+
+        # 2️⃣ Determine language class
+        lang_class <- if (toupper(input$stata_or_r) == "R") "language-r" else ""
+
+        # 3️⃣ Wrap comment lines in <span class='hljs-comment'>
+        script_text <- sapply(script_vector, function(line) {
+          if (toupper(input$stata_or_r) == "R" && grepl("^\\s*#", line)) {
+            paste0("<span class='hljs-comment'>", line, "</span>")
+          } else if (toupper(input$stata_or_r) == "STATA" && grepl("^\\s*\\*", line)) {
+            paste0("<span class='hljs-comment'>", line, "</span>")
+          } else {
+            line
+          }
+        })
+
+        # 4️⃣ Keep line breaks using \n
+        script_text <- paste(script_text, collapse = "\n")
+
+        # 5️⃣ Show modal
+        shiny::showModal(
+          shiny::modalDialog(
+            title = "Preview of script",
+            size = "l",
+
+            tags$pre(
+              tags$code(
+                class = lang_class,
+                HTML(script_text)  # <span> survives, \n works because of pre-wrap
+              ),
+              style = "
+          max-height: 600px;
+          overflow-y: auto;
+          overflow-x: auto;
+          white-space: pre-wrap;  /* preserves \n */
+          word-break: break-word;
+          background-color: #f7f7f7;
+          padding: 12px;
+          border-radius: 4px;
+          font-family: Consolas, 'Courier New', monospace;
+          font-size: 13px;
+        "
+            ),
+
+            # 6️⃣ Run highlight.js only for R (optional)
+            tags$script(
+              HTML(
+                if (toupper(input$stata_or_r) == "R") {
+                  "setTimeout(function() {
+                document.querySelectorAll('pre code').forEach(el => {
+                  // highlight all except .hljs-comment
+                  hljs.highlightElement(el);
+                  // force comment color again
+                  el.querySelectorAll('.hljs-comment').forEach(c => {
+                    c.style.color = '#2a9d8f';
+                    c.style.fontStyle = 'italic';
+                  });
+                });
+             }, 50);"
+                } else {
+                  ""
+                }
+              )
+            ),
+
+            easyClose = TRUE,
+            footer = shiny::modalButton("Close")
+          )
+        )
+
       })
+
+
+
+
+
+
+
+      # shiny::observeEvent(input$previewScript, {
+      #   shiny::showModal(shiny::modalDialog(
+      #     title = "Preview of script",
+      #     size = "l",
+      #     htmltools::HTML(base::paste(
+      #       gen_script(
+      #         datapath_conv = stringr::str_replace_all(cohort_path(), "\\\\", "/"),
+      #         datapath_local = stringr::str_replace_all(datapath_local(), "\\\\", "/"),
+      #         suf_version = extract_suf_version(cohort_path()),
+      #         suf_version_short = extract_suf_version(cohort_path(), short = TRUE),
+      #         dataformat = input$stata_or_r,
+      #         subformat = input$sub_format_select,
+      #         datalist = filter_dataframes(varlist$data, stringr::str_replace_all(input$global_vars, " - .*", "")),
+      #         prio = input$prio_swap_list,
+      #         english = "Script: English Labels" %in% input$settings,
+      #         set_missings = "Set Missing Values" %in% input$settings,
+      #         parallel = "Include Parallel Spells" %in% input$settings,
+      #         further_training = "Further Training" %in% input$add_modules,
+      #         education = "Highest Education" %in% input$add_modules,
+      #         children = "Children" %in% input$add_modules
+      #       ), collapse = "<br>"
+      #     )),
+      #     easyClose = TRUE,
+      #     footer = shiny::modalButton("Close")
+      #   ))
+      # })
+
+
 
       # Download script
       output$downloadScript <- shiny::downloadHandler(
