@@ -156,12 +156,17 @@ cards_data_trans <- function() {
 
     <h5 style=font-size: 16px; color: #007BFF;>Additional Variables</h5>
     <p style=font-size: 18px; color: #555;>
-        In the third tab, you can add additional variables from various NEPS datasets to the script. Some datasets (e.g. further training related datasets) are excluded here though due to additional data preparation steps required for including variables from these datsets.
+        In the third tab, you can add additional variables from various NEPS datasets to the script. Some datasets (e.g. further training related datasets) are excluded though due to additional data preparation steps required for including variables from these datsets.
     </p>
 
     <h5 style=font-size: 16px; color: #007BFF;>Preview and Download</h5>
     <p style=font-size: 18px; color: #555;>
-        Lastly, you have the option to preview or download the script incorporating all your adjusted settings. You can also generate a person-year dataset based on your settings. This dataset will be identical to the one produced by the script. It will be saved to the specified datapath, and you can view it in the 'Explore Variables' tab.
+        Lastly, you have the option to preview or download the script incorporating all your adjusted settings.
+    </p>
+
+        <h5 style=font-size: 16px; color: #007BFF;>Optional: Provide Datapath</h5>
+    <p style=font-size: 18px; color: #555;>
+        If you wish, you can provide the local file path to the NEPS SUF data (in .dta format) so it is immediately available in your script. Alternatively, you can insert the path manually.
     </p>
 </div>"
           )

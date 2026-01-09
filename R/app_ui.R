@@ -24,7 +24,7 @@ bslib::page_navbar(
       href = "www/css/styles.css"
     ),
     # make green ticks in picker inputs appear on the left side instead of right
-      tags$style(HTML("
+      htmltools::tags$style(htmltools::HTML("
     .bootstrap-select .dropdown-menu li a span.check-mark {
       left: 10px;         /* distance from left */
       right: auto;         /* remove right alignment */
@@ -112,10 +112,13 @@ bslib::page_navbar(
      <!-- Notes Box -->
      <div style='max-width: 900px; padding: 15px; border: 1px solid #ccc; border-radius: 8px; background-color: #f1f8ff;'>
        <p style='font-size:16px; margin: 0;'>
-         Note: The app's language is English only, but you can switch between English and German in the sidebar.
+         Note: The app's language is English only, but you can switch Variable labels between English and German in the sidebar.
        </p>
        <p style='font-size:16px; margin: 5px 0 0 0;'>
          There you may also change the sidebar width.
+       </p>
+              <p style='font-size:16px; margin: 5px 0 0 0;'>
+        If you find any issues or bugs in the app or in the generated scripts, please report them to alexander.helbig@wzb.eu or open an issue on the app's github page (See help tab in the navbar).
        </p>
      </div>"
     ),
@@ -132,8 +135,8 @@ bslib::page_navbar(
     align = "right",
     bslib::nav_item(htmltools::tags$a("NEPS Website", href = "https://www.neps-data.de/", target="_blank")),
     bslib::nav_item(htmltools::tags$a("NEPS Documentation", href = "https://www.neps-data.de/Data-Center/Data-and-Documentation", target="_blank")),
-    bslib::nav_item(htmltools::tags$a("SUF-Explorer Documentation", href = "", target="_blank")),
-    bslib::nav_item(htmltools::tags$a("References", href = "", target="_blank")),
+    # bslib::nav_item(htmltools::tags$a("SUF-Explorer Documentation", href = "", target="_blank")),
+    # bslib::nav_item(htmltools::tags$a("References", href = "", target="_blank")),
     bslib::nav_item(htmltools::tags$a("Contact Authors", href = "https://www.wzb.eu/de/personen/alexander-helbig", target="_blank")),
     bslib::nav_item(htmltools::tags$a("GitHub", href = "https://github.com/a-helbig/nepscribe", target="_blank"))
   )
