@@ -7,16 +7,16 @@
 
 <!-- badges: end -->
 
-NEPScribe is a Shiny application for browsing metadata of NEPS SUF
-datasets across all starting cohorts. It helps users identify and
-explore variables and their associated metadata. The app also provides
-functionality for comparing variables and metadata across cohorts.
-Another main purpose of NEPScribe is to generate dynamic Stata or R
-scripts that transform NEPS SUF datasets into a person-year format, a
-structure often required for various data analysis projects. This can be
-challenging for new NEPS users due to the structure of the data, which
-combines lifecourse data in spell format with repeated cross-sectional
-data.
+NEPScribe is a Shiny application that generates dynamic Stata and R
+scripts to transform NEPS Scientific Use File (SUF) datasets into a
+person-year format—a data structure commonly required for many
+analytical tasks. This transformation can be challenging for new NEPS
+users because NEPS data combine lifecourse information stored in spell
+format with repeated cross-sectional data.
+
+In addition, NEPScribe enables users to explore SUF datasets, including
+their variables and associated metadata. For this purpose, the app
+relies on the freely available semantic SUF files provided by NEPS.
 
 ## Installation
 
@@ -32,5 +32,5 @@ remotes::install_github("a-helbig/nepscribe")
 In order to start the app, use:
 
 ``` r
-NEPScribe::run_app("nepscribe")
+NEPScribe::run_app()
 ```

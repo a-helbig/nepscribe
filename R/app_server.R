@@ -2,6 +2,7 @@
 #' @description Define the server logic for the SUF-Explorer Shiny application.
 #' Manages reactive modules, dataset exploration, data transformation, and sidebar updates.
 #' @keywords internal
+#' @noRd
 app_server <- function(input, output, session) {
 
   # Stop the app cleanly when session ends
