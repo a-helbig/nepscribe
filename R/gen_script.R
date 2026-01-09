@@ -1,7 +1,7 @@
 #' function that generates the scripts
 #'
-#' @param datapath_conv
 #' @keywords internal
+#' @noRd
 gen_script <- function(datapath_conv, datapath_local, suf_version, suf_version_short, dataformat, subformat, datalist, prio, english, set_missings, parallel, further_training, education, children){
   prio_var <- as.numeric(stringr::str_extract_all(prio, "\\d{2}"))
   sc <- toupper(identify_sc(datapath_conv))

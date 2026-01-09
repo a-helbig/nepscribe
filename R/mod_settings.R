@@ -1,6 +1,7 @@
 #' @title Settings UI Module
 #' @description Provides global settings for the app, including sidebar width and label language.
 #' @keywords internal
+#' @noRd
 settings_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
@@ -22,6 +23,7 @@ settings_ui <- function(id) {
 #' @title Settings Server Module
 #' @description Provides a reactive list of global settings selected in the UI.
 #' @keywords internal
+#' @noRd
 settings_server <- function(id) {
   shiny::moduleServer(
     id,

@@ -5,6 +5,7 @@
 #' script preview, and download.
 #'
 #' @keywords internal
+#' @noRd
 data_transformation_add_variables_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
@@ -46,6 +47,7 @@ data_transformation_add_variables_ui <- function(id) {
 
 #' UI func for priorisation tab
 #' @keywords internal
+#' @noRd
 data_transformation_prio_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
@@ -61,6 +63,7 @@ data_transformation_prio_ui <- function(id) {
 
 #' UI func for sidebar
 #' @keywords internal
+#' @noRd
 data_transformation_sidebar_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
@@ -112,6 +115,7 @@ data_transformation_sidebar_ui <- function(id) {
 #' func for server
 #' @importFrom shiny reactive observe observeEvent req updateTextInput
 #' @keywords internal
+#' @noRd
 data_transformation_server <- function(id, settings_reactive) {
   shiny::moduleServer(
     id,

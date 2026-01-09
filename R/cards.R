@@ -1,18 +1,12 @@
-#' Cards for Dataset Exploration and Data Transformation
-#'
-#' These functions create UI cards for the Shiny app:
-#' - `dataset_exploration_card()` for exploring datasets
-#' - `cards_data_trans()` for data transformation
-#'
-#' @return `bslib::navset_card_tab` objects
-#' @keywords internal
-
 #' Dataset Exploration Card
 #'
 #' Creates a `navset_card_tab` containing a tab for dataset exploration:
 #' Variable Table: Shows a data overview table with settings dropdown.
 #'
 #' @return A `navset_card_tab` object for Shiny UI.
+#' @keywords internal
+#' @noRd
+
 dataset_exploration_card <- function() {
   bslib::navset_card_tab(
     full_screen = TRUE,
@@ -56,6 +50,8 @@ dataset_exploration_card <- function() {
 #' Creates the UI card for the "Transform Data" tab
 #'
 #' @return A `navset_card_tab` object
+#' @keywords internal
+#' @noRd
 cards_data_trans <- function() {
   bslib::navset_card_tab(
     height = 450,

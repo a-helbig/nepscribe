@@ -1,11 +1,6 @@
-#' Data Exploration Module
-#'
-#' Internal Shiny module for exploring datasets with multiple cohort selection.
-#'
-#' @keywords internal
-
 #' UI func
 #' @keywords internal
+#' @noRd
 dataset_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
@@ -84,6 +79,7 @@ dataset_ui <- function(id) {
 
 #' UI func for output
 #' @keywords internal
+#' @noRd
 dataset_overview_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::fluidRow(
@@ -98,6 +94,7 @@ dataset_overview_ui <- function(id) {
 #'
 #' @importFrom shiny reactive observe observeEvent req updateTextInput
 #' @keywords internal
+#' @noRd
 dataset_explorer_server <- function(id, settings_reactive) {
 
   shiny::moduleServer(
