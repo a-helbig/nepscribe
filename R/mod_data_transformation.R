@@ -100,7 +100,7 @@ data_transformation_sidebar_ui <- function(id) {
                         shiny::downloadButton(ns("downloadScript"), "Download Script")),
     shiny::p(""),
     shiny::p(htmltools::HTML("<b>Optional: Add local SUF URL</b>")),
-    shinyFiles::shinyDirButton(ns("folder"), "Browse Computer", "Optional: Select a local NEPS data folder for the script", width = "35%"),
+    # shinyFiles::shinyDirButton(ns("folder"), "Browse Computer", "Optional: Select a local NEPS data folder for the script", width = "35%"),
     shiny::textInput(
       inputId = ns("datapath"),
       "Datapath",
@@ -129,27 +129,28 @@ data_transformation_server <- function(id, settings_reactive) {
         path <- system.file("extdata", input$cohort_data_trans, package = "NEPScribe")
       })
 
-      # first, retrieve all windows drives with custom function
-      volumes <- getWindowsDrives()
-
-      # open input ui and feed the windows drives from vector volumes
-      shinyFiles::shinyDirChoose(input, "folder", roots = volumes, session = session)
-
-      # reactive that holds the datapath
-      folder_path <- shiny::reactive({
-        shiny::req(input$folder)
-        shinyFiles::parseDirPath(volumes, input$folder)
-      })
-
-      # when dataset is being selected, update the textInput with the datapath
-      observeEvent(input$folder, {
-        updateTextInput(
-          session = getDefaultReactiveDomain(),
-          "datapath",
-          value = folder_path()
-        )
-      })
+      # # first, retrieve all windows drives with custom function
+      # volumes <- getWindowsDrives()
+      #
+      # # open input ui and feed the windows drives from vector volumes
+      # shinyFiles::shinyDirChoose(input, "folder", roots = volumes, session = session)
+      #
+      # # reactive that holds the datapath
+      # folder_path <- shiny::reactive({
+      #   shiny::req(input$folder)
+      #   shinyFiles::parseDirPath(volumes, input$folder)
+      # })
+      #
+      # # when dataset is being selected, update the textInput with the datapath
+      # observeEvent(input$folder, {
+      #   updateTextInput(
+      #     session = getDefaultReactiveDomain(),
+      #     "datapath",
+      #     value = folder_path()
+      #   )
+      # })
       # check if there are NEPS SUF files in that folder
+
       valid_files <- reactive({
         path <- input$datapath %||% ""
         if (path == "" || !dir.exists(path)) {

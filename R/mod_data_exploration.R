@@ -18,7 +18,7 @@ dataset_ui <- function(id) {
         "SC6" = "sc6_semantic_files",
         "SC8" = "sc8_semantic_files"
       ),
-      selected = "sc6_semantic_files",
+      # selected = "sc1_semantic_files",
       multiple = TRUE,
       options = list(
         `actions-box` = TRUE,
@@ -84,8 +84,8 @@ dataset_overview_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::fluidRow(
     shinycssloaders::withSpinner(
-      DT::DTOutput(ns("data_overview")),
-      caption = .captiontext
+    DT::DTOutput(ns("data_overview")),
+    caption = .captiontext
     )
   )
 }
@@ -128,6 +128,7 @@ dataset_explorer_server <- function(id, settings_reactive) {
       shiny::observeEvent(input$cohort_data_explore, {
         df <- datasets_available()
         if (is.null(df)) {
+          shiny::freezeReactiveValue(input, "dataset")
           shinyWidgets::updatePickerInput(session, "dataset", choices = character(0), selected = NULL)
         } else {
           shinyWidgets::updatePickerInput(
@@ -138,6 +139,7 @@ dataset_explorer_server <- function(id, settings_reactive) {
           )
         }
         # Clear meta selector and value boxes until dataset is selected
+        shiny::freezeReactiveValue(input, "meta_selector")
         shinyWidgets::updatePickerInput(session, "meta_selector", choices = character(0), selected = NULL)
         output$dataset <- shiny::renderText({ "" })
         output$vars <- shiny::renderText({ "" })
@@ -188,8 +190,8 @@ dataset_explorer_server <- function(id, settings_reactive) {
 
       # --- Reactive: data overview ---
       data_overview_r <- shiny::reactive({
+        shiny::req(input$dataset)
         df <- datasets_available()
-        req(df, input$dataset)
         selected_files <- df$full_path[df$file %in% input$dataset]
         if (length(selected_files) == 0) return(NULL)
         language <- ifelse(settings_reactive()$language, "en", "de")
@@ -200,37 +202,37 @@ dataset_explorer_server <- function(id, settings_reactive) {
       # --- Value boxes ---
 
       # first box: Datasets
-      output$dataset_summary <- shiny::renderUI({
-        req(input$dataset)
+        output$dataset_summary <- shiny::renderUI({
+          req(input$dataset)
 
-        datasets <- input$dataset
-        n <- length(datasets)
+          datasets <- input$dataset
+          n <- length(datasets)
 
-        if (n == 0) {
-          return(tags$span("-"))
-        }
+          if (n == 0) {
+            return(tags$span("-"))
+          }
 
-        # Limit to 3 items
-        shown <- head(datasets, 5)
+          # Limit to 3 items
+          shown <- head(datasets, 5)
 
-        tags$ul(
-          style = "
-      margin: 0;
-      padding-left: 1em;
-      font-size: 0.85rem;
-      line-height: 1.3;
-    ",
-          lapply(shown, tags$li),
-          if (n > 5) tags$li("...")
-        )
-      })
+          tags$ul(
+            style = "
+        margin: 0;
+        padding-left: 1em;
+        font-size: 0.85rem;
+        line-height: 1.3;
+      ",
+            lapply(shown, tags$li),
+            if (n > 5) tags$li("...")
+          )
+        })
 
-      # second box: Variables count
-      output$vars_summary <- shiny::renderText({
-        df <- data_overview_r()
-        if (is.null(df) || nrow(df) == 0) return("-")
-        nrow(df)
-      })
+        # second box: Variables count
+        output$vars_summary <- shiny::renderText({
+          df <- data_overview_r()
+          if (is.null(df) || nrow(df) == 0) return("-")
+          nrow(df)
+        })
 
 
 
