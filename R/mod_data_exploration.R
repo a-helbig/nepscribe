@@ -59,7 +59,17 @@ dataset_ui <- function(id) {
       ),
       width = "100%"
     ),
-
+    shiny::p(htmltools::HTML("<b>Variable Labels</b>")),
+    shinyWidgets::switchInput(
+      ns("language"),
+      label = htmltools::tags$b("Labels"),
+      value = TRUE,
+      onLabel = "English",
+      offLabel = "German",
+      onStatus = "info",
+      offStatus = "warning",
+      inline = FALSE
+    ),
     # Value boxes
     bslib::value_box(
       title = "Datasets",
@@ -194,7 +204,7 @@ dataset_explorer_server <- function(id, settings_reactive) {
         df <- datasets_available()
         selected_files <- df$full_path[df$file %in% input$dataset]
         if (length(selected_files) == 0) return(NULL)
-        language <- ifelse(settings_reactive()$language, "en", "de")
+        language <- ifelse(input$language, "en", "de")
         dataframes <- purrr::map(selected_files, ~ gen_data_overview(dirname(.x), basename(.x), language = language))
         do.call(dplyr::bind_rows, dataframes)
       })
@@ -241,7 +251,7 @@ dataset_explorer_server <- function(id, settings_reactive) {
         data <- data_overview_r()
         req(data)
         meta_selection <- input$meta_selector
-        if (!settings_reactive()$language) meta_selection <- add_suffix(meta_selection, "de")
+        if (!input$language) meta_selection <- add_suffix(meta_selection, "de")
         else meta_selection <- add_suffix(meta_selection, "en")
         if (length(meta_selection) > 0) {
           data <- data |> dplyr::select(Dataset, Variable, dplyr::starts_with("NEPS_varlabel"), dplyr::any_of(meta_selection))

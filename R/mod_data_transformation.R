@@ -90,7 +90,18 @@ data_transformation_sidebar_ui <- function(id) {
                         )),
     htmltools::tags$div(title = "Currently supported script formats: R or STATA.",
                         shiny::radioButtons(ns("stata_or_r"), htmltools::tags$b("Script file format"), c("STATA", "R"), selected = "R")),
-    shiny::checkboxGroupInput(ns("settings"), htmltools::tags$b("Settings"), choices = c("Set Missing Values","Script: English Labels", "Include Parallel Spells")),
+    shiny::p(htmltools::HTML("<b>Variable Labels</b>")),
+    shinyWidgets::switchInput(
+      ns("language"),
+      label = htmltools::tags$b("Labels"),
+      value = TRUE,
+      onLabel = "English",
+      offLabel = "German",
+      onStatus = "info",
+      offStatus = "warning",
+      inline = FALSE
+    ),
+    shiny::checkboxGroupInput(ns("settings"), htmltools::tags$b("Settings"), choices = c("Set Missing Values", "Include Parallel Spells")),
     shiny::p(""),
     shiny::checkboxGroupInput(ns("add_modules"), htmltools::tags$b("Add exemplary data preparation"), choices = c("Further Training","Children", "Highest Education")),
     shiny::p(""),
@@ -212,7 +223,7 @@ data_transformation_server <- function(id, settings_reactive) {
           "multi_vars_input",
           label = NULL,
           selected = NULL,
-          choices = gen_comb_char(cohort_path(), input$dataset, settings_reactive()$language)
+          choices = gen_comb_char(cohort_path(), input$dataset, input$language)
         )
       })
 
@@ -310,7 +321,7 @@ data_transformation_server <- function(id, settings_reactive) {
             stringr::str_replace_all(input$global_vars, " - .*", "")
           ),
           prio = input$prio_swap_list,
-          english = "Script: English Labels" %in% input$settings,
+          english = input$language,
           set_missings = "Set Missing Values" %in% input$settings,
           parallel = "Include Parallel Spells" %in% input$settings,
           further_training = "Further Training" %in% input$add_modules,
@@ -407,7 +418,7 @@ data_transformation_server <- function(id, settings_reactive) {
             subformat = input$sub_format_select,
             datalist = filter_dataframes(varlist$data, stringr::str_replace_all(input$global_vars, " - .*", "")),
             prio = input$prio_swap_list,
-            english = "Script: English Labels" %in% input$settings,
+            english = input$language,
             set_missings = "Set Missing Values" %in% input$settings,
             parallel = "Include Parallel Spells" %in% input$settings,
             further_training = "Further Training" %in% input$add_modules,
