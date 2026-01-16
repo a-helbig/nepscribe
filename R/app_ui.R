@@ -101,26 +101,36 @@ bslib::page_navbar(
          </li>
          <br>
          <li>
-           <b>Dataset Transformation (SC3-SC6):</b> Create dynamic Stata or R scripts for person-year data preparation.
-           It will transform and merge multiple NEPS SUF data files into a person-year-format according to your specifications.
-           You will obtain a script that handles most of the complex restructuring and merging of the data.
-           However, further data preparation is still necessary.
-         </li>
+  <b>Dataset Transformation (SC3-SC6):</b> Create a dynamic Stata or R script for person-year data preparation. It transforms and merges multiple NEPS SUF data files into a person-year format, with one row for each wave of each respondent.
+  <br>
+  <br>
+  <ul>
+    <li>Choose between using the spellfiles or the biography file as the baseline for data preparation.</li>
+    <li>Additionally, select variables from most datasets and easily include them in the script.</li>
+    <li>Optionally, add sample code for complex data preparation tasks, such as further training, highest educational degree, or children.</li>
+    <li>Finally, obtain a script that handles most of the complex restructuring and merging of the data.</li>
+    <li>However, careful review of the script and additional data preparation remain necessary.</li>
+  </ul>
+</li>
        </ul>
      </div>
      <br>
-
      <!-- Notes Box -->
      <div style='max-width: 900px; padding: 15px; border: 1px solid #ccc; border-radius: 8px; background-color: #f1f8ff;'>
-       <p style='font-size:16px; margin: 0;'>
-         Note: The app's language is English only, but you can switch Variable labels between English and German in the sidebar.
-       </p>
-       <p style='font-size:16px; margin: 5px 0 0 0;'>
-         There you may also change the sidebar width.
-       </p>
-              <p style='font-size:16px; margin: 5px 0 0 0;'>
-        If you find any issues or bugs in the app or in the generated scripts, please report them to alexander.helbig@wzb.eu or open an issue on the app's github page (See help tab in the navbar).
-       </p>
+            <p style='font-size:18px; font-weight: bold; margin-bottom: 10px;'>Note</p>
+              <ul style='margin-left: 20px; line-height: 1.6;'>
+                <li>
+                  The app is based on NEPS semantic structure files, which are identical to NEPS SUF data files but have had all observations removed and are therefore publicly available.
+                </li>
+                <br>
+                <li>
+                  You may change the sidebar width in the sidebar to be able to read long variable names on smaller screens.
+                </li>
+                <br>
+                <li>
+                If you find any issues or bugs in the app or in the generated scripts, please report them to alexander.helbig@wzb.eu or open an issue on the app's github page (See help tab in the navbar).
+                </li>
+              </ul>
      </div>"
     ),
     icon = shiny::icon("door-open")
