@@ -18,7 +18,7 @@ dataset_ui <- function(id) {
         "SC6" = "sc6_semantic_files",
         "SC8" = "sc8_semantic_files"
       ),
-      # selected = "sc1_semantic_files",
+      # selected = "sc6_semantic_files",
       multiple = TRUE,
       options = list(
         `actions-box` = TRUE,
