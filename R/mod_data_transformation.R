@@ -52,12 +52,13 @@ data_transformation_prio_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
     htmltools::HTML("To construct a person-year dataset where each row corresponds to one wave for each individual, a spell prioritization process is useful for identifying the principal spell in cases where multiple spells occur simultaneously. The following hierarchy of spell types dictates which episodes take precedence in this process, with the items at the top representing the highest priority and those at the bottom indicating the lowest priority."),
-    sortable::rank_list(
-      input_id = ns("prio_swap_list"),
-      text = "Swap Items to change priorisation order.",
-      labels = .labels,
-      options = sortable::sortable_options(swap = FALSE)
-    )
+    uiOutput(ns("prio_ui"))  # placeholder for dynamic UI
+    # sortable::rank_list(
+    #   input_id = ns("prio_swap_list"),
+    #   text = "Swap Items to change priorisation order.",
+    #   labels = .labels_sc3_4_6,
+    #   options = sortable::sortable_options(swap = FALSE)
+    # )
   )
 }
 
@@ -226,6 +227,62 @@ data_transformation_server <- function(id, settings_reactive) {
           choices = gen_comb_char(cohort_path(), input$dataset, input$language)
         )
       })
+
+      # update prio rank list in order to differentiate different labels between sc3,sc4,sc6 and sc5
+      labels_for_prio <- reactive({
+        if(input$cohort_data_trans == "sc5_semantic_files") {
+          .labels_sc5
+        } else {
+          .labels_sc3_4_6
+        }
+      })
+
+
+
+
+      # Reactive label vector based on cohort
+      labels_for_prio <- reactive({
+        if(input$cohort_data_trans == "sc5_semantic_files") {
+          .labels_sc5
+        } else {
+          .labels_sc3_4_6
+        }
+      })
+
+      # Render the sortable rank_list UI dynamically
+      output$prio_ui <- renderUI({
+        labels <- labels_for_prio()
+        sortable::rank_list(
+          input_id = session$ns("prio_swap_list"),
+          text = "Swap Items to change priorisation order.",
+          labels = labels,
+          options = sortable::sortable_options(swap = FALSE)
+        )
+      })
+
+      output$prio_ui <- renderUI({
+        sortable::rank_list(
+          input_id = session$ns("prio_swap_list"),
+          text = "Swap Items to change priorisation order.",
+          labels = labels_for_prio(),
+          options = sortable::sortable_options(swap = FALSE)
+        )
+      })
+      #
+      # # update prio rank list in order to differentiate different labels between sc3,sc4,sc6 and sc5
+      # observeEvent(input$cohort_data_trans, {
+      #   labels_to_use <- if (input$cohort_data_trans == "sc5_semantic_files") {
+      #     .labels_sc5
+      #   } else {
+      #     .labels_sc3_4_6
+      #   }
+      #
+      #   sortable::update_rank_list(
+      #     css_id = session$ns("prio_swap_list"),
+      #     labels = labels_to_use,
+      #     session = session
+      #   )
+      # })
 
       # List all .dta files in selected cohort
       filenames <- shiny::reactive({
