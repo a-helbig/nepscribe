@@ -3,8 +3,14 @@
 #' @keywords internal
 #' @noRd
 gen_script <- function(datapath_conv, datapath_local, suf_version, suf_version_short, dataformat, subformat, datalist, prio, english, set_missings, parallel, further_training, education, children){
-  prio_var <- as.numeric(stringr::str_extract_all(prio, "\\d{2}"))
   sc <- toupper(identify_sc(datapath_conv))
+  # if prio tab hasnt been clicked, we want to load the static element from constants. if prio is clicked we use the inputs returned value. This is necessary because inputs often do not return their return value when they are hidden behind a tab that wasnt clicked yet.
+  if (is.null(prio) || length(prio) == 0) {
+    prio <- if (sc != "SC5") .labels_sc3_4_6 else .labels_sc5
+  }
+
+  prio_var <- as.numeric(stringr::str_extract_all(prio, "\\d{2}"))
+
   if(dataformat== "R" & subformat == "Harmonized Spell Format (Recommended)"){
     scripts <- c(
       paste0("# NEPScribe base script to transform NEPS ", sc, " SUF data into a person-year structured format."),
@@ -155,11 +161,11 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, suf_version_s
       "",
       "# To construct a person-year dataset where each row corresponds to one wave for each individual, a spell prioritization process is useful for identifying the principal spell in cases where multiple spells occur simultaneously.",
       "",
-      "# We  may recode licences courses and ihk courses to value 31 to place it behind xmodule episodes in the prioritisation order, because these types of episodes are typically rather side spells than main spells and thus considered of lesser importance in many research projects with regard to spell prioritisation. You may change that.",
+      paste0("# We  may recode licences courses and ihk courses to value ", ifelse(sc != "SC5", "31", "37"), " to place it behind ", ifelse(sc != "SC5", "xmodule", "internship")," episodes in the prioritisation order, because these types of episodes are typically rather side spells than main spells and thus considered of lesser importance in many research projects with regard to spell prioritisation. You may change that."),
       "",
       "bio <- bio |>",
       "  mutate(prio = sptype,",
-      "  prio = if_else(vt_typ %in% c(13,14), 31, prio),",
+      paste0("  prio = ifelse(vt_typ %in% 13:14, ", ifelse(sc != "SC5", "31", "37"),", sptype),"),
       "  prio = case_when(",
       paste("  prio == ",prio_var[1]," ~ 1,"),
       paste("  prio == ",prio_var[2]," ~ 2,"),
@@ -171,6 +177,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, suf_version_s
       paste("  prio == ",prio_var[8]," ~ 8,"),
       paste("  prio == ",prio_var[9]," ~ 9,"),
       paste("  prio == ",prio_var[10]," ~ 10,"),
+      if(sc == "SC5")paste("  prio == ",prio_var[11]," ~ 11,"),
       "  TRUE ~ NA_real_  # For values not specified, set to NA",
       "))",
       "",
@@ -281,6 +288,9 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, suf_version_s
       if(sc == "SC5") "keep_vars <- c('ts1111m', 'ts1111y', 'ts1112m', 'ts1112y', 'ts1112c','ts1311m', 'ts1311y', 'ts1312m', 'ts1312y', 'ts1312c', 'ts15201', 'ts1511m', 'ts1511y', 'ts1512m', 'ts1512y', 'ts1512c','ts2111m', 'ts2111y', 'ts2112m', 'ts2112y', 'ts2112c', 'ts23223', 'ts2311m', 'ts2311y', 'ts2312m', 'ts2312y', 'ts2312c','ts2511m', 'ts2511y', 'ts2512m', 'ts2512y', 'ts2512c','ts2711m', 'ts2711y', 'ts2712m', 'ts2712y', 'ts2712c','ts2911m', 'ts2911y', 'ts2912m', 'ts2912y', 'ts2912c', 'sptype')",
       if(sc=='SC6')"fill_vars <- c('ts23223_g1', 'vt_typ')",
       if(sc %in% c("SC3", "SC4","SC5"))"fill_vars <- c('ts23223', 'vt_typ')",
+      "",
+      "# 1. Append spelldata files ----------------------------------------------------",
+      "",
       "# Load datasets",
       "school <- read_neps(paste0(datapath, '/', sc, '_spSchool_D_', suf_version, '.dta'), english = english) |>",
       "  mutate(sptype = 22)",
@@ -443,10 +453,14 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, suf_version_s
       "bio <- bio |> ",
       "  filter(spms != -20)",
       "",
-      "# Sort spells for prioritisation",
+      "# 2. Spell prioritisation: reduce to 1 obs per row ----------------------------------------------------",
+      "",
+      "# To construct a person-year dataset where each row corresponds to one wave for each individual, a spell prioritization process is useful for identifying the principal spell in cases where multiple spells occur simultaneously.",
+      "",
+      paste0("# We  may recode licences courses and ihk courses to value ", ifelse(sc != "SC5", "31", "37"), " to place it behind ", ifelse(sc != "SC5", "xmodule", "internship")," episodes in the prioritisation order, because these types of episodes are typically rather side spells than main spells and thus considered of lesser importance in many research projects with regard to spell prioritisation. You may change that."),
       "bio <- bio |>",
       "mutate(",
-      "prio = ifelse(vt_typ %in% 13:14, 31, sptype),",
+      paste0("prio = ifelse(vt_typ %in% 13:14, ", ifelse(sc != "SC5", "31", "37"),", sptype),"),
       "prio = case_when(",
       paste("prio == ",prio_var[1]," ~ 1,"),
       paste("prio == ",prio_var[2]," ~ 2,"),
@@ -458,6 +472,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, suf_version_s
       paste("prio == ",prio_var[8]," ~ 8,"),
       paste("prio == ",prio_var[9]," ~ 9,"),
       paste("prio == ",prio_var[10]," ~ 10,"),
+      if(sc == "SC5")paste("  prio == ",prio_var[11]," ~ 11,"),
       "TRUE ~ NA_real_  # For values not specified, set to NA",
       "),",
       "    spms = tidyr::replace_na(spms, 0),",
@@ -646,10 +661,11 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, suf_version_s
       "* sort parallel Episodes",
       "clonevar prio = sptype",
       "",
-      "* recode licences courses and ihk courses to value 31 to place it behind xmodule episodes in the prioritisation order because these types of episodes are considered of minor importance in many research projects in regard to spell prioritisation.",
-      "recode prio 24= 31 if inrange(vt_typ,13,14)",
+      paste0("* recode licences courses and ihk courses to value ",  ifelse(sc != "SC5", "31", "37"), " to place it behind ", ifelse(sc != "SC5", "xmodule", "internship"), " episodes in the prioritisation order because these types of episodes are considered of minor importance in many research projects in regard to spell prioritisation."),
+      paste0("recode prio 24 = ", ifelse(sc != "SC5", "31", "37"), " if inrange(vt_typ,13,14)"),
       "",
-      paste0("recode prio ","(",prio_var[1],  " = 1)"," (",prio_var[2]," = 2)"," (",prio_var[3]," = 3)"," (",prio_var[4]," = 4)"," (",prio_var[5]," = 5)"," (",prio_var[6]," = 6)"," (",prio_var[7]," = 7)"," (",prio_var[8]," = 8)"," (",prio_var[9]," = 9)"," (",prio_var[10]," = 10)",",gen(prio_temp)"),
+      if(sc != "SC5")paste0("recode prio ","(",prio_var[1],  " = 1)"," (",prio_var[2]," = 2)"," (",prio_var[3]," = 3)"," (",prio_var[4]," = 4)"," (",prio_var[5]," = 5)"," (",prio_var[6]," = 6)"," (",prio_var[7]," = 7)"," (",prio_var[8]," = 8)"," (",prio_var[9]," = 9)"," (",prio_var[10]," = 10)",",gen(prio_temp)"),
+      if(sc == "SC5")paste0("recode prio ","(",prio_var[1],  " = 1)"," (",prio_var[2]," = 2)"," (",prio_var[3]," = 3)"," (",prio_var[4]," = 4)"," (",prio_var[5]," = 5)"," (",prio_var[6]," = 6)"," (",prio_var[7]," = 7)"," (",prio_var[8]," = 8)"," (",prio_var[9]," = 9)"," (",prio_var[10]," = 10)"," (",prio_var[11]," = 11)",",gen(prio_temp)"),
       "* for sorting set side episodes und missings to 0",
       "recode spms (1 = 1) (2 . = 0)",
       "",
@@ -892,10 +908,11 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, suf_version_s
       "* sort parallel Episodes",
       "clonevar prio = sptype",
       "",
-      "* recode licences courses and ihk courses to value 31 to place it behind xmodule episodes in the prioritisation order because these types of episodes are considered of minor importance in many research projects in regard to spell prioritisation.",
-      "recode prio 24= 31 if inrange(vt_typ,13,14)",
+      paste0("* recode licences courses and ihk courses to value ",  ifelse(sc != "SC5", "31", "37"), " to place it behind ", ifelse(sc != "SC5", "xmodule", "internship"), " episodes in the prioritisation order because these types of episodes are considered of minor importance in many research projects in regard to spell prioritisation."),
+      paste0("recode prio 24 = ", ifelse(sc != "SC5", "31", "37"), " if inrange(vt_typ,13,14)"),
       "",
-      paste0("recode prio ","(",prio_var[1],  " = 1)"," (",prio_var[2]," = 2)"," (",prio_var[3]," = 3)"," (",prio_var[4]," = 4)"," (",prio_var[5]," = 5)"," (",prio_var[6]," = 6)"," (",prio_var[7]," = 7)"," (",prio_var[8]," = 8)"," (",prio_var[9]," = 9)"," (",prio_var[10]," = 10)",",gen(prio_temp)"),
+      if(sc != "SC5")paste0("recode prio ","(",prio_var[1],  " = 1)"," (",prio_var[2]," = 2)"," (",prio_var[3]," = 3)"," (",prio_var[4]," = 4)"," (",prio_var[5]," = 5)"," (",prio_var[6]," = 6)"," (",prio_var[7]," = 7)"," (",prio_var[8]," = 8)"," (",prio_var[9]," = 9)"," (",prio_var[10]," = 10)",",gen(prio_temp)"),
+      if(sc == "SC5")paste0("recode prio ","(",prio_var[1],  " = 1)"," (",prio_var[2]," = 2)"," (",prio_var[3]," = 3)"," (",prio_var[4]," = 4)"," (",prio_var[5]," = 5)"," (",prio_var[6]," = 6)"," (",prio_var[7]," = 7)"," (",prio_var[8]," = 8)"," (",prio_var[9]," = 9)"," (",prio_var[10]," = 10)"," (",prio_var[11]," = 11)",",gen(prio_temp)"),
       "* for sorting set nebenbeschaeftigungen und missings to 0",
       "recode spms (1 = 1) (2 . = 0)",
       "",
