@@ -10,6 +10,21 @@ app_server <- function(input, output, session) {
     shiny::stopApp()
   })
 
+  observeEvent(input$show_changelog, {
+
+    # You can read the changelog markdown file here
+    changelog_file <- system.file("CHANGELOG.md", package = "NEPScribe")
+    # or locally: changelog_file <- "CHANGELOG.md"
+
+    showModal(modalDialog(
+      title = "Changelog",
+      size = "l",  # large modal
+      easyClose = TRUE,
+      footer = modalButton("Close"),
+      shiny::includeMarkdown(changelog_file)
+    ))
+  })
+
   # --- Settings reactive for sidebar width, language, etc. ---
   settings_reactive <- settings_server("settings")
 

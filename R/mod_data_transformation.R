@@ -52,13 +52,7 @@ data_transformation_prio_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
     htmltools::HTML("To construct a person-year dataset where each row corresponds to one wave for each individual, a spell prioritization process is useful for identifying the principal spell in cases where multiple spells occur simultaneously. The following hierarchy of spell types dictates which episodes take precedence in this process, with the items at the top representing the highest priority and those at the bottom indicating the lowest priority."),
-    uiOutput(ns("prio_ui"))  # placeholder for dynamic UI
-    # sortable::rank_list(
-    #   input_id = ns("prio_swap_list"),
-    #   text = "Swap Items to change priorisation order.",
-    #   labels = .labels_sc3_4_6,
-    #   options = sortable::sortable_options(swap = FALSE)
-    # )
+    shiny::uiOutput(ns("prio_ui"))
   )
 }
 
@@ -68,29 +62,33 @@ data_transformation_prio_ui <- function(id) {
 data_transformation_sidebar_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
+    htmltools::tags$div(title = "Harmonized Format: The data preparation of life-course trajectories is based on the edited and cleaned biography file.\n\nSubspell Format: The data preparation of life-course trajectories is based on the originally recorded subspell episodes.",
+                        shiny::selectizeInput(
+                          ns("sub_format_select"),
+                          htmltools::tags$b("Person-Year-Data: Format"),
+                          choices = c("Harmonized Spell Format", "Original Subspell Format"),
+                          multiple = TRUE,
+                          selected = "Harmonized Spell Format",
+                          options = list(maxItems = 1)
+                        )),
     shiny::radioButtons(
       inputId = ns("cohort_data_trans"),
       label = htmltools::tags$b("Select Starting Cohort"),
       choices = c(
-        "Starting Cohort 3" = "sc3_semantic_files",
-        "Starting Cohort 4" = "sc4_semantic_files",
+        "Starting Cohort 6" = "sc6_semantic_files",
         "Starting Cohort 5" = "sc5_semantic_files",
-        "Starting Cohort 6" = "sc6_semantic_files"
+        "Starting Cohort 4" = "sc4_semantic_files",
+        "Starting Cohort 3" = "sc3_semantic_files"
       ),
       selected = "sc6_semantic_files",
       inline = TRUE
     ),
-    htmltools::tags$div(title = "Harmonized Format: The data preparation of life-course trajectories is based on the edited and cleaned biography file. Subspell Format: The data preparation of life-course trajectories is based on the originally recorded subspell episodes.",
-                        shiny::selectizeInput(
-                          ns("sub_format_select"),
-                          htmltools::tags$b("Person-Year-Data: Format"),
-                          choices = c("Harmonized Spell Format (Recommended)", "Original Subspell Format"),
-                          multiple = TRUE,
-                          selected = "Harmonized Spell Format (Recommended)",
-                          options = list(maxItems = 1)
-                        )),
     htmltools::tags$div(title = "Currently supported script formats: R or STATA.",
                         shiny::radioButtons(ns("stata_or_r"), htmltools::tags$b("Script file format"), c("STATA", "R"), selected = "R")),
+    shiny::checkboxGroupInput(ns("settings"), htmltools::tags$b("Settings"), choices = c("Set Missing Values", "Include Parallel Spells")),
+    shiny::p(""),
+    shiny::checkboxGroupInput(ns("add_modules"), htmltools::tags$b("Add exemplary data preparation"), choices = c("Further Training","Children", "Highest Education")),
+    shiny::p(""),
     shiny::p(htmltools::HTML("<b>Variable Labels</b>")),
     shinyWidgets::switchInput(
       ns("language"),
@@ -99,20 +97,15 @@ data_transformation_sidebar_ui <- function(id) {
       onLabel = "English",
       offLabel = "German",
       onStatus = "info",
-      offStatus = "warning",
+      offStatus = "success",
       inline = FALSE
     ),
-    shiny::checkboxGroupInput(ns("settings"), htmltools::tags$b("Settings"), choices = c("Set Missing Values", "Include Parallel Spells")),
-    shiny::p(""),
-    shiny::checkboxGroupInput(ns("add_modules"), htmltools::tags$b("Add exemplary data preparation"), choices = c("Further Training","Children", "Highest Education")),
-    shiny::p(""),
     htmltools::tags$div(title = "Show a preview of the script with the actual settings.",
                         shiny::actionButton(ns("previewScript"), "Preview Script", shiny::icon("play-circle"))),
     htmltools::tags$div(title = "Download the script with the actual settings.",
                         shiny::downloadButton(ns("downloadScript"), "Download Script")),
     shiny::p(""),
     shiny::p(htmltools::HTML("<b>Optional: Add local SUF URL</b>")),
-    # shinyFiles::shinyDirButton(ns("folder"), "Browse Computer", "Optional: Select a local NEPS data folder for the script", width = "35%"),
     shiny::textInput(
       inputId = ns("datapath"),
       "Datapath",
@@ -140,28 +133,6 @@ data_transformation_server <- function(id, settings_reactive) {
         shiny::req(input$cohort_data_trans)
         path <- system.file("extdata", input$cohort_data_trans, package = "NEPScribe")
       })
-
-      # # first, retrieve all windows drives with custom function
-      # volumes <- getWindowsDrives()
-      #
-      # # open input ui and feed the windows drives from vector volumes
-      # shinyFiles::shinyDirChoose(input, "folder", roots = volumes, session = session)
-      #
-      # # reactive that holds the datapath
-      # folder_path <- shiny::reactive({
-      #   shiny::req(input$folder)
-      #   shinyFiles::parseDirPath(volumes, input$folder)
-      # })
-      #
-      # # when dataset is being selected, update the textInput with the datapath
-      # observeEvent(input$folder, {
-      #   updateTextInput(
-      #     session = getDefaultReactiveDomain(),
-      #     "datapath",
-      #     value = folder_path()
-      #   )
-      # })
-      # check if there are NEPS SUF files in that folder
 
       valid_files <- reactive({
         path <- input$datapath %||% ""
@@ -237,9 +208,6 @@ data_transformation_server <- function(id, settings_reactive) {
         }
       })
 
-
-
-
       # Reactive label vector based on cohort
       labels_for_prio <- reactive({
         if(input$cohort_data_trans == "sc5_semantic_files") {
@@ -268,21 +236,6 @@ data_transformation_server <- function(id, settings_reactive) {
           options = sortable::sortable_options(swap = FALSE)
         )
       })
-      #
-      # # update prio rank list in order to differentiate different labels between sc3,sc4,sc6 and sc5
-      # observeEvent(input$cohort_data_trans, {
-      #   labels_to_use <- if (input$cohort_data_trans == "sc5_semantic_files") {
-      #     .labels_sc5
-      #   } else {
-      #     .labels_sc3_4_6
-      #   }
-      #
-      #   sortable::update_rank_list(
-      #     css_id = session$ns("prio_swap_list"),
-      #     labels = labels_to_use,
-      #     session = session
-      #   )
-      # })
 
       # List all .dta files in selected cohort
       filenames <- shiny::reactive({

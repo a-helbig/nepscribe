@@ -126,9 +126,14 @@ cards_data_trans <- function() {
         First, you will need to choose between two format options in the sidebar:
     </p>
     <ol style=font-size: 18px; color: #555;>
-        <li><b>Harmonized Spell Format</b>: This option prepares data based on the edited and cleaned biography file to represent life-course trajectories.</li>
+        <li><b>Harmonized Spell Format</b>: This option prepares data based on the edited and cleaned biography file to represent life-course trajectories. It is recommended to use this format. </li>
         <li><b>Original Subspell Format</b>: This option uses the originally recorded subspell episodes. Please note that data cleaning and smoothing operations performed in the biography are not accounted for in this preparation.</li>
     </ol>
+
+    <h5 style=font-size: 16px; color: #007BFF;>Starting cohort</h5>
+    <p style=font-size: 18px; color: #555;>
+        Now, you need to choose a starting cohort.
+    </p>
 
     <h5 style=font-size: 16px; color: #007BFF;>Script Type</h5>
     <p style=font-size: 18px; color: #555;>
@@ -145,9 +150,14 @@ cards_data_trans <- function() {
         On top of that,  you might add exemplary data preparation of variables from modules that cannot be directly merged with the person-year dataset.
     </p>
 
+        <h5 style=font-size: 16px; color: #007BFF;>Variable labels language</h5>
+    <p style=font-size: 18px; color: #555;>
+        You may also switch the language of the variable labels in the script.
+    </p>
+
     <h5 style=font-size: 16px; color: #007BFF;>Spell Prioritization</h5>
     <p style=font-size: 18px; color: #555;>
-        You can modify the spell prioritization order in the second tab located in the top right corner.
+        Furthermore, you can alter the spell prioritization order using the second tab in the top right corner.
     </p>
 
     <h5 style=font-size: 16px; color: #007BFF;>Additional Variables</h5>
@@ -157,7 +167,7 @@ cards_data_trans <- function() {
 
     <h5 style=font-size: 16px; color: #007BFF;>Preview and Download</h5>
     <p style=font-size: 18px; color: #555;>
-        Lastly, you have the option to preview or download the script incorporating all your adjusted settings.
+        Lastly, you can preview and download the script incorporating all your adjusted settings.
     </p>
 
         <h5 style=font-size: 16px; color: #007BFF;>Optional: Provide Datapath</h5>

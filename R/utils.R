@@ -1,16 +1,5 @@
 # Main Functions ---------------------------------------------------------
 
-#' # function that returns string about starting cohort in form: 'sc3':'sc6'
-#' @keywords internal
-#' @noRd
-getWindowsDrives <- function() {
-  drives <- sprintf("%s:/", LETTERS)
-  drives <- drives[file.exists(drives)]
-  names(drives) <- gsub(":/", "", drives)  # C, D, E
-  drives
-}
-
-
 #' inspects filenames in a dir and return sc cohort identifier
 #' @keywords internal
 #' @noRd
