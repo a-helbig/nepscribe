@@ -6,6 +6,8 @@
 #' @noRd
 app_ui <- function() {
 
+  app_version <- "v0.2.0"  # define your current app version here
+
   # Make package www resources accessible in Shiny
   shiny::addResourcePath(
     "www",
@@ -87,6 +89,7 @@ bslib::page_navbar(
        <div>
          <p style='font-size:22px; margin: 0;'><b>NEPScribe</b>
          <span style='font-size:14px; margin-left: 5px;'>Beta</span></p>
+         <small style='font-size:12px; color:gray;'>Version: ", app_version, "</small>
        </div>
      </div>
      <br>
@@ -149,7 +152,8 @@ bslib::page_navbar(
     # bslib::nav_item(htmltools::tags$a("SUF-Explorer Documentation", href = "", target="_blank")),
     # bslib::nav_item(htmltools::tags$a("References", href = "", target="_blank")),
     bslib::nav_item(htmltools::tags$a("Contact Authors", href = "https://www.wzb.eu/de/personen/alexander-helbig", target="_blank")),
-    bslib::nav_item(htmltools::tags$a("GitHub", href = "https://github.com/a-helbig/nepscribe", target="_blank"))
+    bslib::nav_item(htmltools::tags$a("GitHub", href = "https://github.com/a-helbig/nepscribe", target="_blank")),
+    bslib::nav_item(shiny::actionLink("show_changelog", "View Changelog"))
   )
 )
 }

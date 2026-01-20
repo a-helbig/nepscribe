@@ -67,7 +67,7 @@ dataset_ui <- function(id) {
       onLabel = "English",
       offLabel = "German",
       onStatus = "info",
-      offStatus = "warning",
+      offStatus = "success",
       inline = FALSE
     ),
     # Value boxes

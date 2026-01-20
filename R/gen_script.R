@@ -11,7 +11,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, suf_version_s
 
   prio_var <- as.numeric(stringr::str_extract_all(prio, "\\d{2}"))
 
-  if(dataformat== "R" & subformat == "Harmonized Spell Format (Recommended)"){
+  if(dataformat== "R" & subformat == "Harmonized Spell Format"){
     scripts <- c(
       paste0("# NEPScribe base script to transform NEPS ", sc, " SUF data into a person-year structured format."),
       "# It uses the harmonized spells (subspell == 0) from the biography data as a base for this transformation process.",
@@ -516,7 +516,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, suf_version_s
     )
 
   }
-  if(dataformat == "STATA" & subformat == "Harmonized Spell Format (Recommended)") {
+  if(dataformat == "STATA" & subformat == "Harmonized Spell Format") {
     scripts <- c(
       paste0("* Base Dofile to transform NEPS ", sc," SUF data into a person-year format"),
       "* It uses the harmonized spells (subspell==0) from the biography data as a base for this transformation process.",
