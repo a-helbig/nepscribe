@@ -69,13 +69,13 @@ bslib::page_navbar(
       settings_ui("settings"),
     ),
     shiny::conditionalPanel(
+      condition = "input.nav === 'Transform Data'",
+      data_transformation_sidebar_ui("data_transformation")
+    ),
+    shiny::conditionalPanel(
       condition = "input.nav === 'Explore Datasets  '",
       title = "Click here to select dataset",
       dataset_ui("explore_dataset")
-    ),
-    shiny::conditionalPanel(
-      condition = "input.nav === 'Transform Data'",
-      data_transformation_sidebar_ui("data_transformation")
     ),
     open = TRUE
   ),
@@ -98,23 +98,23 @@ bslib::page_navbar(
      <div style='max-width: 900px; padding: 15px; border: 1px solid #ccc; border-radius: 8px; background-color: #f9f9f9;'>
        <p style='font-size:18px; font-weight: bold; margin-bottom: 10px;'>Features</p>
        <ul style='margin-left: 20px; line-height: 1.6;'>
-         <li>
+                  <li>
+              <b>Dataset Transformation (SC3-SC6):</b> Create a dynamic Stata or R script for person-year data preparation. It transforms and merges multiple NEPS SUF data files into a person-year format, with one row for each wave of each respondent.
+              <br>
+              <br>
+              <ul>
+                <li>Choose between using the spellfiles or the biography file as the baseline for data preparation.</li>
+                <li>Additionally, select variables from most datasets and easily include them in the script.</li>
+                <li>Optionally, add sample code for complex data preparation tasks, such as further training, highest educational degree, or children.</li>
+                <li>Finally, obtain a script that handles most of the complex restructuring and merging of the data.</li>
+                <li>However, careful review of the script and additional data preparation remain necessary.</li>
+              </ul>
+            </li>
+            <br>
+            <li>
            <b>Dataset Exploration (SC1-SC8):</b> Browse available meta data in NEPS SUF data to get an overview of datasets and variables.
            Search for keywords in specific or all datasets. Compare items and variables across starting cohorts.
          </li>
-         <br>
-         <li>
-  <b>Dataset Transformation (SC3-SC6):</b> Create a dynamic Stata or R script for person-year data preparation. It transforms and merges multiple NEPS SUF data files into a person-year format, with one row for each wave of each respondent.
-  <br>
-  <br>
-  <ul>
-    <li>Choose between using the spellfiles or the biography file as the baseline for data preparation.</li>
-    <li>Additionally, select variables from most datasets and easily include them in the script.</li>
-    <li>Optionally, add sample code for complex data preparation tasks, such as further training, highest educational degree, or children.</li>
-    <li>Finally, obtain a script that handles most of the complex restructuring and merging of the data.</li>
-    <li>However, careful review of the script and additional data preparation remain necessary.</li>
-  </ul>
-</li>
        </ul>
      </div>
      <br>
@@ -138,9 +138,8 @@ bslib::page_navbar(
     ),
     icon = shiny::icon("door-open")
   ),
-  bslib::nav_panel(title = "Explore Datasets  ", dataset_exploration_card(), icon = shiny::icon("table")),
   bslib::nav_panel(title = "Transform Data", cards_data_trans(), icon = shiny::icon("wrench")),
-
+  bslib::nav_panel(title = "Explore Datasets  ", dataset_exploration_card(), icon = shiny::icon("table")),
   bslib::nav_spacer(),
 
   # --- Help menu ---
