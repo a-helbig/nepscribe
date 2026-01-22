@@ -161,7 +161,7 @@ dataset_explorer_server <- function(id, settings_reactive) {
 
       # --- Available metadata ---
       available_meta <- shiny::reactive({
-        req(input$dataset)
+        shiny::req(input$dataset)
 
         df <- datasets_available()
         selected_files <- df$full_path[df$file %in% input$dataset]
@@ -226,8 +226,8 @@ dataset_explorer_server <- function(id, settings_reactive) {
             return(tags$span("-"))
           }
 
-          # Limit to 3 items
-          shown <- head(datasets, 5)
+          # Limit to 5 items
+          shown <- utils::head(datasets, 5)
 
           tags$ul(
             style = "
