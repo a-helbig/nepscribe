@@ -74,7 +74,6 @@ bslib::page_navbar(
     ),
     shiny::conditionalPanel(
       condition = "input.nav === 'Explore Datasets  '",
-      title = "Click here to select dataset",
       dataset_ui("explore_dataset")
     ),
     open = TRUE

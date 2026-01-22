@@ -3,6 +3,76 @@
 #' This module provides UI and server logic for transforming NEPS SUF data
 #' into a person-year format, including variable selection, spell prioritization,
 #' script preview, and download.
+
+
+#' UI func for the sidebar
+#'
+#' @keywords internal
+#' @noRd
+data_transformation_sidebar_ui <- function(id) {
+  ns <- shiny::NS(id)
+  shiny::tagList(
+    htmltools::tags$div(title = "Harmonized Format: The data preparation of life-course trajectories is based on the edited and cleaned biography file.\n\nSubspell Format: The data preparation of life-course trajectories is based on the originally recorded subspell episodes.",
+                        shiny::selectizeInput(
+                          ns("sub_format_select"),
+                          htmltools::tags$b("Person-Year-Data: Format"),
+                          choices = c("Harmonized Spell Format", "Original Subspell Format"),
+                          multiple = TRUE,
+                          selected = "Harmonized Spell Format",
+                          options = list(maxItems = 1)
+                        )),
+    htmltools::tags$div(title = "Please select NEPS Starting Cohort.",
+                        shiny::radioButtons(
+      inputId = ns("cohort_data_trans"),
+      label = htmltools::tags$b("Starting Cohort"),
+      choices = c(
+        "Starting Cohort 6" = "sc6_semantic_files",
+        "Starting Cohort 5" = "sc5_semantic_files",
+        "Starting Cohort 4" = "sc4_semantic_files",
+        "Starting Cohort 3" = "sc3_semantic_files"
+      ),
+      selected = "sc6_semantic_files",
+      inline = TRUE
+    )),
+    htmltools::tags$div(title = "Currently supported script formats: R or STATA.",
+                        shiny::radioButtons(ns("stata_or_r"), htmltools::tags$b("Script file format"), c("STATA", "R"), selected = "STATA")),
+    htmltools::tags$div(title = "Set missing values: Specific NEPS missing codes will be set to Statas missing notation '.' or NA in R. \n\n Include Parallel Spells: Variables on type and timing of parallel spell will be generated in the script.",
+                        shiny::checkboxGroupInput(ns("settings"), htmltools::tags$b("Settings"), choices = c("Set Missing Values", "Include Parallel Spells"))),
+    shiny::p(""),
+    htmltools::tags$div(title = "Adds code for data preparation of modules, that cant simply be added via the 'Additional Variables' tab",
+    shiny::checkboxGroupInput(ns("add_modules"), htmltools::tags$b("Add exemplary data preparation"), choices = c("Further Training","Children", "Highest Education"))),
+    shiny::p(""),
+    htmltools::tags$div(title = "Switch language of variables in the data preparation script",
+    shiny::p(htmltools::HTML("<b>Variable Labels</b>")),
+                            shinyWidgets::switchInput(
+      ns("language"),
+      label = htmltools::tags$b("Labels"),
+      value = TRUE,
+      onLabel = "English",
+      offLabel = "German",
+      onStatus = "info",
+      offStatus = "success",
+      inline = FALSE
+    )),
+    htmltools::tags$div(title = "Show a preview of the script with the actual settings.",
+                        shiny::actionButton(ns("previewScript"), label = "Preview Script", shiny::icon("eye"), class = "btn btn-info")),
+    htmltools::tags$div(title = "Download the script with the actual settings.",
+                        shiny::downloadButton(ns("downloadScript"), label = "Download Script", class = "btn btn-info",)),
+    shiny::p(""),
+    htmltools::tags$div(title = "You can paste an URL to your local SUF files. This datapath will then be added at the beginning of the script.",
+    shiny::p(htmltools::HTML("<b>Optional: Add local SUF URL</b>")),
+                        shiny::textInput(
+      inputId = ns("datapath"),
+      "Datapath",
+      value = "",
+      placeholder = "Optional: Paste local URL",
+      width = "100%"
+    ))
+  )
+}
+
+
+#' UI func for the "add variables" feature
 #'
 #' @keywords internal
 #' @noRd
@@ -16,7 +86,7 @@ data_transformation_add_variables_ui <- function(id) {
     shiny::fluidRow(
       shiny::column(shiny::selectizeInput(ns("dataset"), label = NULL, choices = NULL, multiple = TRUE, options = list(maxItems = 1)), width = 2),
       shiny::column(
-        shiny::actionButton(ns("confirm_variables"), "Confirm Vars", style = "width: 145px; height: 40px"), width = 2)
+        shiny::actionButton(ns("confirm_variables"), "Confirm Vars", style = "width: 145px; height: 40px", class = "btn btn-info"), width = 2)
         ,
         htmltools::tags$b(shiny::div("2. Step: Select Variables"))
 
@@ -39,13 +109,14 @@ data_transformation_add_variables_ui <- function(id) {
           selected = NULL,
           options = list('actions-box' = TRUE)
         ),
-        shiny::actionButton(ns("reset_variables"), "Reset Vars", style = "width: 145px; height: 40px"), width = 2
+        shiny::actionButton(ns("reset_variables"), "Reset Vars", style = "width: 145px; height: 40px", class = "btn btn-info"), width = 2
       )
     )
   )
 }
 
-#' UI func for priorisation tab
+#' UI func for the prioritisation tab
+#'
 #' @keywords internal
 #' @noRd
 data_transformation_prio_ui <- function(id) {
@@ -56,68 +127,11 @@ data_transformation_prio_ui <- function(id) {
   )
 }
 
-#' UI func for sidebar
-#' @keywords internal
-#' @noRd
-data_transformation_sidebar_ui <- function(id) {
-  ns <- shiny::NS(id)
-  shiny::tagList(
-    htmltools::tags$div(title = "Harmonized Format: The data preparation of life-course trajectories is based on the edited and cleaned biography file.\n\nSubspell Format: The data preparation of life-course trajectories is based on the originally recorded subspell episodes.",
-                        shiny::selectizeInput(
-                          ns("sub_format_select"),
-                          htmltools::tags$b("Person-Year-Data: Format"),
-                          choices = c("Harmonized Spell Format", "Original Subspell Format"),
-                          multiple = TRUE,
-                          selected = "Harmonized Spell Format",
-                          options = list(maxItems = 1)
-                        )),
-    shiny::radioButtons(
-      inputId = ns("cohort_data_trans"),
-      label = htmltools::tags$b("Select Starting Cohort"),
-      choices = c(
-        "Starting Cohort 6" = "sc6_semantic_files",
-        "Starting Cohort 5" = "sc5_semantic_files",
-        "Starting Cohort 4" = "sc4_semantic_files",
-        "Starting Cohort 3" = "sc3_semantic_files"
-      ),
-      selected = "sc6_semantic_files",
-      inline = TRUE
-    ),
-    htmltools::tags$div(title = "Currently supported script formats: R or STATA.",
-                        shiny::radioButtons(ns("stata_or_r"), htmltools::tags$b("Script file format"), c("STATA", "R"), selected = "R")),
-    shiny::checkboxGroupInput(ns("settings"), htmltools::tags$b("Settings"), choices = c("Set Missing Values", "Include Parallel Spells")),
-    shiny::p(""),
-    shiny::checkboxGroupInput(ns("add_modules"), htmltools::tags$b("Add exemplary data preparation"), choices = c("Further Training","Children", "Highest Education")),
-    shiny::p(""),
-    shiny::p(htmltools::HTML("<b>Variable Labels</b>")),
-    shinyWidgets::switchInput(
-      ns("language"),
-      label = htmltools::tags$b("Labels"),
-      value = TRUE,
-      onLabel = "English",
-      offLabel = "German",
-      onStatus = "info",
-      offStatus = "success",
-      inline = FALSE
-    ),
-    htmltools::tags$div(title = "Show a preview of the script with the actual settings.",
-                        shiny::actionButton(ns("previewScript"), "Preview Script", shiny::icon("play-circle"))),
-    htmltools::tags$div(title = "Download the script with the actual settings.",
-                        shiny::downloadButton(ns("downloadScript"), "Download Script")),
-    shiny::p(""),
-    shiny::p(htmltools::HTML("<b>Optional: Add local SUF URL</b>")),
-    shiny::textInput(
-      inputId = ns("datapath"),
-      "Datapath",
-      value = "",
-      placeholder = "Optional: Paste local URL",
-      width = "100%"
-    )
-  )
-}
 
 
-#' func for server
+
+#' Main func for the data trans server
+#'
 #' @importFrom shiny reactive observe observeEvent req updateTextInput
 #' @keywords internal
 #' @noRd
@@ -177,6 +191,54 @@ data_transformation_server <- function(id, settings_reactive) {
         }
       })
 
+# Update exemplary data preparation further training depending on sc --------
+
+      shiny::observeEvent(input$cohort_data_trans, {
+
+        if(input$cohort_data_trans == "sc6_semantic_files")
+          choices <- c("Further Training","Children", "Highest Education")
+        else
+          choices <- c("Children", "Highest Education")
+
+        shiny::updateCheckboxGroupInput(session,
+                                        "add_modules",
+                                          choices = choices,
+                                          selected = input$dataset)
+      })
+
+
+# Spell Prioritisation  ----------------------------------------------------
+
+      # Reactive to differentiate labels between sc3,sc4,sc6 and sc5
+      labels_for_prio <- reactive({
+        if(input$cohort_data_trans == "sc5_semantic_files") {
+          .labels_sc5
+        } else {
+          .labels_sc3_4_6
+        }
+      })
+
+      # Render the sortable rank_list UI dynamically
+      output$prio_ui <- renderUI({
+        labels <- labels_for_prio()
+        sortable::rank_list(
+          input_id = session$ns("prio_swap_list"),
+          text = "Swap Items to change priorisation order.",
+          labels = labels,
+          options = sortable::sortable_options(swap = FALSE)
+        )
+      })
+
+
+# Add Variables ---------------------------------------------------
+
+      # List all .dta files in selected cohort
+      filenames <- shiny::reactive({
+        shiny::req(cohort_path())
+        files <- base::list.files(cohort_path(), pattern = "*.dta", full.names = TRUE)
+        substr(files, stringr::str_length(cohort_path()) + 2, 500)
+      })
+
       # Update dataset select input when cohort changes
       shiny::observeEvent(cohort_path(), {
         shiny::updateSelectInput(
@@ -197,51 +259,6 @@ data_transformation_server <- function(id, settings_reactive) {
           selected = NULL,
           choices = gen_comb_char(cohort_path(), input$dataset, input$language)
         )
-      })
-
-      # update prio rank list in order to differentiate different labels between sc3,sc4,sc6 and sc5
-      labels_for_prio <- reactive({
-        if(input$cohort_data_trans == "sc5_semantic_files") {
-          .labels_sc5
-        } else {
-          .labels_sc3_4_6
-        }
-      })
-
-      # Reactive label vector based on cohort
-      labels_for_prio <- reactive({
-        if(input$cohort_data_trans == "sc5_semantic_files") {
-          .labels_sc5
-        } else {
-          .labels_sc3_4_6
-        }
-      })
-
-      # Render the sortable rank_list UI dynamically
-      output$prio_ui <- renderUI({
-        labels <- labels_for_prio()
-        sortable::rank_list(
-          input_id = session$ns("prio_swap_list"),
-          text = "Swap Items to change priorisation order.",
-          labels = labels,
-          options = sortable::sortable_options(swap = FALSE)
-        )
-      })
-
-      output$prio_ui <- renderUI({
-        sortable::rank_list(
-          input_id = session$ns("prio_swap_list"),
-          text = "Swap Items to change priorisation order.",
-          labels = labels_for_prio(),
-          options = sortable::sortable_options(swap = FALSE)
-        )
-      })
-
-      # List all .dta files in selected cohort
-      filenames <- shiny::reactive({
-        shiny::req(cohort_path())
-        files <- base::list.files(cohort_path(), pattern = "*.dta", full.names = TRUE)
-        substr(files, stringr::str_length(cohort_path()) + 2, 500)
       })
 
       # Reactive list of dataset names for select input
@@ -289,6 +306,8 @@ data_transformation_server <- function(id, settings_reactive) {
         )
       })
 
+
+
       # Reset variables when either reset button is clicked or cohort changes
       shiny::observeEvent(
         list(input$reset_variables, input$cohort_data_trans),  # <-- list of triggers
@@ -296,6 +315,7 @@ data_transformation_server <- function(id, settings_reactive) {
           # Reset the form / inputs
           shinyjs::reset("dataset")
 
+          # update global_vars input
           shinyWidgets::updatePickerInput(
             session,
             "global_vars",
@@ -303,6 +323,7 @@ data_transformation_server <- function(id, settings_reactive) {
             selected = NULL
           )
 
+          # update multi_vars_input
           shinyWidgets::updateMultiInput(
             session,
             "multi_vars_input",
@@ -315,6 +336,9 @@ data_transformation_server <- function(id, settings_reactive) {
           all_lists(list())
         }
       )
+
+
+# Preview script  ---------------------------------------------------------
 
       shiny::observeEvent(input$previewScript, {
 
@@ -408,6 +432,9 @@ data_transformation_server <- function(id, settings_reactive) {
         )
 
       })
+
+
+# download script ---------------------------------------------------------
 
       # Download script
       output$downloadScript <- shiny::downloadHandler(
