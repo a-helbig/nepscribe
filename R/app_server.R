@@ -13,14 +13,12 @@ app_server <- function(input, output, session) {
   shiny::observeEvent(input$show_changelog, {
 
     # Determine path to changelog
-    changelog_file <- system.file("extdata", "changelog.md", package = "YourPackage")
+    changelog_file <- system.file("extdata", "changelog.md", package = "NEPScribe")
 
-    # Fallback if running in dev (file not yet installed)
     if (!file.exists(changelog_file)) {
-      changelog_file <- file.path("inst", "extdata", "changelog.md")
+      stop("Changelog file not found! Make sure it is included in inst/extdata.")
     }
 
-    # Show modal
     shiny::showModal(
       shiny::modalDialog(
         title = "Changelog",
@@ -30,7 +28,6 @@ app_server <- function(input, output, session) {
         shiny::includeMarkdown(changelog_file)
       )
     )
-
   })
 
   # --- Settings reactive for sidebar width, language, etc. ---
