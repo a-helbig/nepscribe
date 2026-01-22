@@ -25,3 +25,5 @@
     
 -   Further training exemplary code in scripts is now only available for SC6. 
     It may be released for other SCs in the future.
+    
+-   Added hover texts for all inputs in the UI.

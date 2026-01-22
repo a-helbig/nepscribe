@@ -1112,7 +1112,7 @@ gen_children_example_stata_sc3_4 <- function(english, sc, suf_version){
     "",
     "* now merge child prep to person-year-dataset",
     "merge 1:1 ID_t wave using `child_prep', nogen keep(master match)",
-    "",
+    ""
   )
 }
 
