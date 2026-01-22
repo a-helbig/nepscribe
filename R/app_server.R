@@ -10,17 +10,17 @@ app_server <- function(input, output, session) {
     shiny::stopApp()
   })
 
-  observeEvent(input$show_changelog, {
+  shiny::observeEvent(input$show_changelog, {
 
     # You can read the changelog markdown file here
     changelog_file <- system.file("CHANGELOG.md", package = "NEPScribe")
     # or locally: changelog_file <- "CHANGELOG.md"
 
-    showModal(modalDialog(
+    shiny::showModal(shiny::modalDialog(
       title = "Changelog",
       size = "l",  # large modal
       easyClose = TRUE,
-      footer = modalButton("Close"),
+      footer = shiny::modalButton("Close"),
       shiny::includeMarkdown(changelog_file)
     ))
   })

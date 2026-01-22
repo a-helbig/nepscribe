@@ -148,7 +148,7 @@ data_transformation_server <- function(id, settings_reactive) {
         path <- system.file("extdata", input$cohort_data_trans, package = "NEPScribe")
       })
 
-      valid_files <- reactive({
+      valid_files <- shiny::reactive({
         path <- input$datapath %||% ""
         if (path == "" || !dir.exists(path)) {
           return(character(0))
@@ -157,12 +157,12 @@ data_transformation_server <- function(id, settings_reactive) {
       })
 
       # Reactive flag is TRUE when valid files found, FALSE otherwise
-      valid_path <- reactive({
+      valid_path <- shiny::reactive({
         length(valid_files()) > 0
       })
 
       # Feedback based on valid_path
-      observe({
+      shiny::observe({
         path <- input$datapath %||% ""
         if (path == "") {
           shinyFeedback::hideFeedback("datapath")
@@ -183,7 +183,7 @@ data_transformation_server <- function(id, settings_reactive) {
       })
 
       # reactive datapath that will be added to the script
-      datapath_local <- reactive({
+      datapath_local <- shiny::reactive({
         if (isTRUE(valid_path())) {
           input$datapath
         } else {
@@ -210,7 +210,7 @@ data_transformation_server <- function(id, settings_reactive) {
 # Spell Prioritisation  ----------------------------------------------------
 
       # Reactive to differentiate labels between sc3,sc4,sc6 and sc5
-      labels_for_prio <- reactive({
+      labels_for_prio <- shiny::reactive({
         if(input$cohort_data_trans == "sc5_semantic_files") {
           .labels_sc5
         } else {
@@ -219,7 +219,7 @@ data_transformation_server <- function(id, settings_reactive) {
       })
 
       # Render the sortable rank_list UI dynamically
-      output$prio_ui <- renderUI({
+      output$prio_ui <- shiny::renderUI({
         labels <- labels_for_prio()
         sortable::rank_list(
           input_id = session$ns("prio_swap_list"),
@@ -406,8 +406,8 @@ data_transformation_server <- function(id, settings_reactive) {
             ),
 
             # Run highlight.js only for R (optional)
-            tags$script(
-              HTML(
+            htmltools::tags$script(
+              htmltools::HTML(
                 if (toupper(input$stata_or_r) == "R") {
                   "setTimeout(function() {
                 document.querySelectorAll('pre code').forEach(el => {
