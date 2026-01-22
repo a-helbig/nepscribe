@@ -19,7 +19,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, suf_version_s
       "# When using the “Additional variables” function in the app, this procedure is applied automatically. This ensures that time-varying spell information is preserved. However, it requires careful handling of different missing-value codes that may arise from filtering or data issues. Examples of handling missing values in spell variables are provided in the code",
       "",
       "# !!!ATTENTION!!!" ,
-      "# This is a basic data preparation script which serves the purpose of demonstrating how one might generate a dataset in person-year-format. Edits to the script that fit your research project needs are possibly necessary and recommended.",
+      "# This is a basic data preparation script that generates a dataset in a person-year-format by taking the NEPS SUF Biography file as a baseline. Edits to the script that fit your research project needs are possibly necessary and recommended.",
       "",
       "# Approach:",
       "",
@@ -237,7 +237,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, suf_version_s
       "bio <- bio |> ",
       "select(-starts_with('intd'), -worktime, -month, -splast)",
       "",
-      if(length(datalist)>0) generate_strings(datalist, suf_version, english),
+      if(length(datalist)>0) generate_strings(datalist, english, format = "harmonized"), # add variables feature
       if(length(datalist)>0) "",
       if(education) gen_qualification_prep_code_r(english, sc, suf_version, suf_version_short),
       if(education) "",
@@ -254,13 +254,18 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, suf_version_s
     )
   }
 
+  # NEPScribe R base script to transform NEPS SUF data from a spell format into a person-year structured format.
+  # Harmonized biography spells are ignored; original spell files are used instead.
+
   if(dataformat== "R" & subformat == "Original Subspell Format"){
-    scripts <- c("# R Script to generate a dataset in person year format. Harmonized spells from biography are being ignored - instead the original spell files are taken",
+    scripts <- c("# NEPScribe R base script to transform NEPS SUF data from a spell format into a person-year structured format.",
+    "# Harmonized biography spells are ignored; original spell files are used instead.",
       "",
-      "# This is a basic data preparation R script which only serves the purpose of demonstrating how one might generate a dataset in person-year-format by taking the subspells and not the harmonized spells from biography dataset as a baseline. Please carefully check each line and edit the script according to the needs of your research project",
+      "# This R script generates a dataset in a person-year-format by taking the subspells from the NEPS SUF spell datasets as a baseline for the data preparation.",
       "",
       "#  - It is recommended to run this script line by line and make sence of it. ",
-      "#  - List key variables over subspells, pay attention to missings in subspells",
+      "#  - Edit the script according to the needs of your research project ",
+      "#  - Print key variables over subspells, pay attention to missings in subspells",
       "#  - Eventually deal with missings by filling these with valid values from other subspells. Routines for that are partially provided in the script.",
       "",
       "rm(list = ls())",
@@ -406,9 +411,9 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, suf_version_s
       "# Drop harmonized spells",
       "bio <- bio  |>  filter(!spstat %in% c(30, 31))",
       "",
-      "# Note, that spell variables may not have consistent info over all subspells. So we might fill missings in these two recoded variable above with valid values from subspells before or after. Edit this if you prefer a different approach.",
+      "# Note that spell variables may contain inconsistent information across subspells. Therefore, we use tidyr::fill() to propagate non-missing values in the two recoded variables above, filling NAs with valid values from preceding or subsequent subspells within the same episode (splink variable). Edit this, if you prefer a different approach.",
       "",
-      "# First, set missings on variables used for prioritisation later. It is recommended to use the function nepsmiss from the nepstools ado to recode all missing values to specific missing codes. You may install it with: net install nepstools, from(http://nocrypt.neps-data.de/stata). If you want to exclude specific missings from being recoded you might use statas mvdecode function instead.",
+      "# First, set NA to missing codes on variables used for prioritisation later.",
       "bio <- bio |>",
       "replace_values_with_na(vars = c(all_of(fill_vars)))",
       "",
@@ -416,7 +421,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, suf_version_s
       "  dtplyr::lazy_dt() |> # use this function from dtplyr for faster processing",
       "  group_by(ID_t, splink)  |> ",
       "  arrange(ID_t, splink, subspell)  |> ",
-      "  tidyr::fill(all_of(fill_vars), .direction = 'down')  |> ",
+      "  tidyr::fill(any_of(fill_vars), .direction = 'downup')  |> ",
       "  ungroup() |>",
       "  as_tibble()",
       "",
@@ -522,7 +527,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, suf_version_s
       "bio <- bio  |> ",
       "  select(-starts_with('ts'), -prio, -spms, -starts_with('ts15201'))",
       "",
-      if(length(datalist)>0) generate_strings(datalist,suf_version, english),
+      if(length(datalist)>0) generate_strings(datalist, english, format = "subspell"), # add variables feature
       if(length(datalist)>0) "",
       if(education) gen_qualification_prep_code_r(english, sc, suf_version,suf_version_short),
       if(education) "",
@@ -544,8 +549,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, suf_version_s
       "* It uses the harmonized spells (subspell==0) from the biography data as a base for this transformation process.",
       "* If you want access to within spell variation across waves, spell related longitudinal information should be merged via 'ID_t', 'wave' and 'splink' after step 6, when the person-year structure has been generated and after dropping harmonized episodes in the spellfiles. When you use the 'Additional variables' function in the app, this process is used. It ensures that timevariant spell information is not being lost. However it requires a handling of various missing value codes due to filtering or data issues. Examples are provided when using the 'Additional variables' function",
       "",
-      "* !!!ATTENTION!!!" ,
-      "* This is a basic data preparation script which serves the purpose of demonstrating how one might generate a dataset in person-year-format by taking the harmonized spells from biography as a baseline and merge infos from other datasets. Edits to the script that fit to you research project are possibly necessary and recommended.",
+      "* This is a basic data preparation script, that generates a dataset in a person-year-format by taking the harmonized spells from biography as a baseline and merge infos from other datasets. Edits to the script that fit to you research project are possibly necessary and recommended.",
       "",
       "* Approach:",
       "",
@@ -742,7 +746,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, suf_version_s
       "",
       "merge 1:1 ID_t month using `intd', nogen keep(match)",
       "",
-      if(length(datalist)>0) generate_strings_stata(datalist, suf_version),
+      if(length(datalist)>0) generate_strings_stata(datalist, format = "harmonized"), # add variables feature
       if(length(datalist)>0) "",
       if(education) gen_qualification_prep_code_stata(english, sc,suf_version,suf_version_short),
       if(education) "",
@@ -771,17 +775,21 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, suf_version_s
     )
   }
 
+
   if(dataformat == "STATA" & subformat == "Original Subspell Format"){
     scripts <- c(
-      "* Dofile for generating dataset in person year format. Harmonized spells from biography are being ignored - instead the original spell files are taken",
+      "* NEPScribe base dofile for generating dataset in a person-year-format.",
+      "# Harmonized biography spells are ignored; original spell files are used instead.",
       "",
       "********************************************************************************",
-      "  *** !!!ATTENTION!!! ",
-      "  * This is a basic data preparation script which serves the purpose of demonstrating how one might generate a dataset in person-year-format by taking the subspells and not the harmonized spells from biography dataset as a baseline. Edits to the script that fit to you research project are possibly necessary and recommended.",
       "",
-      "* - It is recommended to run this script line by line and make sence of it. ",
-      "* - List key variables over subspells, pay attention to missings in subspells",
-      "* - Eventually deal with missings by filling these with valid values from other subspells. Routines are provided in the script.",
+      "  * This R script generates a dataset in a person-year-format by taking the subspells from the NEPS SUF spell datasets as a baseline for the data preparation.",
+      "",
+      "#  - It is recommended to run this script line by line and make sence of it. ",
+      "#  - Edit the script according to the needs of your research project ",
+      "#  - List key variables over subspells, pay attention to missings in subspells",
+      "#  - Eventually deal with missings by filling these with valid values from other subspells. Routines for that are partially provided in the script.",
+      "",
       "********************************************************************************",
       "",
       "clear",
@@ -857,13 +865,13 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, suf_version_s
       "* drop harmonized spells",
       "drop if inlist(spstat,30,31)",
       "",
-      "* Note, that spell variables may not have consistent info over all subspells. So we might fill missings in these two recoded variable above with valid values from subspells before or after. Edit this if you prefer a different approach.",
+      "* Note that spell variables may contain inconsistent information across subspells. Therefore, we fill missings in the two recoded variables above with valid values from preceding or subsequent subspells. Edit this, if you prefer a different approach.",
       "* First, set missings on variables used for prioritisation later. It is recommended to use the function nepsmiss from the nepstools ado to recode all missing values to specific missing codes. You may install it with: net install nepstools, from(http://nocrypt.neps-data.de/stata). If you want to exclude specific missings from being recoded you might use statas mvdecode function instead.",
       "nepsmiss _all",
       "",
       "foreach var of varlist $fill_vars  {",
       "  bys ID_t splink (subspell): replace `var' = `var'[_n-1] if missing(`var') & !missing(`var'[_n-1]) //fill missings from preceding rows",
-      " bys ID_t splink (subspell): replace `var' = `var'[_n+1] if missing(`var') & !missing(`var'[_n+1]) //fill missings from subsequent rows",
+      "  bys ID_t splink (subspell): replace `var' = `var'[_n+1] if missing(`var') & !missing(`var'[_n+1]) //fill missings from subsequent rows",
       "}",
       "",
       "* generate date variable from actual respondent information (_g date variables have problems)",
@@ -956,7 +964,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, suf_version_s
       if(sc %in% c("SC3","SC4"))"drop ts1111m ts1111y ts1112m ts1112y tf1112c ts1311m ts1311y ts1312m ts1312y ts1312c ts1511m ts1511y ts1512m ts1512y ts1512c ts2111m ts2111y ts2112m ts2112y ts2112c ts2311m ts2311y ts2312m ts2312y ts2312c ts2511m ts2511y ts2512m ts2512y ts2512c ts2711m ts2711y ts2712m ts2712y ts2712c ts2911m ts2911y ts2912m ts2912y ts2912c prio worktime",
       if(sc %in% c("SC5","SC6"))"drop ts1111m ts1111y ts1112m ts1112y ts1112c ts1311m ts1311y ts1312m ts1312y ts1312c ts1511m ts1511y ts1512m ts1512y ts1512c ts2111m ts2111y ts2112m ts2112y ts2112c ts2311m ts2311y ts2312m ts2312y ts2312c ts2511m ts2511y ts2512m ts2512y ts2512c ts2711m ts2711y ts2712m ts2712y ts2712c ts2911m ts2911y ts2912m ts2912y ts2912c prio worktime",
       "",
-      if(length(datalist)>0) generate_strings_stata(datalist, suf_version),
+      if(length(datalist)>0) generate_strings_stata(datalist, format = "subspell"), # add variables feature
       if(length(datalist)>0)"",
       if(education) gen_qualification_prep_code_stata(english, sc, suf_version,suf_version_short),
       if(education) "",
