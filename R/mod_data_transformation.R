@@ -386,10 +386,10 @@ data_transformation_server <- function(id, settings_reactive) {
             title = "Preview of script",
             size = "l",
 
-            tags$pre(
-              tags$code(
+            htmltools::tags$pre(
+              htmltools::tags$code(
                 class = lang_class,
-                HTML(script_text)  # <span> survives, \n works because of pre-wrap
+                htmltools::HTML(script_text)  # <span> survives, \n works because of pre-wrap
               ),
               style = "
           max-height: 600px;

@@ -98,21 +98,28 @@ bslib::page_navbar(
        <p style='font-size:18px; font-weight: bold; margin-bottom: 10px;'>Features</p>
        <ul style='margin-left: 20px; line-height: 1.6;'>
                   <li>
-              <b>Dataset Transformation (SC3-SC6):</b> Create a dynamic Stata or R script for person-year data preparation. It transforms and merges multiple NEPS SUF data files into a person-year format, with one row for each wave of each respondent.
+              <b>Dataset Transformation (SC3-SC6):</b> Dynamically create a Stata or R script for person-year data preparation. It merges multiple NEPS SUF data files and transforms into a person-year format, with one row for each wave of each respondent.
               <br>
               <br>
               <ul>
                 <li>Choose between using the spellfiles or the biography file as the baseline for data preparation.</li>
-                <li>Additionally, select variables from most datasets and easily include them in the script.</li>
-                <li>Optionally, add sample code for complex data preparation tasks, such as further training, highest educational degree, or children.</li>
-                <li>Finally, obtain a script that handles most of the complex restructuring and merging of the data.</li>
+                <li>Select variables from most datasets and easily include them in the script.</li>
+                <li>Add sample code for complex data preparation tasks, such as further training, highest educational degree, or children.</li>
+                <li>Obtain a script that handles most of the complex restructuring and merging of the data.</li>
                 <li>However, careful review of the script and additional data preparation remain necessary.</li>
               </ul>
             </li>
             <br>
             <li>
            <b>Dataset Exploration (SC1-SC8):</b> Browse available meta data in NEPS SUF data to get an overview of datasets and variables.
-           Search for keywords in specific or all datasets. Compare items and variables across starting cohorts.
+           </b>
+           <br>
+           <br>
+           <ul>
+           <li>Search for keywords in specific or all datasets.</li>
+           <li>Compare items and variables across starting cohorts.</li>
+           <li>Check what meta data is available for which variables.</li>
+          </ul>
          </li>
        </ul>
      </div>
