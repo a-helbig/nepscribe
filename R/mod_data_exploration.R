@@ -117,7 +117,7 @@ dataset_explorer_server <- function(id, settings_reactive) {
 
       # --- Reactive: gather datasets from selected cohorts ---
       datasets_available <- shiny::reactive({
-        req(input$cohort_data_explore)
+        shiny::req(input$cohort_data_explore)
         all_files <- purrr::map(input$cohort_data_explore, function(cohort) {
           cohort_dir <- system.file("extdata", cohort, package = "NEPScribe")
           files <- list.files(
@@ -217,27 +217,27 @@ dataset_explorer_server <- function(id, settings_reactive) {
 
       # first box: Datasets
         output$dataset_summary <- shiny::renderUI({
-          req(input$dataset)
+          shiny::req(input$dataset)
 
           datasets <- input$dataset
           n <- length(datasets)
 
           if (n == 0) {
-            return(tags$span("-"))
+            return(htmltools::tags$span("-"))
           }
 
           # Limit to 5 items
           shown <- utils::head(datasets, 5)
 
-          tags$ul(
+          htmltools::tags$ul(
             style = "
         margin: 0;
         padding-left: 1em;
         font-size: 0.85rem;
         line-height: 1.3;
       ",
-            lapply(shown, tags$li),
-            if (n > 5) tags$li("...")
+            lapply(shown, htmltools::tags$li),
+            if (n > 5) htmltools::tags$li("...")
           )
         })
 

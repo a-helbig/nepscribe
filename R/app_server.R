@@ -13,7 +13,7 @@ app_server <- function(input, output, session) {
   shiny::observeEvent(input$show_changelog, {
 
     # Determine path to changelog
-    changelog_file <- system.file("extdata", "changelog.md", package = "NEPScribe")
+    changelog_file <- system.file("extdata", "CHANGELOG.md", package = "NEPScribe")
 
     if (!file.exists(changelog_file)) {
       stop("Changelog file not found! Make sure it is included in inst/extdata.")
