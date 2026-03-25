@@ -36,8 +36,8 @@ data_transformation_sidebar_ui <- function(id) {
     )),
     htmltools::tags$div(title = "Currently supported script formats: R or STATA.",
                         shiny::radioButtons(ns("stata_or_r"), htmltools::tags$b("Script file format"), c("STATA", "R"), selected = "STATA")),
-    htmltools::tags$div(title = "Set missing values: Specific NEPS missing codes will be set to Statas missing notation '.' or NA in R. \n\n Include Parallel Spells: Variables on type and timing of parallel spell will be generated in the script.",
-                        shiny::checkboxGroupInput(ns("settings"), htmltools::tags$b("Settings"), choices = c("Set Missing Values", "Include Parallel Spells"))),
+    htmltools::tags$div(title = "Set missing values: Specific NEPS missing codes will be set to Statas missing notation '.' or NA in R. \n\n Include Parallel Spells: Variables on type and timing of parallel spell will be generated in the script. \n\n Employment experience: Include an indicator that (retrospectively) counts the months spent in any employment. \n\n Unemployment experience: Include an indicator that (retrospectively) counts the months spent in any employment.",
+                        shiny::checkboxGroupInput(ns("settings"), htmltools::tags$b("Settings"), choices = c("Set Missing Values", "Include Parallel Spells", "Retrospective work experience", "Retrospective unemployment experience"))),
     shiny::p(""),
     htmltools::tags$div(title = "Adds code for data preparation of modules, that cant simply be added via the 'Additional Variables' tab",
     shiny::checkboxGroupInput(ns("add_modules"), htmltools::tags$b("Add exemplary data preparation"), choices = c("Further Training","Children", "Highest Education"))),
@@ -358,12 +358,14 @@ data_transformation_server <- function(id, settings_reactive) {
           english = input$language,
           set_missings = "Set Missing Values" %in% input$settings,
           parallel = "Include Parallel Spells" %in% input$settings,
+          work_exp = "Retrospective work experience" %in% input$settings,
+          unemp_exp = "Retrospective unemployment experience" %in% input$settings,
           further_training = "Further Training" %in% input$add_modules,
           education = "Highest Education" %in% input$add_modules,
           children = "Children" %in% input$add_modules
         )
 
-        # Determine language class
+        # Determine language class for formatting
         lang_class <- if (toupper(input$stata_or_r) == "R") "language-r" else ""
 
         # Wrap comment lines in <span class='hljs-comment'>
@@ -386,40 +388,36 @@ data_transformation_server <- function(id, settings_reactive) {
             title = "Preview of script",
             size = "l",
 
-            htmltools::tags$pre(
-              htmltools::tags$code(
-                class = lang_class,
-                htmltools::HTML(script_text)  # <span> survives, \n works because of pre-wrap
-              ),
+            htmltools::tags$code(
+              class = lang_class,
               style = "
-          max-height: 600px;
-          overflow-y: auto;
-          overflow-x: auto;
-          white-space: pre-wrap;  /* preserves \n */
-          word-break: break-word;
-          background-color: #f7f7f7;
-          padding: 12px;
-          border-radius: 4px;
-          font-family: Consolas, 'Courier New', monospace;
-          font-size: 13px;
-        "
+        display: block;
+        max-height: 600px;
+        overflow-y: auto;
+        overflow-x: auto;
+        white-space: pre;
+        margin: 0;
+        background-color: #f7f7f7;
+        padding: 12px;
+        border-radius: 4px;
+        font-family: Consolas, 'Courier New', monospace;
+        font-size: 13px;
+      ",
+              htmltools::HTML(script_text)
             ),
 
-            # Run highlight.js only for R (optional)
             htmltools::tags$script(
               htmltools::HTML(
                 if (toupper(input$stata_or_r) == "R") {
                   "setTimeout(function() {
-                document.querySelectorAll('pre code').forEach(el => {
-                  // highlight all except .hljs-comment
-                  hljs.highlightElement(el);
-                  // force comment color again
-                  el.querySelectorAll('.hljs-comment').forEach(c => {
-                    c.style.color = '#2a9d8f';
-                    c.style.fontStyle = 'italic';
-                  });
-                });
-             }, 50);"
+             document.querySelectorAll('code.language-r').forEach(el => {
+               hljs.highlightElement(el);
+               el.querySelectorAll('.hljs-comment').forEach(c => {
+                 c.style.color = '#2a9d8f';
+                 c.style.fontStyle = 'italic';
+               });
+             });
+           }, 50);"
                 } else {
                   ""
                 }
@@ -430,7 +428,6 @@ data_transformation_server <- function(id, settings_reactive) {
             footer = shiny::modalButton("Close")
           )
         )
-
       })
 
 
@@ -458,6 +455,8 @@ data_transformation_server <- function(id, settings_reactive) {
             english = input$language,
             set_missings = "Set Missing Values" %in% input$settings,
             parallel = "Include Parallel Spells" %in% input$settings,
+            work_exp = "Retrospective work experience" %in% input$settings,
+            unemp_exp = "Retrospective unemployment experience" %in% input$settings,
             further_training = "Further Training" %in% input$add_modules,
             education = "Highest Education" %in% input$add_modules,
             children = "Children" %in% input$add_modules

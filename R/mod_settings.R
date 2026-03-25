@@ -5,7 +5,7 @@
 settings_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
-    shiny::sliderInput(ns("sidebarWidth"), htmltools::tags$b("Sidebar Width"), min = 150, max = 600, value = 320),
+    shiny::sliderInput(ns("sidebarWidth"), htmltools::tags$b("Sidebar Width"), min = 150, max = 600, value = 300),
   )
 }
 
