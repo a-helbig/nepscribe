@@ -86,6 +86,9 @@ cards_data_trans <- function() {
     <p style=font-size: 18px; color: #555;>
         You can customize numerous settings to align with the requirements of your research project and enrich the resulting dataset with variables from all datasets.
     </p>
+        <p style=font-size: 18px; color: #555;>
+        Please use the latest SUF version; otherwise, variable names or the data structure may differ from what the script assumes.
+    </p>
     <div style=background-color: #f9f9f9; border-left: 4px solid #007BFF; padding: 10px; margin: 20px 0;>
         <strong>Important Note:</strong><br>
         This feature applies only to Starting Cohorts 3 to 6. However, it has so far only been extensively tested for SC6. Scripts for SC3, SC4 and SC5 may need substantial adjustments.

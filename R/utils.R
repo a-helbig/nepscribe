@@ -106,9 +106,9 @@ extract_suf_version <- function(datapath, short = FALSE){
   num_string <- num_strings[1]
 
   if(base::length(distinct_strings)==0){
-    warning("Not possible to determine suf version - check provided directory and restart the app")
+    return()
   }
-  else if(base::length(distinct_strings) == 1){
+  if(base::length(distinct_strings) == 1){
     if(short){
       return(num_strings)
     } else {
