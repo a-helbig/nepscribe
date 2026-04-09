@@ -2,7 +2,7 @@
 #' helper function to put these further education prep lines into multiple script versions. R.
 #' @keywords internal
 #' @noRd
-further_training_gen_r <- function(english, suf_version_short) {
+further_training_gen_r <- function(english) {
   lines_of_code <-  c(
     "# Add indicators on Further Training Participation ---------------------------------------",
     "",
@@ -11,10 +11,12 @@ further_training_gen_r <- function(english, suf_version_short) {
     "",
     "# Training Courses: 1. Step: spFurtherEducation data set as a base ----------------------------------",
     "",
-    "# Read data FurtherEducation",
-    paste0("ft_data <- read_neps(paste0(datapath, 'SC6_FurtherEducation_D_', suf_version,'.dta'), english = ", english, ")"),
+    "# The generated file FurtherEducation integrates further training and course data from all datasets related to courses and training. It serves as a baseline for the data preparation of further training data.",
     "",
-    "# Set NA values for the date variables so that we can compute harmonized date vars and get rid of courses without valid dates",
+    "# Read data FurtherEducation",
+    paste0("ft_data <- read_neps(paste0(datapath, '/', 'SC6_FurtherEducation_D_', suf_version,'.dta'), english = ", english, ")"),
+    "",
+    "# Set the date variables to NA to compute harmonized date variables and remove courses without valid dates.",
     "ft_data <- ft_data  |> ",
     "  replace_values_with_na(vars = c('tx2821y', 'tx2821m', 'tx2822y', 'tx2822m'))",
     "",
@@ -24,7 +26,7 @@ further_training_gen_r <- function(english, suf_version_short) {
     "         end = ((ft_data$tx2822y - 1960) * 12) + ft_data$tx2822m - 1) |>  #startdate in months since jan. 1960",
     "  filter(!is.na(start) & !is.na(end))",
     "",
-    "# No course- and further training-module in wave 1 ('ALWA'), get rid of this wave",
+    "# Wave 1 (ALWA) contains no course or further-training module, so it should be excluded.",
     "ft_data <- ft_data |> ",
     "  filter(wave > 1)",
     "",
@@ -33,10 +35,8 @@ further_training_gen_r <- function(english, suf_version_short) {
     "# We need the interview date from this module to identify and delete retrospective courses, that were recorded more than 2 years ago.",
     "",
     "# Read data cohortprofile in order to get access to interview dates",
-    paste0("interview_data <- read_neps(paste0(datapath, 'SC6_CohortProfile_D_', suf_version,'.dta'), english = ", english, ") |> "),
-    if(suf_version_short %in% c(8:11))" select(ID_t, wave, inty, intm) |> rename(tx8600m = intm, tx8600y = inty) |> ",
-    if(suf_version_short %in% c(12:14))" select(ID_t, wave, tx8600y, tx8600m) |>",
-    if(suf_version_short > 14)"  select(ID_t, wave, tx8601y, tx8601m) |> rename(tx8600m = tx8601m, tx8600y = tx8601y) |> ",
+    paste0("interview_data <- read_neps(paste0(datapath, '/', 'SC6_CohortProfile_D_', suf_version,'.dta'), english = ", english, ") |> "),
+    "  select(ID_t, wave, tx8601y, tx8601m) |> rename(tx8600m = tx8601m, tx8600y = tx8601y) |> ",
     "    filter(wave > 1)",
     "",
     "# Take 'FurtherEducation' dataset as a base for the merging with cohort profile",
@@ -45,7 +45,7 @@ further_training_gen_r <- function(english, suf_version_short) {
     "               interview_data,",
     "               by = c('ID_t', 'wave'))",
     "",
-    "# Generate interview date",
+    "# Generate interview date variable",
     "ft_data <- ft_data |>",
     "mutate(interv = ((tx8600y - 1960) * 12) + tx8600m - 1,",
     "timegap = interv-end)  |>",
@@ -57,10 +57,10 @@ further_training_gen_r <- function(english, suf_version_short) {
     "# Some courses ended a long time before the interview.",
     "tabyl(ft_data$timegap)",
     "",
-    "# 1. respondents who didnt participate in the survey in one wave -> reported episodes since their last interview which might be up to 2-3 years ago",
-    "# 2. in wave 2 and 4 all episodes of vocational training were registered retrospectively -> reported vocational training episodes that were classified as courses (from spVocTrain) possibly ended years before the interview",
+    "# 1. Respondents who did not participate in a given wave may have returned in a later wave and then reported episodes since their last interview, which may have occurred in the penultimate wave, up to 2–3 years earlier.",
+    "# 2. In waves 2 and 4, vocational training episodes were collected retrospectively. As a result, episodes reported as courses in spVocTrain may have ended several years before the interview.",
     "",
-    "# get rid of courses that ended more than two years before interview",
+    "# Get rid of courses that ended more than two years before interview",
     "ft_data <- ft_data |> filter((interv-end < 25) & (interv-end >= 0))",
     "",
     "# Keep it simple",
@@ -72,8 +72,7 @@ further_training_gen_r <- function(english, suf_version_short) {
     "# Training Courses: 3. Step: join furtherEdu2 --------------------------------------------------------",
     "",
     "# Load furtheredu2 to get access to variable t279040 on occupation/private training for waves 2-10 from detail loop",
-    "",
-    paste0("further_edu2 <- read_neps(paste0(datapath, 'SC6_spFurtherEdu2_D_', suf_version,'.dta'), col_select = c('ID_t', 'course', 't279040'), english = ", english, ")"),
+    paste0("further_edu2 <- read_neps(paste0(datapath, '/', 'SC6_spFurtherEdu2_D_', suf_version,'.dta'), col_select = c('ID_t', 'course', 't279040'), english = ", english, ")"),
     "",
     "# Merge it with ft_data",
     "ft_data <-",
@@ -85,12 +84,14 @@ further_training_gen_r <- function(english, suf_version_short) {
     "",
     "# Training Courses: 4. Step: join furtherEdu1 --------------------------------------------------------",
     "",
-    "# Load furtheredu1 to get access to variable t279040 on occupation/private training for waves 10+ from further training module",
-    paste0("further_edu1 <- read_neps(paste0(datapath, 'SC6_spFurtherEdu1_D_', suf_version,'.dta'), col_select = c('ID_t', 'wave', 'course', 't279040'), english = ", english, ")"),
+    "# Load furtheredu1 to get access to variable t279040 on occupation/private training for waves 11+ from further training module",
+    paste0("further_edu1 <- read_neps(paste0(datapath, '/', 'SC6_spFurtherEdu1_D_', suf_version,'.dta'), col_select = c('ID_t', 'wave', 'course', 't279040'), english = ", english, ")"),
     "",
+    "# Keep only waves 11+",
     "further_edu1 <- further_edu1 |> ",
-    "  filter(wave > 10)  # keep only waves above 10",
+    "  filter(wave > 10)",
     "",
+    "# Left_join this data to ft_data",
     "ft_data <-  left_join(ft_data, further_edu1, by = c('ID_t', 'wave', 'course'))",
     "ft_data <- replace_values_with_na(ft_data, vars = c('t279040.x', 't279040.y'))",
     "",
@@ -103,8 +104,8 @@ further_training_gen_r <- function(english, suf_version_short) {
     "",
     "# Training Courses: 5. Step: join spcourses ----------------------------------------------------------",
     "",
-    "# Load course data to get access to variable t279040 on occupation/private training for waves 10+ from course module",
-    paste0("spcourses <- read_neps(paste0(datapath, 'SC6_spCourses_D_', suf_version,'.dta'), col_select = c('ID_t','wave', paste0('t279030_w',1:5), paste0('course_w',1:5), 'sptype'), english = ", english, ")"),
+    "# Load course data to get access to variable t279040 on occupation/private training for waves 11+ from course module",
+    paste0("spcourses <- read_neps(paste0(datapath, '/', 'SC6_spCourses_D_', suf_version,'.dta'), col_select = c('ID_t','wave', paste0('t279030_w',1:5), paste0('course_w',1:5), 'sptype'), english = ", english, ")"),
     "",
     "# Generate counter per ID and wave",
     "spcourses <- spcourses  |> ",
@@ -112,7 +113,7 @@ further_training_gen_r <- function(english, suf_version_short) {
     "  mutate(n = row_number()) |> ",
     "  ungroup()",
     "",
-    "# Reshape to long format and then to wide in order to have t279030 and course number in wide format again",
+    "# Reshape to long format and then to wide format in order to have variable t279030 and course number in wide format again",
     "spcourses <- spcourses |> ",
     "  pivot_longer(",
     "    cols = c(starts_with('t27'), starts_with('course_w')),",
@@ -124,11 +125,11 @@ further_training_gen_r <- function(english, suf_version_short) {
     "    values_from = 'value' ",
     "  )",
     "",
-    "# Course is missing when no (further) course reported - remove!",
+    "# Course is missing (NA) when no (further) course reported - remove!",
     "spcourses <- spcourses  |> ",
     "  filter(!is.na(course))",
     "",
-    "# Renaming to the names of the variables in furtherEdu1",
+    "# Rename the variable to match the variable name in furtherEdu1",
     "spcourses <- rename(",
     "  spcourses,",
     "  t279040 = t279030",
@@ -142,7 +143,7 @@ further_training_gen_r <- function(english, suf_version_short) {
     "                       spcourses,",
     "                       by = c('ID_t', 'wave', 'course'))",
     "",
-    "# Unite the 2 variable versions of t279040 again and deselect .x .y versions.",
+    "# Unite the 2 variable versions of t279040 and drop .x .y variable versions.",
     "ft_data <- ft_data |> ",
     "  mutate(t279040 = dplyr::coalesce(t279040.x,t279040.y)) |> ",
     "  select(-c(t279040.x,t279040.y))",
@@ -166,7 +167,7 @@ further_training_gen_r <- function(english, suf_version_short) {
     "",
     "# Training Courses: 6. Step: edit jobrelated_course variable according to context --------",
     "",
-    "# If info on job related is NA, we check if its a course form voctrain module or a course from course module reported in the context of voctrain, employment or unemployment",
+    "# If job-related information is NA, check whether the course was reported in the vocational training module or in the course module within the context of vocational training, employment, or unemployment.",
     "ft_data <- ft_data |>",
     "mutate(",
     "jobrelated_course = case_when(",
@@ -190,7 +191,7 @@ further_training_gen_r <- function(english, suf_version_short) {
     "ft_data <- ft_data |> ",
     "  replace_values_with_na(vars = 'tx28203')",
     "",
-    "# Generate dummy variable for participation in at least 1 course per wave",
+    "# Generate three main training indicators: 1. Dummy variable for participation in at least 1 course per wave, 2. Count of courses per wave and 3. Total hours spent in training per wave.",
     "ft_data <- ft_data |> ",
     "  group_by(ID_t,wave) |> ",
     "  mutate(jobrelated_course = max(jobrelated_course),",
@@ -206,29 +207,25 @@ further_training_gen_r <- function(english, suf_version_short) {
     "",
     "# Make labels for generated variables: ",
     "",
-    if(english)"# Change class of var to labelled dbl",
+    if(english)"# Change class of variable to labelled dbl",
     if(english)"ft_data$jobrelated_course <- haven::labelled(ft_data$jobrelated_course, labels = c(No = 0, Yes = 1), label = 'Job-related training course'
 )",
     if(english)"",
-    if(english)"# Assign varlabel to variable",
+    if(english)"# Assign varlabels to variables",
     if(english)"attr(ft_data$jobrelated_course_n, 'label') <- 'Number of job-related training courses'",
-    if(english)"",
-    if(english)"# Assign varlabel to variable",
     if(english)"attr(ft_data$jobrelated_course_hours, 'label') <- 'Hours spent in job-related training courses'",
     if(!english)"# Change class of var to labelled dbl",
     if(!english)"ft_data$jobrelated_course <- haven::labelled(ft_data$jobrelated_course, labels = c(Nein = 0, Ja = 1), label = 'Berufsbezogene Weiterbildung'
 )",
     if(!english)"",
-    if(!english)"# Assign varlabel to variable",
+    if(!english)"# Assign varlabels to variables",
     if(!english)"attr(ft_data$jobrelated_course_n, 'label') <- 'Anzahl berufsbezogener Weiterbildungen'",
-    if(!english)"",
-    if(!english)"# Assign varlabel to variable",
     if(!english)"attr(ft_data$jobrelated_course_hours, 'label') <- 'Berufsbezogene Weiterbildung: Teilnahme in Stunden'",
     "",
     "# Join training data to bio",
     "bio <- left_join(bio,ft_data, by=c('ID_t','wave'))",
     "",
-    "# Set NA values in the further training indicators to 0, these are essential waves, where no course was reported, while 0 in further training preparation actually meant that there was a course but no jobrelated course",
+    "# Set the NA values in the further training indicators to 0. These are essential waves where no course was reported. In further training preparation, 0 actually meant that a course was reported, but it was not job-related.",
     "bio <- bio |> ",
     "mutate(across(c('jobrelated_course', 'jobrelated_course_n', 'jobrelated_course_hours'), ~ tidyr::replace_na(., 0)))",
     "",
@@ -247,7 +244,7 @@ further_training_gen_r <- function(english, suf_version_short) {
 #' helper function to put these further education prep lines into multiple script versions. Stata.
 #' @keywords internal
 #' @noRd
-further_training_gen_stata <- function(english, suf_version_short) {
+further_training_gen_stata <- function(english) {
   lines_of_code <-  c(
     "********************************************************************************",
     "* Add indicators on further training participation",
@@ -262,10 +259,12 @@ further_training_gen_stata <- function(english, suf_version_short) {
     "tempfile person_year_data",
     "save `person_year_data'",
     "",
-    "// using the FurtherEducation-Data set as basis",
+    "* The generated file FurtherEducation integrates further training and course data from all datasets related to courses and training. It serves as a baseline for the data preparation of further training data.",
+    "",
+    "* Load FurtherEducation",
     "use \"$DATA\\SC6_FurtherEducation_D_$suf.dta\", clear",
     "",
-    "* Set missings",
+    "* Set the date variables to missing to compute harmonized date variables and remove courses without valid dates.",
     "foreach var of varlist tx2821y tx2821m tx2822y tx2822m {",
     "\treplace `var' = missing() if `var' == -55",
     "}",
@@ -278,7 +277,7 @@ further_training_gen_stata <- function(english, suf_version_short) {
     "order start ende, after (tx28200)\t\t",
     "keep if start < . & ende < .\t\t",
     "",
-    "// no course- and further training-module in wave 1 ('ALWA'), get rid of this wave",
+    "* Wave 1 (ALWA) contains no course or further-training module, so it should be excluded.",
     "drop if wave == 1",
     "",
     "********************************************************************************",
@@ -288,16 +287,14 @@ further_training_gen_stata <- function(english, suf_version_short) {
     "* We need the interview date from this module to identify and delete retrospective courses, that were recorded more than 2 years ago.",
     "",
     "preserve",
+    "* Load cohortprofile in order to get access to interview dates"
     "use \"$DATA\\SC6_CohortProfile_D_$suf.dta\", clear",
-    if(suf_version_short %in% c(8:11))"keep ID_t wave inty intm",
-    if(suf_version_short %in% c(8:11))"rename inty tx8600y",
-    if(suf_version_short %in% c(8:11))"rename intm tx8600m",
-    if(suf_version_short %in% c(12:14))"keep ID_t wave tx8600y tx8600m",
-    if(suf_version_short > 14)"keep ID_t wave tx8601y tx8601m",
-    if(suf_version_short > 14)"rename tx8601y tx8600y",
-    if(suf_version_short > 14)"rename tx8601m tx8600m",
+    "keep ID_t wave tx8601y tx8601m",
+    "rename tx8601y tx8600y",
+    "rename tx8601m tx8600m",
     "drop if wave == 1 ",
     "",
+    "* Generate interview date variable"
     "gen interv=ym(tx8600y, tx8600m) // interview date in each wave",
     "format interv %tm",
     "",
@@ -311,8 +308,8 @@ further_training_gen_stata <- function(english, suf_version_short) {
     "********************************************************************************",
     "* Some courses ended a long time before the interview. Why?",
     "",
-    "* 1. Respondents who didnt participate in the survey in one wave -> reported episodes since their last interview which might be up to 2-3 years ago",
-    "* 2. In wave 2 and 4 all episodes of vocational training were registered retrospectively -> reported vocational training episodes that were classified as courses (from spVocTrain) possibly ended years before the interview",
+    "* 1. Respondents who did not participate in a given wave may have returned in a later wave and then reported episodes since their last interview, which may have occurred in the penultimate wave, up to 2–3 years earlier.",
+    "* 2. In waves 2 and 4, vocational training episodes were collected retrospectively. As a result, episodes reported as courses in spVocTrain may have ended several years before the interview.",
     "",
     "* Get rid of courses that ended more than two years before interview",
     "keep if (interv-ende < 25) & (interv-ende >=0)",
@@ -323,17 +320,17 @@ further_training_gen_stata <- function(english, suf_version_short) {
     "* Now we need to gather information on occupational vs private courses that are spread over different datasets depending on the wave where data was collected",
     "",
     "********************************************************************************",
-    "* Training Courses: 3. Step: join furtherEdu2",
+    "* Training Courses: 3. Step: Merge furtherEdu2",
     "********************************************************************************",
     "",
-    "* Professional/private reasons, attendance during working hours, course costs Employer",
+    "* Load furtheredu2 to get access to variable t279040 on occupation/private training for waves 2-10 from detail loop."
     "merge m:1 ID_t course using \"$DATA/SC6_spFurtherEdu2_D_$suf.dta\", keepusing(ID_t course t279040) // merge 1:1 is not possible because of missing values in course-variable for most courses from vocTrain",
     "",
     "drop if _merge==2 // 14 infos from using can't be linked (these are courses with missing start or endddates, which we dropped at the beginning)",
     "drop _merge\t\t\t\t",
     "",
     "********************************************************************************",
-    "* Training Courses: 4. Step: join furtherEdu1 ",
+    "* Training Courses: 4. Step: Merge furtherEdu1 ",
     "********************************************************************************",
     "",
     "* Set -54 to missing here in order to be able to update it with the update option in merging below",
@@ -341,10 +338,11 @@ further_training_gen_stata <- function(english, suf_version_short) {
     "",
     "preserve ",
     "",
-    "* Load furtheredu1 to get access to variable t279040 on occupation/private training for waves 10+ from further training module",
+    "* Load furtheredu1 to get access to variable t279040 on occupation/private training for waves 11+ from further training module",
     "use \"$DATA/SC6_spFurtherEdu1_D_$suf.dta\", clear",
     "",
-    "keep if wave > 10 // information only to be added for courses from wave 11 on",
+    "* Keep only waves 11+",
+    "keep if wave > 10",
     "",
     "tempfile fe1",
     "save `fe1'",
@@ -360,13 +358,15 @@ further_training_gen_stata <- function(english, suf_version_short) {
     "* Training Courses: 5. Step: join spcourses",
     "********************************************************************************",
     "",
-    "* Load course data to get access to variable t279040 on occupation/private training for waves 10+ from course module",
+    "* Load course data to get access to variable t279040 on occupation/private training for waves 11+ from course module",
     "preserve ",
     "",
     "use \"$DATA/SC6_spCourses_D_$suf.dta\", clear",
     "",
     "bys ID_t wave: gen n =_n",
     "keep ID_t wave t279030_w* course_w* n sptype",
+    "",
+    "* Reshape to long format",
     "reshape long t279030_w course_w, i(ID_t wave n) j(course_nr)",
     "drop if course_w==. // course_w missing when no (further) course reported",
     "",
@@ -394,8 +394,6 @@ further_training_gen_stata <- function(english, suf_version_short) {
     "",
     "tab wave t279040",
     "",
-    "* Variable harmonization required, because we merged variables that were existent in both datasets but were not specified in the 'by' argument. Get rid of of t279040.x and t279040.y vars ",
-    "",
     "assert _mergeco!=2\t",
     "drop _mergeco",
     "",
@@ -421,7 +419,7 @@ further_training_gen_stata <- function(english, suf_version_short) {
     "* Before wave 11 data on whether course was for private or job-related reasons only collected for (up to) 2 courses per person (spFurtherEdu2) (see survey paper for details)",
     "* -> Option to distinguish between private and professional Further Training for missing values based on corresponding life episode of reported course",
     "",
-    "* if info on job related is missing, we check if its a course form voctrain module or a course from course module reported in the context of voctrain, employment or unemployment",
+    "* If job-related information is missing, check whether the course was reported in the vocational training module or in the course module within the context of vocational training, employment, or unemployment.",
     "",
     "* Replace variable with addition of job-related courses depending on context",
     "replace jobrelated_course=1 if tx28200==24 & jobrelated_course==.  // courses stated as vocational training",
@@ -503,7 +501,7 @@ gen_parallel_spells_stata <- function(format="harmonized") {
   lines_of_code <- c(
     "",
     "*******************************************************************************",
-    "* Parallel  Spells Data Prep",
+    "* Parallel spells data preparation",
     "*******************************************************************************",
     "",
     "* Because multiple spells can occur at the same time, several columns (variables) are generated for parallel spells for each variable.",
@@ -512,7 +510,7 @@ gen_parallel_spells_stata <- function(format="harmonized") {
     if(format=="harmonized") "by ID_t month: gen n = _n",
     if(format=="subspell") "by ID_t wave: gen n = _n",
     "",
-    "* We set maximum to 7 parallel spells because there are only a handful of ids that have up to 15, which is odd anyway and the computation would take way more time for these few cases. Edit this if neccessary.",
+    "* We set the maximum to 7 parallel spells, because there are only a handful of ids that have up to 15, which is odd anyway and the computation would take way more time for these few cases. Edit this if neccessary.",
     "drop if n > 7",
     "",
     "* Now we summarize n and then create a local which we use in the for loop to generate the parallel sidespells",
@@ -526,7 +524,7 @@ gen_parallel_spells_stata <- function(format="harmonized") {
     "  gen sidespell`i'_start = .",
     "  gen sidespell`i'_end = .",
     "",
-    "  * Group by ID_t and month and put sptype, splink, startdate and enddatefrom next month in variable",
+    "* Group by ID_t and month and put sptype, splink, startdate and enddatefrom next month in variable",
     if(format=="harmonized") "  bys ID_t month (n): replace sidespell`i'_sptype = sptype[_n+`i'] if n == 1",
     if(format=="harmonized") "  bys ID_t month (n): replace sidespell`i'_splink = splink[_n+`i'] if n == 1",
     if(format=="harmonized") "  bys ID_t month (n): replace sidespell`i'_start = start[_n+`i'] if n == 1",
@@ -596,7 +594,7 @@ gen_parallel_spells_r <- function(format="harmonized") {
 #' function to generate educational qualification preparation. Stata.
 #' @keywords internal
 #' @noRd
-gen_qualification_prep_code_stata <- function(english, sc, suf_version, suf_version_short) {
+gen_qualification_prep_code_stata <- function(english, sc) {
   # Create a character vector to hold the lines of code
   lines_of_code <- c(
     "*******************************************************************************",
@@ -657,31 +655,32 @@ gen_qualification_prep_code_stata <- function(english, sc, suf_version, suf_vers
     "* Count the number of qualification records",
     "local count = 0",
     "foreach var of varlist casmin* {",
-      "local ++count",
+    "local ++count",
     "}",
     "",
     "* Loop over survey waves",
-    "forval x = 1/$suf_short {",
-      "",
-      "* Initialize wave-specific CASMIN and ISCED variables",
-      "gen wave_casmin_`x' = .",
+    "local sufnum = real(substr(\"$suf\", 1, strpos(\"$suf\", \"-\") - 1))",
+    "forval x = 1/`sufnum' {",
+    "",
+    "* Initialize wave-specific CASMIN and ISCED variables",
+    "gen wave_casmin_`x' = .",
     "gen wave_isced_`x'  = .",
-      "",
-      "* Create temporary variables for qualifications attained by the interview date",
-      "foreach y of numlist 1/`count' {",
-        "gen casmin_elig_`y' = cond(edud`y' <= intdate`x' & !missing(edud`y') & !missing(intdate`x'), casmin`y', .)",
-        "gen isced_elig_`y'  = cond(edud`y' <= intdate`x' & !missing(edud`y') & !missing(intdate`x'), isced`y', .)",
+    "",
+    "* Create temporary variables for qualifications attained by the interview date",
+    "foreach y of numlist 1/`count' {",
+    "gen casmin_elig_`y' = cond(edud`y' <= intdate`x' & !missing(edud`y') & !missing(intdate`x'), casmin`y', .)",
+    "gen isced_elig_`y'  = cond(edud`y' <= intdate`x' & !missing(edud`y') & !missing(intdate`x'), isced`y', .)",
     "}",
     "",
     "* Take the highest eligible qualification for each person",
     "egen wave_casmin_`x'_max = rowmax(casmin_elig_*)",
-     "egen wave_isced_`x'_max  = rowmax(isced_elig_*)",
+    "egen wave_isced_`x'_max  = rowmax(isced_elig_*)",
     "",
     "replace wave_casmin_`x' = wave_casmin_`x'_max",
     "replace wave_isced_`x'  = wave_isced_`x'_max",
     "",
     "drop casmin_elig_* isced_elig_* wave_casmin_`x'_max wave_isced_`x'_max",
-"}",
+    "}",
     "",
     "drop intd* casmin* edud* isced*",
     "",
@@ -747,7 +746,7 @@ gen_qualification_prep_code_stata <- function(english, sc, suf_version, suf_vers
 #' function to generate educational qualification preparation. R
 #' @keywords internal
 #' @noRd
-gen_qualification_prep_code_r <- function(english, SC, suf_version,suf_version_short) {
+gen_qualification_prep_code_r <- function(english, SC) {
   lines_of_code <- c(
     "# Educational Qualification ----------------------------------------------------------",
     "",
@@ -812,7 +811,7 @@ gen_qualification_prep_code_r <- function(english, SC, suf_version,suf_version_s
     "suffixes <- as.integer(str_extract(intdate_cols, \"\\\\d+$\"))",
     "",
     "# Get minimum suffix",
-      "min_suffix <- min(suffixes, na.rm = TRUE)",
+    "min_suffix <- min(suffixes, na.rm = TRUE)",
     "",
     "# Now, we generate wave-specific indicators for the highest CASMIN and ISCED",
     "# qualification attained up to each interview wave. To do this efficiently,",
@@ -832,38 +831,38 @@ gen_qualification_prep_code_r <- function(english, SC, suf_version,suf_version_s
     "edud_mat   <- as.matrix(edu_data[, edud_cols])",
     "",
     "# Create wave-specific CASMIN and ISCED variables by looping over all waves",
-    "for (x in min_suffix: suf_version_short) {",
-      "",
-      "# Wave-specific interview date column",
-      "intdate_col <- paste0(\"intdate\", x)",
-      "",
-      "# Wave-specific output variables",
-      "wave_col_casmin <- paste0(\"casmin_wave_\", x)",
-      "wave_col_isced  <- paste0(\"isced_wave_\", x)",
-      "",
-      "# Interview dates for all persons in this wave",
-      "intdate <- edu_data[[intdate_col]]",
-      "",
-      "# Main step: Keep only qualifications obtained on or before the interview date by comparing them",
-      "elig <- !is.na(edud_mat) & !is.na(intdate) & sweep(edud_mat, 1, intdate, `<=`) # sweep: rowwise comparison of qualification dates with interview dates on matrices",
-      "",
-      "# Replace ineligible qualifications with NA.",
-      "casmin_tmp <- casmin_mat",
-      "casmin_tmp[!elig] <- NA",
-      "isced_tmp <- isced_mat",
-      "isced_tmp[!elig] <- NA",
-      "",
-      "# Take the highest eligible CASMIN level for each person by computing the",
-      "# row-wise maximum of the temporary CASMIN matrix.",
-      "edu_data[[wave_col_casmin]] <- apply(casmin_tmp, 1, function(z) {",
-        "if (all(is.na(z))) NA_integer_ else max(z, na.rm = TRUE)",
-      "})",
-      "",
-      "# Take the highest eligible ISCED level for each person by computing the",
+    "for (x in min_suffix: as.integer(strsplit(suf_version, \"-\", fixed = TRUE)[[1]][1])) {",
+    "",
+    "# Wave-specific interview date column",
+    "intdate_col <- paste0(\"intdate\", x)",
+    "",
+    "# Wave-specific output variables",
+    "wave_col_casmin <- paste0(\"casmin_wave_\", x)",
+    "wave_col_isced  <- paste0(\"isced_wave_\", x)",
+    "",
+    "# Interview dates for all persons in this wave",
+    "intdate <- edu_data[[intdate_col]]",
+    "",
+    "# Main step: Keep only qualifications obtained on or before the interview date by comparing them",
+    "elig <- !is.na(edud_mat) & !is.na(intdate) & sweep(edud_mat, 1, intdate, `<=`) # sweep: rowwise comparison of qualification dates with interview dates on matrices",
+    "",
+    "# Replace ineligible qualifications with NA.",
+    "casmin_tmp <- casmin_mat",
+    "casmin_tmp[!elig] <- NA",
+    "isced_tmp <- isced_mat",
+    "isced_tmp[!elig] <- NA",
+    "",
+    "# Take the highest eligible CASMIN level for each person by computing the",
+    "# row-wise maximum of the temporary CASMIN matrix.",
+    "edu_data[[wave_col_casmin]] <- apply(casmin_tmp, 1, function(z) {",
+    "if (all(is.na(z))) NA_integer_ else max(z, na.rm = TRUE)",
+    "})",
+    "",
+    "# Take the highest eligible ISCED level for each person by computing the",
     "# row-wise maximum of the temporary ISCED matrix.",
-      "edu_data[[wave_col_isced]] <- apply(isced_tmp, 1, function(z) {",
-        "if (all(is.na(z))) NA_integer_ else max(z, na.rm = TRUE)",
-      "})",
+    "edu_data[[wave_col_isced]] <- apply(isced_tmp, 1, function(z) {",
+    "if (all(is.na(z))) NA_integer_ else max(z, na.rm = TRUE)",
+    "})",
     "}",
     "",
     "# Pivot education indicators to long format",
@@ -936,12 +935,12 @@ gen_qualification_prep_code_r <- function(english, SC, suf_version,suf_version_s
 #' function to generate child example prep. R SC5 SC6.
 #' @keywords internal
 #' @noRd
-gen_children_example_r_sc5_6 <- function(english, sc, suf_version){
+gen_children_example_r_sc5_6 <- function(english, sc){
   lines_of_code <- c(
     "# Children exemplary data prep------------------------------------",
     "",
     "# Goal: prepare dataset for merging with person-year-data where we get info about the count of studying children for each wave (expecting 0 for most IDs). ",
-    "# Approach: We will reduce the child dataset to ids with children and only waves where at least 1 child studied. Then we generate a count variable to count how many studying children people have. Then we join this dataset to biography and overwrite NAs in the studying child count indicator with 0 for all those that have no studying children.",
+    "# Approach: We will reduce the child dataset to ids with children and only waves where at least 1 child studied. Then we generate a count variable to count how many studying children respondents have. Then we join this dataset to biography and overwrite NAs in the studying child count indicator with 0 for all those that have no studying children.",
     "",
     "# Load data",
     "",
@@ -984,7 +983,7 @@ gen_children_example_r_sc5_6 <- function(english, sc, suf_version){
 #' function to generate child example prep. R SC3 SC4.
 #' @keywords internal
 #' @noRd
-gen_children_example_r_sc3_4 <- function(english, sc, suf_version){
+gen_children_example_r_sc3_4 <- function(english, sc){
   lines_of_code <- c(
     "# Exemplary children data preparation -----------------------------------",
     "",
@@ -1046,7 +1045,7 @@ gen_children_example_r_sc3_4 <- function(english, sc, suf_version){
 #' function to generate child example prep. Stata SC5 SC6.
 #' @keywords internal
 #' @noRd
-gen_children_example_stata_sc5_6 <- function(english, sc, suf_version){
+gen_children_example_stata_sc5_6 <- function(english, sc){
   lines_of_code <- c(
     "*******************************************************************************",
     "* Exemplary children data preparation",
@@ -1058,7 +1057,7 @@ gen_children_example_stata_sc5_6 <- function(english, sc, suf_version){
     "preserve",
     "",
     "* Load child dataset",
-    paste0("use \"$DATA\\", sc, "_spChild_D_", suf_version, ".dta\", clear"),
+    paste0("use \"$DATA\\", sc, "_spChild_D_$suf.dta\", clear"),
     "",
     "* Keep only rows where subspell != 0 & ts33210 == 8",
     "keep if subspell != 0 & ts33210 == 8",
@@ -1108,7 +1107,7 @@ gen_children_example_stata_sc5_6 <- function(english, sc, suf_version){
 #' function to generate child example prep. Stata SC3 SC4.
 #' @keywords internal
 #' @noRd
-gen_children_example_stata_sc3_4 <- function(english, sc, suf_version){
+gen_children_example_stata_sc3_4 <- function(english, sc){
   lines_of_code <- c(
     "*******************************************************************************",
     "* Exemplary children data preparation",
@@ -1119,7 +1118,7 @@ gen_children_example_stata_sc3_4 <- function(english, sc, suf_version){
     "preserve",
     "",
     "* Load dataset child",
-    paste0("use \"$DATA\\", sc, "_spChild_D_", suf_version, ".dta\", clear"),
+    paste0("use \"$DATA\\", sc, "_spChild_D_$suf.dta\", clear"),
     "",
     "* First drop children outside of household and deceased children",
     "drop if ts33310 == 2 | died == 1 | ts33205 == 2",
@@ -1171,7 +1170,7 @@ gen_children_example_stata_sc3_4 <- function(english, sc, suf_version){
 #'
 #' @keywords internal
 #' @noRd
- generate_strings <- function(data_list, english, format) {
+generate_strings <- function(data_list, english, format) {
   # Initialize an empty character vector to store the results
   result_vector <- character()
   # Initialize an empty character vector to store all variables
@@ -1221,7 +1220,7 @@ gen_children_example_stata_sc3_4 <- function(english, sc, suf_version){
       result_vector <- c(result_vector, string1, string2, string3, string4, string5, string6, string7, string8, string9,string10,string11)
 
 
-# If spelldatasets are being joined ---------------------------------------
+      # If spelldatasets are being joined ---------------------------------------
 
       # Create an intermediate vector to accumulate all variables added from spell files,
       # so that filling missing values can be performed once at the end of the variable addition code chunk.
@@ -1234,7 +1233,7 @@ gen_children_example_stata_sc3_4 <- function(english, sc, suf_version){
         # Append to intermediate_vector
         intermediate_vector <- c(intermediate_vector, new_vars)
 
-      # Also create a vector holding all sptypes from added spell datafiles for listing of variables filtered by sptype
+        # Also create a vector holding all sptypes from added spell datafiles for listing of variables filtered by sptype
         sptypes_vector <- c(sptypes_vector, sptype_number)
       }
 
@@ -1248,34 +1247,34 @@ gen_children_example_stata_sc3_4 <- function(english, sc, suf_version){
 
   # generate and add these strings to the results vector in case that length of intermediate vector is > 0
   if(length(intermediate_vector)>0){
-  # outside of the loop, we now add the syntax for fill missings in vars and preceding infotext, we do this only for vars from spelldatasets
-  intermediate_vector <- paste0("\"", intermediate_vector, "\"", collapse = ", ")
-  string12 <- "stop('STOP HERE: Read the notes below before continuing. You may delete this line then')"
-  string13 <- "# Note: Researchers often have to deal with missings values, when preparing panel datasets. For variables in NEPS spell datasets however, it is even more important."
-  string14 <- "# Sometimes in spell datasets, it might be advisable to use a 'carry-forward' approach, replacing missing values with the most recent non-missing value from previous waves, to address missing data caused by filtering (e.g., when spell information is collected only during the initial interview because it is assumed to be time-invariant), new items or data issues."
-  string15 <- "# However, it is important to carefully evaluate each spell-related variable to determine, whether carrying information forward (or backward) is appropriate. Additionally, you may also want to examine variables in non-spell datasets for missing values and consider methods such as carry-forward imputation or multiple imputation."
-  string16 <- "# This process cannot be fully automated and must be performed thoughtfully by the researcher. Below, we provide routines for replacing missing values with valid values from preceding or subsequent rows, grouped by ID_t and splink (Episodes). Uncomment if you want to use them."
-  string17 <- ""
-  string18 <- "# First, print the spell-related variables from all joined spell datasets (if its alot of variables, you should list only a few of them stepwise and decide for each variable, if you want to carry forward non-missing information or not)"
-  string19 <- paste0("# print(bio |> filter(sptype %in% c(", paste0(unique(sptypes_vector), collapse = ", "), ")) |> select(\"ID_t\", \"wave\", \"splink\", ", intermediate_vector, "), n = 40)", collapse = ", ")
-  string20 <- ""
-  string21 <- "# Set Missings on selected variables."
-  string22 <- "# bio <- replace_values_with_na(bio)"
-  string23 <- ""
-  string24 <- "# Now use tidyr::fill to carry non-missing information forward and backward !!where approriate!!."
-  string25 <- paste0("# vars_to_fill <- c(",intermediate_vector,")", collapse = ", ")
-  string26 <- "# bio <- bio |>
+    # outside of the loop, we now add the syntax for fill missings in vars and preceding infotext, we do this only for vars from spelldatasets
+    intermediate_vector <- paste0("\"", intermediate_vector, "\"", collapse = ", ")
+    string12 <- "stop('STOP HERE: Read the notes below before continuing. You may delete this line then')"
+    string13 <- "# Note: Researchers often have to deal with missings values, when preparing panel datasets. For variables in NEPS spell datasets however, it is even more important."
+    string14 <- "# Sometimes in spell datasets, it might be advisable to use a 'carry-forward' approach, replacing missing values with the most recent non-missing value from previous waves, to address missing data caused by filtering (e.g., when spell information is collected only during the initial interview because it is assumed to be time-invariant), new items or data issues."
+    string15 <- "# However, it is important to carefully evaluate each spell-related variable to determine, whether carrying information forward (or backward) is appropriate. Additionally, you may also want to examine variables in non-spell datasets for missing values and consider methods such as carry-forward imputation or multiple imputation."
+    string16 <- "# This process cannot be fully automated and must be performed thoughtfully by the researcher. Below, we provide routines for replacing missing values with valid values from preceding or subsequent rows, grouped by ID_t and splink (Episodes). Uncomment if you want to use them."
+    string17 <- ""
+    string18 <- "# First, print the spell-related variables from all joined spell datasets (if its alot of variables, you should list only a few of them stepwise and decide for each variable, if you want to carry forward non-missing information or not)"
+    string19 <- paste0("# print(bio |> filter(sptype %in% c(", paste0(unique(sptypes_vector), collapse = ", "), ")) |> select(\"ID_t\", \"wave\", \"splink\", ", intermediate_vector, "), n = 40)", collapse = ", ")
+    string20 <- ""
+    string21 <- "# Set Missings on selected variables."
+    string22 <- "# bio <- replace_values_with_na(bio)"
+    string23 <- ""
+    string24 <- "# Now use tidyr::fill to carry non-missing information forward and backward !!where approriate!!."
+    string25 <- paste0("# vars_to_fill <- c(",intermediate_vector,")", collapse = ", ")
+    string26 <- "# bio <- bio |>
         # arrange(ID_t, splink, wave) |> # sort ascending
         # group_by(ID_t, splink) |>
         # fill(all_of(vars_to_fill), .direction = 'downup') |> # forward then backward
         # ungroup()"
-  string27 <- ""
+    string27 <- ""
 
     result_vector <- c(result_vector, string12,string13,string14,string15,string16,string17,string18,string19,string20,string21,string22,string23,string24,string25,string26,string27)
   }
 
   return(result_vector)
- }
+}
 
 
 #' function to generate Stata strings that read and merge neps datafiles to the person year dataset based on a list that is generated by the app user selecting variables in different datasets in the data transformation tab
@@ -1311,8 +1310,8 @@ generate_strings_stata <- function(data_list, format) {
       # Extract sptype number for listing
       if(stringr::str_detect(df[1, "Dataset"], spstat_vars_regex)) {
         sptype_number <- df |>
-        dplyr::filter(stringr::str_detect(Dataset, dataset_name)) |>
-        dplyr::pull(Sptype)
+          dplyr::filter(stringr::str_detect(Dataset, dataset_name)) |>
+          dplyr::pull(Sptype)
       }
 
       # Take linkage keys from the list and put commas between them
@@ -1364,33 +1363,33 @@ generate_strings_stata <- function(data_list, format) {
 
   # generate and add these strings to the results vector in case that length of intermediate vector is > 0
   if(length(intermediate_vector)>0){
-  # outside of the loop, we now add the syntax for fill missings in vars and preceding infotext, we do this only for vars from spelldatasets.
-  intermediate_vector <- paste0(intermediate_vector, collapse = " ")
+    # outside of the loop, we now add the syntax for fill missings in vars and preceding infotext, we do this only for vars from spelldatasets.
+    intermediate_vector <- paste0(intermediate_vector, collapse = " ")
 
-  string16 <- ""
-  string17 <- "assert 1 == 2 // We stop script execution here, in order to draw your attention to the following notes. You may delete this line now."
-  string18 <-  "* NOTE: Researchers often have to deal with missings values when preparing panel datasets. For variables in NEPS spell datasets however, it is even more important. Sometimes it might be advisable to use a 'carry-forward' approach, replacing missing values with the most recent non-missing value from previous waves, to address missing data caused by filtering (e.g., when spell information is collected only during the initial interview because it is assumed to be time-invariant), new items or data issues. However, it is important to carefully evaluate each spell-related variable to determine whether carrying information forward (or backward) is appropriate. Below are routines for filling missing values using valid values from preceding or following rows within each ID_t and splink (Episodes). Uncomment these lines if you want to use them."
-  string19 <- "* First, list the merged spell-related variables (If its alot of variables, you should list only a few of them stepwise and decide for each variable if you want to carry forward non-missing information or not)"
-  string20 <- paste0("list ID_t wave splink ", paste0(unique(intermediate_vector), collapse = ", "), " if inlist(sptype, ", paste0(unique(sptypes_vector), collapse = ", "), ") in 1/40, sepby(ID_t splink) ", collapse = ", ")
-  string21 <- ""
-  string22 <- "* Set Missings on selected variables. It is recommended to use the function nepsmiss from the nepstools ado to recode all missing values to specific missing codes. You may install it with: net install nepstools, from(http://nocrypt.neps-data.de/stata). If you want to exclude specific missings from being recoded you might use statas mvdecode function instead."
-  string23 <- "* nepsmiss _all"
-  string24 <- ""
-  string25 <- "* Now carry forward existing information to rows with missings data. Please edit the varlist in order to only carry forward information on variables you are sure about"
-  string26 <- paste0("*foreach var of varlist ", intermediate_vector, " {", collapse = ", ")
-  string27 <- "*bys ID_t splink (wave): replace `var' = `var'[_n-1] if missing(`var') & !missing(`var'[_n-1]) //fill missings from preceding rows"
-  string28 <- "*}"
-  string29 <- ""
-  string30 <- "*Note: It might also make sence for some variables to carry information backward when there are missing values at the beginning an episode. If you want to do that, you can use the same procedure but flip the ordering of spells:"
-  string31 <- "*gsort ID_t splink -wave // Order subspells in descending order to easily access the last value of group ID_t and splink for the carry backwards operation"
-  string32 <- paste0("*foreach var of varlist ", intermediate_vector, " {", collapse = ", ")
-  string33 <- "*by ID_t splink: replace `var' = `var'[_n-1] if missing(`var') & !missing(`var'[_n-1]) // now carry forward information again"
-  string34 <- "*}"
-  string35 <- ""
-  string36 <- "*sort ID_t splink wave // sort in natural way again"
+    string16 <- ""
+    string17 <- "assert 1 == 2 // We stop script execution here, in order to draw your attention to the following notes. You may delete this line now."
+    string18 <-  "* NOTE: Researchers often have to deal with missings values when preparing panel datasets. For variables in NEPS spell datasets however, it is even more important. Sometimes it might be advisable to use a 'carry-forward' approach, replacing missing values with the most recent non-missing value from previous waves, to address missing data caused by filtering (e.g., when spell information is collected only during the initial interview because it is assumed to be time-invariant), new items or data issues. However, it is important to carefully evaluate each spell-related variable to determine whether carrying information forward (or backward) is appropriate. Below are routines for filling missing values using valid values from preceding or following rows within each ID_t and splink (Episodes). Uncomment these lines if you want to use them."
+    string19 <- "* First, list the merged spell-related variables (If its alot of variables, you should list only a few of them stepwise and decide for each variable if you want to carry forward non-missing information or not)"
+    string20 <- paste0("list ID_t wave splink ", paste0(unique(intermediate_vector), collapse = ", "), " if inlist(sptype, ", paste0(unique(sptypes_vector), collapse = ", "), ") in 1/40, sepby(ID_t splink) ", collapse = ", ")
+    string21 <- ""
+    string22 <- "* Set Missings on selected variables. It is recommended to use the function nepsmiss from the nepstools ado to recode all missing values to specific missing codes. You may install it with: net install nepstools, from(http://nocrypt.neps-data.de/stata). If you want to exclude specific missings from being recoded you might use statas mvdecode function instead."
+    string23 <- "* nepsmiss _all"
+    string24 <- ""
+    string25 <- "* Now carry forward existing information to rows with missings data. Please edit the varlist in order to only carry forward information on variables you are sure about"
+    string26 <- paste0("*foreach var of varlist ", intermediate_vector, " {", collapse = ", ")
+    string27 <- "*bys ID_t splink (wave): replace `var' = `var'[_n-1] if missing(`var') & !missing(`var'[_n-1]) //fill missings from preceding rows"
+    string28 <- "*}"
+    string29 <- ""
+    string30 <- "*Note: It might also make sence for some variables to carry information backward when there are missing values at the beginning an episode. If you want to do that, you can use the same procedure but flip the ordering of spells:"
+    string31 <- "*gsort ID_t splink -wave // Order subspells in descending order to easily access the last value of group ID_t and splink for the carry backwards operation"
+    string32 <- paste0("*foreach var of varlist ", intermediate_vector, " {", collapse = ", ")
+    string33 <- "*by ID_t splink: replace `var' = `var'[_n-1] if missing(`var') & !missing(`var'[_n-1]) // now carry forward information again"
+    string34 <- "*}"
+    string35 <- ""
+    string36 <- "*sort ID_t splink wave // sort in natural way again"
 
-  # add these strings now to the results vector with all basic strings
-  result_vector <- c(result_vector, string16,string17,string18,string19,string20,string21,string22,string23, string24,string25,string26,string27,string28,string29,string30,string31,string32,string33,string34,string35,string36)
+    # add these strings now to the results vector with all basic strings
+    result_vector <- c(result_vector, string16,string17,string18,string19,string20,string21,string22,string23, string24,string25,string26,string27,string28,string29,string30,string31,string32,string33,string34,string35,string36)
   }
 
   return(result_vector)

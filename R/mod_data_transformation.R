@@ -34,6 +34,7 @@ data_transformation_sidebar_ui <- function(id) {
       selected = "sc6_semantic_files",
       inline = TRUE
     )),
+    shiny::p(""),
     htmltools::tags$div(title = "Currently supported script formats: R or STATA.",
                         shiny::radioButtons(ns("stata_or_r"), htmltools::tags$b("Script file format"), c("STATA", "R"), selected = "STATA")),
     htmltools::tags$div(title = "Set missing values: Specific NEPS missing codes will be set to Statas missing notation '.' or NA in R. \n\n Include Parallel Spells: Variables on type and timing of parallel spell will be generated in the script. \n\n Employment experience: Include an indicator that (retrospectively) counts the months spent in any employment. \n\n Unemployment experience: Include an indicator that (retrospectively) counts the months spent in any employment.",
@@ -202,10 +203,22 @@ data_transformation_server <- function(id, settings_reactive) {
 
         shiny::updateCheckboxGroupInput(session,
                                         "add_modules",
-                                          choices = choices,
-                                          selected = input$dataset)
+                                          choices = choices)
       })
 
+# Update settings options depending on format --------
+
+shiny::observeEvent(input$sub_format_select, {
+
+  if(input$sub_format_select == "Harmonized Spell Format")
+    choices <- c("Set Missing Values", "Include Parallel Spells", "Retrospective work experience", "Retrospective unemployment experience")
+  else
+    choices <- c("Set Missing Values", "Include Parallel Spells")
+
+  shiny::updateCheckboxGroupInput(session,
+                                  "settings",
+                                  choices = choices)
+})
 
 # Spell Prioritisation  ----------------------------------------------------
 
@@ -346,8 +359,7 @@ data_transformation_server <- function(id, settings_reactive) {
         script_vector <- gen_script(
           datapath_conv = stringr::str_replace_all(cohort_path(), "\\\\", "/"),
           datapath_local = stringr::str_replace_all(datapath_local(), "\\\\", "/"),
-          suf_version = extract_suf_version(cohort_path()),
-          suf_version_short = extract_suf_version(cohort_path(), short = TRUE),
+          suf_version = extract_suf_version(datapath_local()),
           dataformat = input$stata_or_r,
           subformat = input$sub_format_select,
           datalist = filter_dataframes(
@@ -446,8 +458,7 @@ data_transformation_server <- function(id, settings_reactive) {
           script_harm <- gen_script(
             datapath_conv = stringr::str_replace_all(cohort_path(), "\\\\", "/"),
             datapath_local = stringr::str_replace_all(datapath_local(), "\\\\", "/"),
-            suf_version = extract_suf_version(cohort_path()),
-            suf_version_short = extract_suf_version(cohort_path(), short = TRUE),
+            suf_version = extract_suf_version(datapath_local()),
             dataformat = input$stata_or_r,
             subformat = input$sub_format_select,
             datalist = filter_dataframes(varlist$data, stringr::str_replace_all(input$global_vars, " - .*", "")),
