@@ -22,7 +22,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           "",
           "# Approach:",
           "",
-          "# 1. Step: Load biography data set as a base for the person-year-data set and generate start-, enddate and duration variables.",
+          "# 1. Step: Test Load biography data set as a base for the person-year-data set and generate start-, enddate and duration variables.",
           "",
           "# 2. Step: Load employment data set and join it to biograhpy in order to get access to working hours variable. This variable will be used in step 5 for the prioritisation of parallel employment episodes.",
           "",
