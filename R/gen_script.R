@@ -14,8 +14,8 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
         scripts <- c(
           paste0("# NEPScribe base script to transform NEPS ", sc, " SUF data into a person-year structured format."),
           "# It uses the harmonized spells from the biography data as a base for this transformation process.",
-          "# If you want access to within spell variation across waves, spell related longitudinal information should be joined via 'ID_t', 'wave' and 'splink' after step 6, when the person-year structure has been generated and after dropping harmonized episodes in the spell files.",
-          "# When using the “Additional variables” function in the app, this procedure is applied automatically. This ensures that time-varying spell information is preserved. However, it requires careful handling of different missing-value codes that may arise from filtering or data issues. Examples of handling missing values in spell variables are provided in the code.",
+         "# If you want access to within spell variation across waves, spell related longitudinal information should be joined via 'ID_t', 'wave' and 'splink' after step 6, when the person-year structure has been generated and after dropping harmonized episodes in the spell files.",
+         "# When using the “Additional variables” function in the app, this procedure is applied automatically. This ensures that time-varying spell information is preserved. However, it requires careful handling of different missing-value codes that may arise from filtering or data issues. Examples of handling missing values in spell variables from spell datasets are provided in the code.",
           "",
           "# !!!ATTENTION!!!" ,
           "# This is a basic data preparation script that generates a data set in a person-year-format by taking the NEPS SUF Biography file as a baseline. Edits to the script that fit your research project needs are possibly necessary and recommended.",

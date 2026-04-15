@@ -287,14 +287,14 @@ further_training_gen_stata <- function(english) {
     "* We need the interview date from this module to identify and delete retrospective courses, that were recorded more than 2 years ago.",
     "",
     "preserve",
-    "* Load cohortprofile in order to get access to interview dates"
+    "* Load cohortprofile in order to get access to interview dates",
     "use \"$DATA\\SC6_CohortProfile_D_$suf.dta\", clear",
     "keep ID_t wave tx8601y tx8601m",
     "rename tx8601y tx8600y",
     "rename tx8601m tx8600m",
     "drop if wave == 1 ",
     "",
-    "* Generate interview date variable"
+    "* Generate interview date variable",
     "gen interv=ym(tx8600y, tx8600m) // interview date in each wave",
     "format interv %tm",
     "",
@@ -323,7 +323,7 @@ further_training_gen_stata <- function(english) {
     "* Training Courses: 3. Step: Merge furtherEdu2",
     "********************************************************************************",
     "",
-    "* Load furtheredu2 to get access to variable t279040 on occupation/private training for waves 2-10 from detail loop."
+    "* Load furtheredu2 to get access to variable t279040 on occupation/private training for waves 2-10 from detail loop.",
     "merge m:1 ID_t course using \"$DATA/SC6_spFurtherEdu2_D_$suf.dta\", keepusing(ID_t course t279040) // merge 1:1 is not possible because of missing values in course-variable for most courses from vocTrain",
     "",
     "drop if _merge==2 // 14 infos from using can't be linked (these are courses with missing start or endddates, which we dropped at the beginning)",

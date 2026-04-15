@@ -145,7 +145,7 @@ cards_data_trans <- function() {
 
     <h5 style=font-size: 16px; color: #007BFF;>Settings</h5>
     <p style=font-size: 18px; color: #555;>
-        Additionally, you may choose options to handle missing values, switch to English labels or add parallel spells information.
+        Additionally, you can select options that add extra code to the script, for example to handle missing values or include indicators on parallel spells. For the harmonized format version, you can also add indicators for retrospective work or unemployment experience.
     </p>
 
     <h5 style=font-size: 16px; color: #007BFF;>Add exemplary data preparation</h5>
