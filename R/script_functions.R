@@ -1203,7 +1203,7 @@ generate_strings <- function(data_list, english, format) {
       string1 <- paste0("# ",ifelse(format == "harmonized", 6, 3)+i,".", " Add selected variables from ", dataset_name," -------------")
       string2 <- ""
       # here we replace also _S_ in the dataset name with _D_ because this is pasted in the script but comes from the semantic files
-      string3 <- paste0(dataset_name, " <- read_neps(paste0(datapath,\"", stringr::str_replace_all(stringr::str_extract(df[1, "Dataset"], pattern= "SC\\d_.*_S_"), "_S_", "_D_"),"\"", ",suf_version", ",\".dta\"), ", "col_select = c(", merge_vector, ", ", selected_variables, ifelse(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex),", \"spstat\"",""), "), english = ", english, ")")
+      string3 <- paste0(dataset_name, " <- read_neps(paste0(datapath, \"/\",\"", stringr::str_replace_all(stringr::str_extract(df[1, "Dataset"], pattern= "SC\\d_.*_S_"), "_S_", "_D_"),"\"", ",suf_version", ",\".dta\"), ", "col_select = c(", merge_vector, ", ", selected_variables, ifelse(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex),", \"spstat\"",""), "), english = ", english, ")")
       string4 <- ""
       # now we filter for spstat < 30 and get rid of those episodes but only when spstat exists and if we have 3 linkage keys
       string5 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) { "# filter for non-harmonized episodes in order to only merge the wave specific subspell information" }
