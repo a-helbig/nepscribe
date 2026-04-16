@@ -729,7 +729,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           "* 6. Create person year format",
           "********************************************************************************",
           "",
-          "* Finally we switch from a monthly format to a yearly format by taking the interview dates from cohort profile, merging biography data to it, while keeping only matches.",
+          "* Finally we switch from a monthly format to a yearly format by taking the interview dates from cohort profile, merging it to the biography data, while keeping only matches.",
           "* This will keep only rows (months) in the bio data set that correspond to actual interview dates from cohort profile. Finally this leads to a format with 1 row per year of a person where information is centered around each interview date.",
           "",
           "* Load interview dates from cohortprofile",
