@@ -756,7 +756,7 @@ gen_qualification_prep_code_r <- function(english, SC) {
     "",
     "# Load cohort profile to get access to interviewdates",
     if(SC %in% c("SC6", "SC3"))"intdata <- read_neps(paste0(datapath, '/', sc, '_CohortProfile_D_', suf_version,'.dta'), col_select = c('ID_t','wave','tx8601y', 'tx8601m'), english = english) |> rename(inty = tx8601y,intm = tx8601m)",
-    if(SC %in% c("SC4", "SC5"))"intdata <- read_neps(paste0(datapath, '/', sc, '_CohortProfile_D_', suf_version,'.dta'), col_select = c('ID_t','wave','tx8601y', 'tx8601m'), english = english) |> rename(inty = tx8601y,intm = tx8601m)",
+    if(SC %in% c("SC4", "SC5"))"intdata <- read_neps(paste0(datapath, '/', sc, '_CohortProfile_D_', suf_version,'.dta'), col_select = c('ID_t','wave','tx8600y', 'tx8600m'), english = english) |> rename(inty = tx8600y,intm = tx8600m)",
     "",
     "# Set neps missings to NA",
     "intdata <- replace_values_with_na(intdata)",

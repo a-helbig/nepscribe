@@ -15,7 +15,7 @@ Imports:
     Hmisc (>= 5.2-4),
     htmltools (>= 0.5-9),
     htmlwidgets (>= 1.6-4),
-    nepstools (>= 0.1.1),
+    nepstools (>= 0.1.2),
     pkgload (>= 1.4.1), 
     purrr (>= 1.2.0),	
     readstata13 (>= 0.11.0),
