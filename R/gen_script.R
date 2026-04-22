@@ -12,11 +12,11 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
 
       if(dataformat== "R" & subformat == "Harmonized Spell Format"){
         scripts <- c(
-          paste0("# NEPScribe base script to transform NEPS ", sc, " SUF data into a person-year format."),
-          "# !ATTENTION!",
+          paste0("# NEPScribe base R script to transform NEPS ", sc, " SUF data into a person-year format."),
+          "",
           "# This is a basic data preparation script that generates a data set in a person-year-format by taking the harmonized spells from the NEPS SUF Biography file as a baseline.",
           "# Please carefully check each line and make sense of it. Edits to the script that fit your research project’s needs are probably necessary and recommended.",
-          "",
+          "# !ATTENTION!",
           "# If you want access to within spell variation across waves, spell related longitudinal information should be joined via 'ID_t', 'wave' and 'splink' after step 6, when the person-year structure has been generated and after dropping harmonized episodes in the spell files.",
           "# When using the 'Additional variables' function in the NEPScribe app, this procedure is applied automatically. This ensures that time-varying spell information is preserved. However, it requires careful handling of different missing value codes that arise from filtering or data issues.",
           "",
@@ -184,7 +184,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           "bio$worktime <- bio$ts23223",
           "bio$worktime[is.na(bio$ts23223)] <- 0",
           "",
-          "# To prioritize multiple parallel employment spells, we consider multiple variables in the following order of relevance: prio, spms (main vs side episode), working hours, employment duration and splink. Edit if necessary.",
+          "# To prioritize multiple parallel spells, we consider multiple variables in the following order of relevance: prio, spms (main vs side episode), working hours, employment duration and splink. Edit if necessary.",
           "",
           "# Sort the data frame in this order",
           "bio$worktime <- as.numeric(bio$worktime) # as.numeric for sorting ",
@@ -513,11 +513,12 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
                      if(sc =="SC6")"    worktime = tidyr::replace_na(ts23223_g1, 0)",
                      if(sc %in% c("SC3","SC4","SC5"))"    worktime = tidyr::replace_na(ts23223, 0)",
                      "  )  |> ",
+                     "# To prioritize multiple parallel spells, we consider multiple variables in the following order of relevance: prio, spms (main vs side episode), working hours, employment duration and splink. Edit if necessary.",
                      "  arrange(ID_t, wave, prio, desc(spms), desc(worktime), desc(dur), splink)",
                      if(parallel) "",
                      if(parallel) gen_parallel_spells_r(format = "subspell"),
                      "",
-                     # Prioritize: Within each combination of ID_t and wave, keep only the first row according to the specified sorting order
+                     "# Prioritize: Within each combination of ID_t and wave, keep only the first row according to the specified sorting order",
                      "bio <- bio |> ",
                      "  lazy_dt() |> # use this function from dtplyr for faster processing",
                      "  group_by(ID_t, wave) |>",
@@ -550,11 +551,13 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
         )
 
       }
+
       if(dataformat == "STATA" & subformat == "Harmonized Spell Format") {
         scripts <- c(
-          paste0("* NEPScribe base Do-file to transform NEPS ", sc," SUF data into a person-year format"),
-          "* !ATTENTION!",
+          paste0("* NEPScribe base Stata Do-file to transform NEPS ", sc," SUF data into a person-year format"),
+          "",
           "* This is a basic data preparation script that generates a data set in a person-year-format by taking the harmonized spells from the NEPS SUF Biography file as a baseline.",
+          "* !ATTENTION!",
           "* Please carefully check each line and make sense of it. Edits to the script that fit your research project’s needs are probably necessary and recommended.",
           "",
           "********************************************************************************",
@@ -961,7 +964,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           "",
           if(sc != "SC5")paste0("recode prio ","(",prio_var[1],  " = 1)"," (",prio_var[2]," = 2)"," (",prio_var[3]," = 3)"," (",prio_var[4]," = 4)"," (",prio_var[5]," = 5)"," (",prio_var[6]," = 6)"," (",prio_var[7]," = 7)"," (",prio_var[8]," = 8)"," (",prio_var[9]," = 9)"," (",prio_var[10]," = 10)",",gen(prio_temp)"),
           if(sc == "SC5")paste0("recode prio ","(",prio_var[1],  " = 1)"," (",prio_var[2]," = 2)"," (",prio_var[3]," = 3)"," (",prio_var[4]," = 4)"," (",prio_var[5]," = 5)"," (",prio_var[6]," = 6)"," (",prio_var[7]," = 7)"," (",prio_var[8]," = 8)"," (",prio_var[9]," = 9)"," (",prio_var[10]," = 10)"," (",prio_var[11]," = 11)",",gen(prio_temp)"),
-          "* For sorting set nebenbeschaeftigungen und missings to 0",
+          "* For sorting set side episodes and missings to 0",
           "recode spms (1 = 1) (2 . = 0)",
           "",
           if(sc=="SC6")"clonevar worktime = ts23223_g1",
