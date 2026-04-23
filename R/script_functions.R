@@ -2,9 +2,9 @@
 #' helper function to put these further education prep lines into multiple script versions. R.
 #' @keywords internal
 #' @noRd
-further_training_gen_r <- function(english) {
+further_training_gen_r <- function(english, chapter) {
   lines_of_code <-  c(
-    "# Add indicators on Further Training Participation ---------------------------------------",
+    paste0("# ", chapter, ". Add indicators on Further Training Participation ---------------------------------------"),
     "",
     "# Explanations and further details on the data preparation: https://www.lifbi.de/Portals/2/NEPS%20Survey%20Papers/NEPS-Survey-Paper_CI.pdf",
     "",
@@ -244,10 +244,10 @@ further_training_gen_r <- function(english) {
 #' helper function to put these further education prep lines into multiple script versions. Stata.
 #' @keywords internal
 #' @noRd
-further_training_gen_stata <- function(english) {
+further_training_gen_stata <- function(english, chapter) {
   lines_of_code <-  c(
     "********************************************************************************",
-    "* Add indicators on further training participation",
+    paste0("* ", chapter, ". Add indicators on further training participation"),
     "******************************************************************************** ",
     "",
     "* Explanations and further details on data preparation of further training in NEPS: https://www.lifbi.de/Portals/2/NEPS%20Survey%20Papers/NEPS-Survey-Paper_CI.pdf",
@@ -594,11 +594,11 @@ gen_parallel_spells_r <- function(format="harmonized") {
 #' function to generate educational qualification preparation. Stata.
 #' @keywords internal
 #' @noRd
-gen_qualification_prep_code_stata <- function(english, sc) {
+gen_qualification_prep_code_stata <- function(english, sc, chapter) {
   # Create a character vector to hold the lines of code
   lines_of_code <- c(
     "*******************************************************************************",
-    "* Educational Qualification",
+    paste0("* ", chapter, ". Educational Qualification"),
     "*******************************************************************************",
     "",
     "* In the Education dataset, information is provided on educational attainment and vocational qualifications classified according to the ISCED and CASMIN schemes. These qualifications are recorded in a month/year format. We therefore need to restructure the dataset before merging it with our person-year dataset.",
@@ -746,9 +746,9 @@ gen_qualification_prep_code_stata <- function(english, sc) {
 #' function to generate educational qualification preparation. R
 #' @keywords internal
 #' @noRd
-gen_qualification_prep_code_r <- function(english, SC) {
+gen_qualification_prep_code_r <- function(english, SC, chapter) {
   lines_of_code <- c(
-    "# Educational Qualification ----------------------------------------------------------",
+    paste0("# ", chapter, ". Educational Qualification ----------------------------------------------------------"),
     "",
     "# The education dataset contains monthly/yearly information on educational",
     "# attainment and vocational qualifications classified according to ISCED and CASMIN.",
@@ -928,16 +928,16 @@ gen_qualification_prep_code_r <- function(english, SC) {
     "",
     "# Join qualifications to person-year dataset",
     "bio <- left_join(bio, edu_data, by =c(\"ID_t\",\"wave\"))",
-    "rm(edu_data)"
+    "rm(edu_data, elig, edud_mat, isced_mat, isced_tmp, casmin_mat, casmin_tmp)"
   )
 }
 
 #' function to generate child example prep. R SC5 SC6.
 #' @keywords internal
 #' @noRd
-gen_children_example_r_sc5_6 <- function(english, sc){
+gen_children_example_r_sc5_6 <- function(english, sc, chapter){
   lines_of_code <- c(
-    "# Children exemplary data prep------------------------------------",
+    paste0("# ", chapter, ". Children exemplary data prep------------------------------------"),
     "",
     "# Goal: prepare dataset for merging with person-year-data where we get info about the count of studying children for each wave (expecting 0 for most IDs). ",
     "# Approach: We will reduce the child dataset to ids with children and only waves where at least 1 child studied. Then we generate a count variable to count how many studying children respondents have. Then we join this dataset to biography and overwrite NAs in the studying child count indicator with 0 for all those that have no studying children.",
@@ -976,6 +976,7 @@ gen_children_example_r_sc5_6 <- function(english, sc){
     "# Set NA values in studying children to 0",
     "bio <- bio |>",
     "mutate(studying_children = tidyr::replace_na(studying_children, 0))",
+    "rm(child)",
     ""
   )
 }
@@ -983,9 +984,9 @@ gen_children_example_r_sc5_6 <- function(english, sc){
 #' function to generate child example prep. R SC3 SC4.
 #' @keywords internal
 #' @noRd
-gen_children_example_r_sc3_4 <- function(english, sc){
+gen_children_example_r_sc3_4 <- function(english, sc, chapter){
   lines_of_code <- c(
-    "# Exemplary children data preparation -----------------------------------",
+    "# ", chapter, ". Exemplary children data preparation -----------------------------------",
     "",
     "# Goal: prepare dataset for merging with person-year-data where we get info about children taken care of at home. this indicator is 1 if one more children are taken care of at home and 0 if the child or all children are in childcare",
     "",
@@ -1038,17 +1039,23 @@ gen_children_example_r_sc3_4 <- function(english, sc){
     "# Reduce vars",
     "child <- child |> ",
     "  select(ID_t, wave, childcare_at_home)",
+    "",
+    "# Join child data prep example to person-year dataset",
+    "bio <- left_join(bio, child, by =c('ID_t','wave'))",
+    "",
+    "rm(child)",
     ""
   )
 }
 
+
 #' function to generate child example prep. Stata SC5 SC6.
 #' @keywords internal
 #' @noRd
-gen_children_example_stata_sc5_6 <- function(english, sc){
+gen_children_example_stata_sc5_6 <- function(english, sc, chapter){
   lines_of_code <- c(
     "*******************************************************************************",
-    "* Exemplary children data preparation",
+    paste0("* ", chapter, ". Exemplary children data preparation"),
     "*******************************************************************************",
     "",
     "* Goal: prepare dataset for merging with person-year-data where we get info about the count of studying children for each wave (expecting 0 for most IDs).",
@@ -1107,10 +1114,10 @@ gen_children_example_stata_sc5_6 <- function(english, sc){
 #' function to generate child example prep. Stata SC3 SC4.
 #' @keywords internal
 #' @noRd
-gen_children_example_stata_sc3_4 <- function(english, sc){
+gen_children_example_stata_sc3_4 <- function(english, sc, chapter){
   lines_of_code <- c(
     "*******************************************************************************",
-    "* Exemplary children data preparation",
+    paste0("* ", chapter, ". Exemplary children data preparation"),
     "*******************************************************************************",
     "",
     "* Goal: prepare dataset for merging with person-year-data where we get info about children taken care of at home. this indicator is 1 if one more children are taken care of at home and 0 if the child or all children are in childcare",
@@ -1318,6 +1325,9 @@ generate_strings_stata <- function(data_list, format) {
   # Initialize string that holds regexp which is used to identify datasets that contain the variable spstat because that variable is used to get rid of harmonized episodes
   spstat_vars_regex <- "spEmp|spGap|spMilitary|spParLeave|spSchool_|spUnemp|spVocPrep|spVocTrain|spParentSchool_|spInternship_"
 
+  # Initialize string that holds regexp which is used to identify dataset with external exams. These datasets need to be reshaped wide before they can be merged to the biography dataset
+  external_exam_regex <- "spVocExtExam|spSchoolExtExam"
+
   # Loop over each dataframe in the provided list
   for (i in seq_along(data_list)) {
     df <- data_list[[i]]
@@ -1349,24 +1359,31 @@ generate_strings_stata <- function(data_list, format) {
       string2 <- "*******************************************************************************"
       string3 <- ""
       string4 <- "preserve"
-      string5 <- paste0("use ", merge_vector," ", selected_variables, ifelse(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex),"  spstat "," "), "using \"$DATA\\",stringr::str_replace_all(full_dataset_name, "_S_", "_D_"), "$suf.dta\", clear")
+      string5 <- paste0("use ", merge_vector," ", selected_variables, ifelse(stringr::str_detect(df[1, "Dataset"],  external_exam_regex)," exam"," "),  ifelse(stringr::str_detect(df[1, "Dataset"],  "spVocBreaks")," break"," "), ifelse(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)," spstat "," "), "using \"$DATA\\",stringr::str_replace_all(full_dataset_name, "_S_", "_D_"), "$suf.dta\", clear")
       string6 <- ""
-      string7 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) { "* filter for non-harmonized episodes in order to only merge the wave specific subspell information" }
+      # for external exams dataset we need to reshape wide before merging
+      string7 <- if(stringr::str_detect(df[1, "Dataset"],  external_exam_regex)) { "* Dataset needs reshaping to wide format before merging it to the person-year-dataset." }
+      string8 <- if(stringr::str_detect(df[1, "Dataset"],  external_exam_regex)) { paste0("reshape wide ", vars_clean <- paste(setdiff(strsplit(selected_variables_collapsed, "\\s+")[[1]], c("ID_t", "wave", "exam")), collapse = " "), ", i(ID_t wave) j(exam)") }
+      string9 <- if(stringr::str_detect(df[1, "Dataset"],  external_exam_regex)) { "" }
+      # for voc breaks dataset we need to reshape wide before merging but with a different variable: break
+      string10 <- if(stringr::str_detect(df[1, "Dataset"],  "spVocBreaks")) { "* Dataset spVocBreaks needs reshaping to wide format before merging it to the person-year-dataset. Rename problematic variable named 'break' before." }
+      string11 <- if(stringr::str_detect(df[1, "Dataset"],  "spVocBreaks")) { paste0("reshape wide ", vars_clean <- paste(setdiff(strsplit(selected_variables_collapsed, "\\s+")[[1]], c("ID_t", "wave", "exam")), collapse = " "), ", i(ID_t splink) j(break)") }
+      string12 <- if(stringr::str_detect(df[1, "Dataset"],  "spVocBreaks")) { "" }
+      string13 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) { "* filter for non-harmonized episodes in order to only merge the wave specific subspell information" }
       # now we filter for spstat < 30 and get rid of those episodes but only when spstat exists and if we have 3 linkage keys
-      string8 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {
+      string14<- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {
         "keep if spstat < 30"
       }
-      string9 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {""}
-      string10 <- "tempfile data"
-      string11 <- "save `data'"
-      string12 <- ""
-      string13 <- "restore"
-      string14 <- ""
+      string15 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {""}
+      string16 <- "tempfile data"
+      string17 <- "save `data'"
+      string18 <- ""
+      string19 <- "restore"
+      string20 <- ""
       # if we have unique identifier in both datasets we can merge 1:1 - this is the case when we have at least 2 merging variables, however if we only merge by ID_t (eg with Basics), we need to merge m:1
-      string15 <- if(length(merge_vector) > 1) paste0("merge 1:1 ", merge_vector, " using `data', keep(1 3)  nogen") else if (length(merge_vector)==1) paste0("merge m:1 ", merge_vector, " using `data', keep(1 3) nogen")
-
+      string21 <- if(length(merge_vector) > 1) paste0("merge 1:1 ", merge_vector, " using `data', keep(1 3)  nogen") else if (length(merge_vector)==1) paste0("merge m:1 ", merge_vector, " using `data', keep(1 3) nogen")
       # Concatenate the current strings into the result vector
-      result_vector <- c(result_vector, string0, string1, string2, string3, string4, string5, string6, string7, string8, string9, string10, string11, string12, string13, string14,string15)
+      result_vector <- c(result_vector, string0, string1, string2, string3, string4, string5, string6, string7, string8, string9, string10, string11, string12, string13, string14, string15, string16, string17, string18, string19, string20, string21)
 
       # Create an intermediate vector to accumulate all variables added from spell files,
       # so that filling missing values can be performed once at the end of the variable addition code chunk.
@@ -1392,30 +1409,30 @@ generate_strings_stata <- function(data_list, format) {
     # outside of the loop, we now add the syntax for fill missings in vars and preceding infotext, we do this only for vars from spelldatasets.
     intermediate_vector <- paste0(intermediate_vector, collapse = " ")
 
-    string16 <- ""
-    string17 <- "assert 1 == 2 // We stop script execution here, in order to draw your attention to the following notes. You may delete this line now."
-    string18 <-  "* NOTE: Researchers often have to deal with missings values when preparing panel datasets. For variables in NEPS spell datasets however, it is even more important. Sometimes it might be advisable to use a 'carry-forward' approach, replacing missing values with the most recent non-missing value from previous waves, to address missing data caused by filtering (e.g., when spell information is collected only during the initial interview because it is assumed to be time-invariant), new items or data issues. However, it is important to carefully evaluate each spell-related variable to determine whether carrying information forward (or backward) is appropriate. Below are routines for filling missing values using valid values from preceding or following rows within each ID_t and splink (Episodes). Uncomment these lines if you want to use them."
-    string19 <- "* First, list the merged spell-related variables (If its alot of variables, you should list only a few of them stepwise and decide for each variable if you want to carry forward non-missing information or not)"
-    string20 <- paste0("list ID_t wave splink ", paste0(unique(intermediate_vector), collapse = ", "), " if inlist(sptype, ", paste0(unique(sptypes_vector), collapse = ", "), ") in 1/40, sepby(ID_t splink) ", collapse = ", ")
-    string21 <- ""
-    string22 <- "* Set Missings on selected variables. It is recommended to use the function nepsmiss from the nepstools ado to recode all missing values to specific missing codes. You may install it with: net install nepstools, from(http://nocrypt.neps-data.de/stata). If you want to exclude specific missings from being recoded you might use statas mvdecode function instead."
-    string23 <- "* nepsmiss _all"
-    string24 <- ""
-    string25 <- "* Now carry forward existing information to rows with missings data. Please edit the varlist in order to only carry forward information on variables you are sure about"
-    string26 <- paste0("*foreach var of varlist ", intermediate_vector, " {", collapse = ", ")
-    string27 <- "*bys ID_t splink (wave): replace `var' = `var'[_n-1] if missing(`var') & !missing(`var'[_n-1]) //fill missings from preceding rows"
-    string28 <- "*}"
-    string29 <- ""
-    string30 <- "*Note: It might also make sence for some variables to carry information backward when there are missing values at the beginning an episode. If you want to do that, you can use the same procedure but flip the ordering of spells:"
-    string31 <- "*gsort ID_t splink -wave // Order subspells in descending order to easily access the last value of group ID_t and splink for the carry backwards operation"
+    string22 <- ""
+    string23 <- "assert 1 == 2 // We stop script execution here, in order to draw your attention to the following notes. You may delete this line now."
+    string24 <-  "* NOTE: Researchers often have to deal with missings values when preparing panel datasets. For variables in NEPS spell datasets however, it is even more important. Sometimes it might be advisable to use a 'carry-forward' approach, replacing missing values with the most recent non-missing value from previous waves, to address missing data caused by filtering (e.g., when spell information is collected only during the initial interview because it is assumed to be time-invariant), new items or data issues. However, it is important to carefully evaluate each spell-related variable to determine whether carrying information forward (or backward) is appropriate. Below are routines for filling missing values using valid values from preceding or following rows within each ID_t and splink (Episodes). Uncomment these lines if you want to use them."
+    string25 <- "* First, list the merged spell-related variables (If its alot of variables, you should list only a few of them stepwise and decide for each variable if you want to carry forward non-missing information or not)"
+    string26 <- paste0("list ID_t wave splink ", paste0(unique(intermediate_vector), collapse = ", "), " if inlist(sptype, ", paste0(unique(sptypes_vector), collapse = ", "), ") in 1/40, sepby(ID_t splink) ", collapse = ", ")
+    string27 <- ""
+    string28 <- "* Set Missings on selected variables. It is recommended to use the function nepsmiss from the nepstools ado to recode all missing values to specific missing codes. You may install it with: net install nepstools, from(http://nocrypt.neps-data.de/stata). If you want to exclude specific missings from being recoded you might use statas mvdecode function instead."
+    string29 <- "* nepsmiss _all"
+    string30 <- ""
+    string31 <- "* Now carry forward existing information to rows with missings data. Please edit the varlist in order to only carry forward information on variables you are sure about"
     string32 <- paste0("*foreach var of varlist ", intermediate_vector, " {", collapse = ", ")
-    string33 <- "*by ID_t splink: replace `var' = `var'[_n-1] if missing(`var') & !missing(`var'[_n-1]) // now carry forward information again"
+    string33 <- "*bys ID_t splink (wave): replace `var' = `var'[_n-1] if missing(`var') & !missing(`var'[_n-1]) //fill missings from preceding rows"
     string34 <- "*}"
     string35 <- ""
-    string36 <- "*sort ID_t splink wave // sort in natural way again"
+    string36 <- "*Note: It might also make sence for some variables to carry information backward when there are missing values at the beginning an episode. If you want to do that, you can use the same procedure but flip the ordering of spells:"
+    string37 <- "*gsort ID_t splink -wave // Order subspells in descending order to easily access the last value of group ID_t and splink for the carry backwards operation"
+    string38 <- paste0("*foreach var of varlist ", intermediate_vector, " {", collapse = ", ")
+    string39 <- "*by ID_t splink: replace `var' = `var'[_n-1] if missing(`var') & !missing(`var'[_n-1]) // now carry forward information again"
+    string40 <- "*}"
+    string41 <- ""
+    string42 <- "*sort ID_t splink wave // sort in natural way again"
 
     # add these strings now to the results vector with all basic strings
-    result_vector <- c(result_vector, string16,string17,string18,string19,string20,string21,string22,string23, string24,string25,string26,string27,string28,string29,string30,string31,string32,string33,string34,string35,string36)
+    result_vector <- c(result_vector, string20, string21, string22, string23, string24, string25, string26, string27, string28, string29, string30, string31, string32, string33, string34, string35, string36, string37, string38, string39, string40, string41, string42)
   }
 
   return(result_vector)
