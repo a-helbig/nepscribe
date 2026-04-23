@@ -61,7 +61,7 @@ SC5_spSchool_S_.dta;"""ID_t"" ""wave"" ""splink""";;22
 SC5_spSchoolExtExam_S_.dta;"""ID_t"" ""wave""";;
 SC5_spSibling_S_.dta;;Nicht mergebar - separat anbieten;
 SC5_spUnemp_S_.dta;"""ID_t"" ""wave"" ""splink""";;27
-SC5_spVocBreaks_S_.dta;"""ID_t"" ""wave""";;
+SC5_spVocBreaks_S_.dta;"""ID_t"" ""splink""";;
 SC5_spVocExtExam_S_.dta;"""ID_t"" ""wave""";;
 SC5_spVocPrep_S_.dta;"""ID_t"" ""wave"" ""splink""";;23
 SC5_spVocTrain_S_.dta;"""ID_t"" ""wave"" ""splink""";;24

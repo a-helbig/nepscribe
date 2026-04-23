@@ -1181,6 +1181,9 @@ generate_strings <- function(data_list, english, format) {
   # Initialize string that holds regexp which is used to identify datasets that contain the variable spstat because that variable is used to get rid of harmonized episodes
   spstat_vars_regex <- "spEmp|spGap|spMilitary|spParLeave|spSchool_|spUnemp|spVocPrep|spVocTrain|spParentSchool_|spInternship_"
 
+  # Initialize string that holds regexp which is used to identify dataset with external exams. These datasets need to be reshaped wide before they can be merged to the biography dataset
+  external_exam_regex <- "spVocExtExam|spSchoolExtExam"
+
   # Loop over each dataframe in the provided list
   for (i in seq_along(data_list)) {
     df <- data_list[[i]]
@@ -1203,21 +1206,44 @@ generate_strings <- function(data_list, english, format) {
       string1 <- paste0("# ",ifelse(format == "harmonized", 6, 3)+i,".", " Add selected variables from ", dataset_name," -------------")
       string2 <- ""
       # here we replace also _S_ in the dataset name with _D_ because this is pasted in the script but comes from the semantic files
-      string3 <- paste0(dataset_name, " <- read_neps(paste0(datapath, \"/\",\"", stringr::str_replace_all(stringr::str_extract(df[1, "Dataset"], pattern= "SC\\d_.*_S_"), "_S_", "_D_"),"\"", ",suf_version", ",\".dta\"), ", "col_select = c(", merge_vector, ", ", selected_variables, ifelse(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex),", \"spstat\"",""), "), english = ", english, ")")
+      string3 <- paste0(dataset_name, " <- read_neps(paste0(datapath, \"/\",\"", stringr::str_replace_all(stringr::str_extract(df[1, "Dataset"], pattern= "SC\\d_.*_S_"), "_S_", "_D_"),"\"", ",suf_version", ",\".dta\"), ", "col_select = c(", merge_vector, ", ", selected_variables, ifelse(stringr::str_detect(df[1, "Dataset"],  external_exam_regex), ", \"exam\"",""), ifelse(stringr::str_detect(df[1, "Dataset"],  "spVocBreaks"), ", \"break\"",""), ifelse(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex),", \"spstat\"",""), "), english = ", english, ")")
       string4 <- ""
+      # for external exams dataset we need to reshape wide before merging
+      string5 <- if(stringr::str_detect(df[1, "Dataset"],  external_exam_regex)) { "# Dataset needs reshaping to wide format before merging it to the person-year-dataset." }
+      string6 <- if(stringr::str_detect(df[1, "Dataset"],  external_exam_regex)) { paste0(dataset_name, " <- ", dataset_name, " |> ") }
+      string7 <- if(stringr::str_detect(df[1, "Dataset"],  external_exam_regex)) { "  pivot_wider(" }
+      string8 <- if(stringr::str_detect(df[1, "Dataset"],  external_exam_regex)) { "    id_cols = c(ID_t, wave)," }
+      string9 <- if(stringr::str_detect(df[1, "Dataset"],  external_exam_regex)) { "    names_from = exam," }
+      string10 <- if(stringr::str_detect(df[1, "Dataset"],  external_exam_regex)) { "    values_from = -c(ID_t, wave, exam)," }
+      string11 <- if(stringr::str_detect(df[1, "Dataset"],  external_exam_regex)) { "    names_sep = \"_\"" }
+      string12 <- if(stringr::str_detect(df[1, "Dataset"],  external_exam_regex)) { "  )" }
+      # for voc breaks dataset we need to reshape wide before merging but with a different variable: break
+      string13 <- if(stringr::str_detect(df[1, "Dataset"],  "spVocBreaks")) { "# Dataset spVocBreaks needs reshaping to wide format before merging it to the person-year-dataset. Rename problematic variable named 'break' before." }
+      string14 <- if(stringr::str_detect(df[1, "Dataset"],  "spVocBreaks")) { paste0(dataset_name, " <- ", dataset_name, " |> ") }
+      string15 <- if(stringr::str_detect(df[1, "Dataset"],  "spVocBreaks")) { "  rename(break_var = `break`)" }
+      string16 <- if(stringr::str_detect(df[1, "Dataset"],  "spVocBreaks")) { "" }
+      string17 <- if(stringr::str_detect(df[1, "Dataset"],  "spVocBreaks")) { paste0(dataset_name, " <- ", dataset_name, " |> ") }
+      string18 <- if(stringr::str_detect(df[1, "Dataset"],  "spVocBreaks")) { "  pivot_wider(" }
+      string19 <- if(stringr::str_detect(df[1, "Dataset"],  "spVocBreaks")) { "    id_cols = c(ID_t, splink)," }
+      string20 <- if(stringr::str_detect(df[1, "Dataset"],  "spVocBreaks")) { "    names_from = break_var," }
+      string21 <- if(stringr::str_detect(df[1, "Dataset"],  "spVocBreaks")) { "    values_from = -c(ID_t, splink, break_var),
+" }
+      string22 <- if(stringr::str_detect(df[1, "Dataset"],  "spVocBreaks")) { "    names_sep = \"_\"" }
+      string23 <- if(stringr::str_detect(df[1, "Dataset"],  "spVocBreaks")) { "  )" }
       # now we filter for spstat < 30 and get rid of those episodes but only when spstat exists and if we have 3 linkage keys
-      string5 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) { "# filter for non-harmonized episodes in order to only merge the wave specific subspell information" }
-      string6 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) { paste0(dataset_name, " <- ",dataset_name," |>
+      string24 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) { "# filter for non-harmonized episodes in order to only merge the wave specific subspell information" }
+      string25 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) { paste0(dataset_name, " <- ",dataset_name," |>
          filter(spstat < 30)")
       }
-      string7 <- if(length(base::strsplit(merge_vector, " ")[[1]])==3) {""}
-      string8 <- paste0("bio <- left_join(bio, ", dataset_name, ", by = c(", merge_vector,"))")
-      string9 <- ""
-      string10 <- paste0("rm(", dataset_name, ")")
-      string11 <- ""
+      string26 <- ""
+      string27 <- if(length(base::strsplit(merge_vector, " ")[[1]])==3) {""}
+      string28 <- paste0("bio <- left_join(bio, ", dataset_name, ", by = c(", merge_vector,"))")
+      string29 <- ""
+      string30 <- paste0("rm(", dataset_name, ")")
+      string31 <- ""
 
       # Concatenate the current strings into the result vector
-      result_vector <- c(result_vector, string1, string2, string3, string4, string5, string6, string7, string8, string9,string10,string11)
+      result_vector <- c(result_vector, string1, string2, string3, string4, string5, string6, string7, string8, string9, string10, string11, string12, string13, string14,string15, string16, string17, string18, string19, string20, string21, string22, string23, string24, string25, string26, string27, string28, string29, string30, string31)
 
 
       # If spelldatasets are being joined ---------------------------------------
@@ -1249,28 +1275,28 @@ generate_strings <- function(data_list, english, format) {
   if(length(intermediate_vector)>0){
     # outside of the loop, we now add the syntax for fill missings in vars and preceding infotext, we do this only for vars from spelldatasets
     intermediate_vector <- paste0("\"", intermediate_vector, "\"", collapse = ", ")
-    string12 <- "stop('STOP HERE: Read the notes below before continuing. You may delete this line then')"
-    string13 <- "# Note: Researchers often have to deal with missings values, when preparing panel datasets. For variables in NEPS spell datasets however, it is even more important."
-    string14 <- "# Sometimes in spell datasets, it might be advisable to use a 'carry-forward' approach, replacing missing values with the most recent non-missing value from previous waves, to address missing data caused by filtering (e.g., when spell information is collected only during the initial interview because it is assumed to be time-invariant), new items or data issues."
-    string15 <- "# However, it is important to carefully evaluate each spell-related variable to determine, whether carrying information forward (or backward) is appropriate. Additionally, you may also want to examine variables in non-spell datasets for missing values and consider methods such as carry-forward imputation or multiple imputation."
-    string16 <- "# This process cannot be fully automated and must be performed thoughtfully by the researcher. Below, we provide routines for replacing missing values with valid values from preceding or subsequent rows, grouped by ID_t and splink (Episodes). Uncomment if you want to use them."
-    string17 <- ""
-    string18 <- "# First, print the spell-related variables from all joined spell datasets (if its alot of variables, you should list only a few of them stepwise and decide for each variable, if you want to carry forward non-missing information or not)"
-    string19 <- paste0("# print(bio |> filter(sptype %in% c(", paste0(unique(sptypes_vector), collapse = ", "), ")) |> select(\"ID_t\", \"wave\", \"splink\", ", intermediate_vector, "), n = 40)", collapse = ", ")
-    string20 <- ""
-    string21 <- "# Set Missings on selected variables."
-    string22 <- "# bio <- replace_values_with_na(bio)"
-    string23 <- ""
-    string24 <- "# Now use tidyr::fill to carry non-missing information forward and backward !!where approriate!!."
-    string25 <- paste0("# vars_to_fill <- c(",intermediate_vector,")", collapse = ", ")
-    string26 <- "# bio <- bio |>
+    string32 <- "stop('STOP HERE: Read the notes below before continuing. You may delete this line then')"
+    string33 <- "# Note: Researchers often have to deal with missings values, when preparing panel datasets. For variables in NEPS spell datasets however, it is even more important."
+    string34 <- "# Sometimes in spell datasets, it might be advisable to use a 'carry-forward' approach, replacing missing values with the most recent non-missing value from previous waves, to address missing data caused by filtering (e.g., when spell information is collected only during the initial interview because it is assumed to be time-invariant), new items or data issues."
+    string35 <- "# However, it is important to carefully evaluate each spell-related variable to determine, whether carrying information forward (or backward) is appropriate. Additionally, you may also want to examine variables in non-spell datasets for missing values and consider methods such as carry-forward imputation or multiple imputation."
+    string36 <- "# This process cannot be fully automated and must be performed thoughtfully by the researcher. Below, we provide routines for replacing missing values with valid values from preceding or subsequent rows, grouped by ID_t and splink (Episodes). Uncomment if you want to use them."
+    string37 <- ""
+    string38 <- "# First, print the spell-related variables from all joined spell datasets (if its alot of variables, you should list only a few of them stepwise and decide for each variable, if you want to carry forward non-missing information or not)"
+    string39 <- paste0("# print(bio |> filter(sptype %in% c(", paste0(unique(sptypes_vector), collapse = ", "), ")) |> select(\"ID_t\", \"wave\", \"splink\", ", intermediate_vector, "), n = 40)", collapse = ", ")
+    string40 <- ""
+    string41 <- "# Set Missings on selected variables."
+    string42 <- "# bio <- replace_values_with_na(bio)"
+    string43 <- ""
+    string44 <- "# Now use tidyr::fill to carry non-missing information forward and backward !!where approriate!!."
+    string45 <- paste0("# vars_to_fill <- c(",intermediate_vector,")", collapse = ", ")
+    string46 <- "# bio <- bio |>
         # arrange(ID_t, splink, wave) |> # sort ascending
         # group_by(ID_t, splink) |>
         # fill(all_of(vars_to_fill), .direction = 'downup') |> # forward then backward
         # ungroup()"
-    string27 <- ""
+    string47 <- ""
 
-    result_vector <- c(result_vector, string12,string13,string14,string15,string16,string17,string18,string19,string20,string21,string22,string23,string24,string25,string26,string27)
+    result_vector <- c(result_vector, string32, string33, string34, string35, string36, string37, string38, string39, string40, string41, string42, string43, string44, string45, string46, string47)
   }
 
   return(result_vector)
