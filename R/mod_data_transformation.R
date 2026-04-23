@@ -288,27 +288,35 @@ shiny::observeEvent(input$sub_format_select, {
       shiny::observeEvent(input$confirm_variables, {
         shiny::req(input$dataset, input$multi_vars_input)
 
+        # delete variable label and the - from selected vars
         vars_vec_short <- stringr::str_replace_all(input$multi_vars_input, " - .*", "")
 
+        # create a df with selected dataset and selected variables
         dataframe <- create_dataframe(input$dataset, vars_vec_short)
 
+        # join linkage/merge key information from a package filed named linkage_keys.csv to the dataframe so each dataset gets the appropriate merge variables
         dataframe <- dplyr::left_join(dataframe, create_linkage_data(cohort_path()), by = "Dataset")
 
+        # put this df into the list of dfs
         varlist$data[[input$dataset]] <- dataframe
 
         # Update picker input for global_vars
         new_list <- gen_list_for_picker(input$dataset, input$multi_vars_input)
+        # read the current stored list into current_lists
         current_lists <- all_lists()
+        # add the selected variables list to current_lists under the selected dataset
         current_lists[[input$dataset]] <- new_list
+        # save the updated combined list back into the reactive value. This is how the app remembers all dataset-variable lists across clicks.
         all_lists(current_lists)
 
+        # update the pickerInput on the right side of the UI, that shows all selected datasets and variables
         shinyWidgets::updatePickerInput(
           session,
           "global_vars",
           choices = current_lists,
           selected = base::unique(base::unlist(current_lists))
         )
-
+        # confirmation/success message popup
         shinyalert::shinyalert(
           title = "",
           text = "Dataset, selected variables and merge procedure added to script. You may continue with another dataset.",

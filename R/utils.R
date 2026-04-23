@@ -568,8 +568,11 @@ assign_var_labels <- function(data, en_labels){
 #' @keywords internal
 #' @noRd
 gen_list_for_picker <-  function(dataset, vars){
+  # Extracts a short dataset name from dataset
   dataset_name_short <- stringr::str_match(dataset, "SC\\d+_(.*?)_S")[, 2]
+  # Converts vars into a named list
   new_list <- stats::setNames(base::as.list(vars), vars)
+  # Assigns that list into the global environment
   base::assign(dataset_name_short, new_list, envir = .GlobalEnv)
   return(new_list)
 }
