@@ -11,6 +11,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
       prio_var <- as.numeric(stringr::str_extract_all(prio, "\\d{2}"))
 
       if(dataformat== "R" & subformat == "Harmonized Spell Format"){
+        chapter <- 6 + length(datalist) # fixed number of chapters for main person-year-dataset preparation
         scripts <- c(
           paste0("# NEPScribe base script to transform NEPS ", sc, " SUF data into a person-year structured format."),
           "# It uses the harmonized spells from the biography data as a base for this transformation process.",
@@ -225,6 +226,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           "arrange(ID_t, wave) |>",
           "group_by(ID_t) |>",
           "mutate(firstwave= head(wave,1))",
+          "ungroup()",
           "",
           "# Select Variables, generate a month variable for the interview date and filter for participation waves and non-NA month rows.",
           if(sc == "SC6")" cohort_profile <- cohort_profile |>
@@ -249,26 +251,47 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           "select(-worktime, -month, -splast)",
           "",
           if(length(datalist)>0) generate_strings(datalist, english, format = "harmonized"), # add variables feature
-          if(length(datalist)>0) "",
-          if(education) gen_qualification_prep_code_r(english, sc),
-          if(education) "",
-          if(further_training) further_training_gen_r(english),
-          if(further_training) "",
-          if(children == T & sc %in% c("SC5", "SC6")) gen_children_example_r_sc5_6(english, sc),
-          if(children == T & sc %in% c("SC3", "SC4")) gen_children_example_r_sc3_4(english, sc),
-          if(children) "",
-          if(set_missings) "# Additional Settings------------------------------------",
-          if(set_missings)"",
-          if(set_missings) "# set missings for all vars",
-          if(set_missings)"bio <- replace_values_with_na(bio)"
-
+          if(length(datalist)>0) ""
         )
+
+      if (education) {
+        chapter <- chapter + 1
+        scripts <- c(scripts, gen_qualification_prep_code_r(english, sc, chapter), "")
+      }
+
+      if (further_training) {
+        chapter <- chapter + 1
+        scripts <- c(scripts, further_training_gen_r(english, chapter), "")
+      }
+
+      if (children && sc %in% c("SC5", "SC6")) {
+        chapter <- chapter + 1
+        scripts <- c(scripts, gen_children_example_r_sc5_6(english, sc, chapter), "")
+      }
+
+      if (children && sc %in% c("SC3", "SC4")) {
+        chapter <- chapter + 1
+        scripts <- c(scripts, gen_children_example_r_sc3_4(english, sc, chapter), "")
+      }
+
+      if (set_missings) {
+        chapter <- chapter + 1
+        scripts <- c(
+          scripts,
+          paste0("# ", chapter, " Additional Settings------------------------------------"),
+          "",
+          "# set missings for all vars",
+          "bio <- replace_values_with_na(bio)"
+        )
+      }
+
       }
 
       # NEPScribe R base script to transform NEPS SUF data from a spell format into a person-year structured format.
       # Harmonized biography spells are ignored; original spell files are used instead.
 
       if(dataformat== "R" & subformat == "Original Subspell Format"){
+        chapter <- 6 + length(datalist)
         scripts <- c("# NEPScribe R base script to transform NEPS SUF data from a spell format into a person-year structured format.",
                      "# Harmonized biography spells are ignored; original spell files are used instead.",
                      "",
@@ -538,21 +561,43 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
                      "",
                      if(length(datalist)>0) generate_strings(datalist, english, format = "subspell"), # add variables feature
                      if(length(datalist)>0) "",
-                     if(education) gen_qualification_prep_code_r(english, sc),
-                     if(education) "",
-                     if(further_training) further_training_gen_r(english),
-                     if(further_training) "",
-                     if(children == T & sc %in% c("SC5", "SC6")) gen_children_example_r_sc5_6(english, sc),
-                     if(children == T & sc %in% c("SC3", "SC4")) gen_children_example_r_sc3_4(english, sc),
-                     if(children) "",
-                     if(set_missings) "# Additional Settings------------------",
-                     if(set_missings)"",
-                     if(set_missings) "# set missings for all vars",
-                     if(set_missings)"bio <- replace_values_with_na(bio)"
         )
 
+        if (education) {
+          chapter <- chapter + 1
+          scripts <- c(scripts, gen_qualification_prep_code_r(english, sc, chapter), "")
+        }
+
+        if (further_training) {
+          chapter <- chapter + 1
+          scripts <- c(scripts, further_training_gen_r(english, chapter), "")
+        }
+
+        if (children && sc %in% c("SC5", "SC6")) {
+          chapter <- chapter + 1
+          scripts <- c(scripts, gen_children_example_r_sc5_6(english, sc, chapter), "")
+        }
+
+        if (children && sc %in% c("SC3", "SC4")) {
+          chapter <- chapter + 1
+          scripts <- c(scripts, gen_children_example_r_sc3_4(english, sc, chapter), "")
+        }
+
+        if (set_missings) {
+          chapter <- chapter + 1
+          scripts <- c(
+            scripts,
+            paste0("# ", chapter, " Additional Settings------------------------------------"),
+            "",
+            "# set missings for all vars",
+            "bio <- replace_values_with_na(bio)"
+          )
+        }
+
       }
+
       if(dataformat == "STATA" & subformat == "Harmonized Spell Format") {
+        chapter <- 6 + length(datalist)
         scripts <- c(
           paste0("* Base Dofile to transform NEPS ", sc," SUF data into a person-year format"),
           "* It uses the harmonized spells from the biography data as a base for this transformation process.",
@@ -767,36 +812,69 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           "merge 1:1 ID_t month using `intd', nogen keep(match)",
           "",
           if(length(datalist)>0) generate_strings_stata(datalist, format = "harmonized"), # add variables feature
-          if(length(datalist)>0) "",
-          if(education) gen_qualification_prep_code_stata(english, sc),
-          if(education) "",
-          if(further_training)"",
-          if(further_training) further_training_gen_stata(english),
-          if(further_training) "",
-          if(children == T & sc %in% c("SC5", "SC6")) gen_children_example_stata_sc5_6(english, sc),
-          if(children == T & sc %in% c("SC3", "SC4")) gen_children_example_stata_sc3_4(english, sc),
-          if(children)"",
-          if(set_missings | english)"********************************************************************************",
-          if(set_missings | english) "* Additional Settings",
-          if(set_missings | english)"********************************************************************************",
-          if(set_missings)"",
-          if(set_missings)"* Set missings for all variables",
-          if(set_missings)"mvdecode _all, mv(-98 = .a \\ -97 = .b \\ -54 = .c \\ -55 = .d ) // alternatively one can use the 'nepsmiss' function from nepstools ado",
-          if(set_missings)"",
-          if(english)"* Switch variable and value labels to english",
-          if(english)"label language en",
-          if(english)"",
-          if(english)"* Label generated variables with english labels",
-          if(english)"label var start \"Date of episode start\"",
-          if(english)"label var end \"Date of episode end\"",
-          if(english)"label var dur \"Duration of episode\"",
-          if(english)"label var firstwave \"First wave\"",
-          if(english)"label var month \"Month\""
+          if(length(datalist)>0) ""
         )
+
+        if (education) {
+          chapter <- chapter + 1
+          scripts <- c(scripts, gen_qualification_prep_code_stata(english, sc, chapter), "")
+        }
+
+        if (further_training) {
+          chapter <- chapter + 1
+          scripts <- c(scripts, further_training_gen_stata(english, chapter), "")
+        }
+
+        if (children && sc %in% c("SC5", "SC6")) {
+          chapter <- chapter + 1
+          scripts <- c(scripts, gen_children_example_stata_sc5_6(english, sc, chapter), "")
+        }
+
+        if (children && sc %in% c("SC3", "SC4")) {
+          chapter <- chapter + 1
+          scripts <- c(scripts, gen_children_example_stata_sc3_4(english, sc, chapter), "")
+        }
+
+        if (set_missings || english) {
+          chapter <- chapter + 1
+          scripts <- c(
+            scripts,
+            paste0("********************************************************************************"),
+            paste0("* ", chapter, " Additional Settings"),
+            paste0("********************************************************************************")
+          )
+        }
+
+        if (set_missings) {
+          scripts <- c(
+            scripts,
+            "",
+            "* Set missings for all variables",
+            "mvdecode _all, mv(-98 = .a \\ -97 = .b \\ -54 = .c \\ -55 = .d ) // alternatively one can use the 'nepsmiss' function from nepstools ado",
+            ""
+          )
+        }
+
+        if (english) {
+          scripts <- c(
+            scripts,
+            "* Switch variable and value labels to english",
+            "label language en",
+            "",
+            "* Label generated variables with english labels",
+            "label var start \"Date of episode start\"",
+            "label var end \"Date of episode end\"",
+            "label var dur \"Duration of episode\"",
+            "label var firstwave \"First wave\"",
+            "label var month \"Month\""
+          )
+        }
+
       }
 
 
       if(dataformat == "STATA" & subformat == "Original Subspell Format"){
+        chapter <- 6 + length(datalist)
         scripts <- c(
           "* NEPScribe base dofile for generating data set in a person-year-format.",
           "* Harmonized biography spells are ignored; original spell files are used instead.",
@@ -983,25 +1061,64 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           if(sc %in% c("SC5","SC6"))"drop ts1111m ts1111y ts1112m ts1112y ts1112c ts1311m ts1311y ts1312m ts1312y ts1312c ts1511m ts1511y ts1512m ts1512y ts1512c ts2111m ts2111y ts2112m ts2112y ts2112c ts2311m ts2311y ts2312m ts2312y ts2312c ts2511m ts2511y ts2512m ts2512y ts2512c ts2711m ts2711y ts2712m ts2712y ts2712c ts2911m ts2911y ts2912m ts2912y ts2912c prio worktime",
           "",
           if(length(datalist)>0) generate_strings_stata(datalist, format = "subspell"), # add variables feature
-          if(length(datalist)>0)"",
-          if(education) gen_qualification_prep_code_stata(english, sc),
-          if(education) "",
-          if(further_training)"",
-          if(further_training) further_training_gen_stata(english),
-          if(further_training) "",
-          if(children == T & sc %in% c("SC5", "SC6")) gen_children_example_stata_sc5_6(english, sc),
-          if(children == T & sc %in% c("SC3", "SC4")) gen_children_example_stata_sc3_4(english, sc),
-          if(children)"",
-          if(set_missings | english)"********************************************************************************",
-          if(set_missings | english) "* Additional Settings",
-          if(set_missings | english)"********************************************************************************",
-          if(set_missings)"",
-          if(set_missings)"* Set missings for all variables",
-          if(set_missings)"mvdecode _all, mv(-98 = .a \\ -97 = .b \\ -54 = .c \\ -55 = .d ) // alternatively one can use the 'nepsmiss' function from nepstools ado",
-          if(set_missings)"",
-          if(english)"* Switch variable and value labels to english",
-          if(english)"label language en"
+          if(length(datalist)>0)""
         )
+
+        if (education) {
+          chapter <- chapter + 1
+          scripts <- c(scripts, gen_qualification_prep_code_stata(english, sc, chapter), "")
+        }
+
+        if (further_training) {
+          chapter <- chapter + 1
+          scripts <- c(scripts, further_training_gen_stata(english, chapter), "")
+        }
+
+        if (children && sc %in% c("SC5", "SC6")) {
+          chapter <- chapter + 1
+          scripts <- c(scripts, gen_children_example_stata_sc5_6(english, sc, chapter), "")
+        }
+
+        if (children && sc %in% c("SC3", "SC4")) {
+          chapter <- chapter + 1
+          scripts <- c(scripts, gen_children_example_stata_sc3_4(english, sc, chapter), "")
+        }
+
+        if (set_missings || english) {
+          chapter <- chapter + 1
+          scripts <- c(
+            scripts,
+            paste0("********************************************************************************"),
+            paste0("* ", chapter, " Additional Settings"),
+            paste0("********************************************************************************")
+          )
+        }
+
+        if (set_missings) {
+          scripts <- c(
+            scripts,
+            "",
+            "* Set missings for all variables",
+            "mvdecode _all, mv(-98 = .a \\ -97 = .b \\ -54 = .c \\ -55 = .d ) // alternatively one can use the 'nepsmiss' function from nepstools ado",
+            ""
+          )
+        }
+
+        if (english) {
+          scripts <- c(
+            scripts,
+            "* Switch variable and value labels to english",
+            "label language en",
+            "",
+            "* Label generated variables with english labels",
+            "label var start \"Date of episode start\"",
+            "label var end \"Date of episode end\"",
+            "label var dur \"Duration of episode\"",
+            "label var firstwave \"First wave\"",
+            "label var month \"Month\""
+          )
+        }
+
       }
       return(scripts)
     }
