@@ -291,7 +291,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
       # Harmonized biography spells are ignored; original spell files are used instead.
 
       if(dataformat== "R" & subformat == "Original Subspell Format"){
-        chapter <- 6 + length(datalist)
+        chapter <- 3 + length(datalist)
         scripts <- c("# NEPScribe R base script to transform NEPS SUF data from a spell format into a person-year structured format.",
                      "# Harmonized biography spells are ignored; original spell files are used instead.",
                      "",
@@ -874,7 +874,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
 
 
       if(dataformat == "STATA" & subformat == "Original Subspell Format"){
-        chapter <- 6 + length(datalist)
+        chapter <- 3 + length(datalist)
         scripts <- c(
           "* NEPScribe base dofile for generating data set in a person-year-format.",
           "* Harmonized biography spells are ignored; original spell files are used instead.",
