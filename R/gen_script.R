@@ -12,7 +12,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
 
       if(dataformat== "R" & subformat == "Harmonized Spell Format"){
         scripts <- c(
-          paste0("# NEPScribe base R script to transform NEPS ", sc, " SUF data into a person-year format."),
+          paste0("# NEPScribe R base script to transform NEPS ", sc, " SUF data into a person-year format."),
           "",
           "# This is a basic data preparation script that generates a data set in a person-year-format by taking the harmonized spells from the NEPS SUF Biography file as a baseline.",
           "# Please carefully check each line and make sense of it. Edits to the script that fit your research project’s needs are probably necessary and recommended.",
@@ -266,16 +266,25 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
       # NEPScribe R base script to transform NEPS SUF data from a spell format into a person-year structured format.
       # Harmonized biography spells are ignored; original spell files are used instead.
 
-      if(dataformat== "R" & subformat == "Original Subspell Format"){
-        scripts <- c("# NEPScribe R base script to transform NEPS SUF data from a spell format into a person-year structured format.",
-                     "# Harmonized biography spells are ignored; original spell files are used instead.",
+      if(dataformat== "R" & subformat == "Original Sub-Spell Format"){
+        scripts <- c("# NEPScribe R base script to transform NEPS SUF data from a spell format into a person-year format.",
+                     "# This is a basic data preparation script that generates a data set in a person-year-format by taking the original sub-spell information from the NEPS SUF spell data sets as a baseline.",
+                     "# Harmonized spells from the biography data set are ignored.",
                      "",
-                     "# This R script generates a data set in a person-year-format by taking the subspells from the NEPS SUF spell data sets as a baseline for the data preparation.",
+                     "# !ATTENTION!",
+                     "# Please carefully check each line and make sense of it. Edits to the script that fit your research project’s needs are probably necessary and recommended.",
+                     "# Pay special attention to key variables of interest in the different sub-spells to see how these data have been collected and consider missings in sub-spells. Missings can be dealt with by replacing them with valid values from other sub-spells. Routines for that are partially provided in the script.",
                      "",
-                     "#  - It is recommended to run this script line by line and make sense of it. ",
-                     "#  - Edit the script according to the needs of your research project. ",
-                     "#  - Look at key variables of interest in the different subspells to see how these data have been collected and pay attention to missings in subspells.",
-                     "#  - Deal with missings by filling these with valid values from other subspells. Routines for that are partially provided in the script.",
+                     "# Approach:",
+                     "",
+                     "# 1. Step: Append all spell data sets into one data set with the original sub-spell information.",
+                     "",
+                     "# 2. Step: Recode variables on the type of vocational training and working hours of employment. This information is used in the spell prioritisation process. Also recode start and end date information by replacing season codes and dropping spells with missing date information. At this point only sub-spells at the time of the interview date are kept (no harmonized information or sub-spells that weren’t current at the interview date).",
+                     "",
+                     "# 3. Step: Spell prioritisation process. Sorting of parallel spells is determined by spell order, main/side episode (descending), working hours (descending), duration (descending) and splink (ascending order in which the episodes were reported). You may edit this according to your research question(s). The data set is then reduced to one (the first) spell per person and wave.",
+                     "",
+                     "# Additional data preparation steps may vary based on the settings configured in the Transform Data tab of the NEPScribe app.",
+                     "",
                      "",
                      "rm(list = ls())",
                      "",
@@ -416,7 +425,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
                      "# Drop harmonized spells",
                      "bio <- bio  |>  filter(!spstat %in% c(30, 31))",
                      "",
-                     "# Note that spell variables may contain missing information across subspells. Therefore, we use tidyr::fill() to propagate non-missing values in the two recoded variables above, filling NAs with valid values from preceding or subsequent subspells within the same episode (splink variable). Edit this, if you prefer a different approach.",
+                     "# Note that spell variables may contain missing information across subspells. Therefore, we use tidyr::fill() to propagate non-missing values in the two recoded variables above, filling NAs with valid values from preceding or subsequent sub spells within the same episode (splink variable). Edit this, if you prefer a different approach.",
                      "",
                      "# First, set missing codes to NA on variables used for prioritisation later.",
                      "bio <- bio |>",
@@ -800,19 +809,25 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
       }
 
 
-      if(dataformat == "STATA" & subformat == "Original Subspell Format"){
+      if(dataformat == "STATA" & subformat == "Original Sub-Spell Format"){
         scripts <- c(
-          "* NEPScribe base Do-file for generating data set in a person-year-format.",
-          "* Harmonized biography spells are ignored; original spell files are used instead.",
+          "* NEPScribe base Stata Do-file to transform NEPS SUF data from a spell format into a person-year format.",
+          "* This is a basic data preparation script that generates a data set in a person-year-format by taking the original sub-spell information from the NEPS SUF spell data sets as a baseline. Harmonized spells from the biography data set are ignored.",
+          "",
+          "* !ATTENTION!",
+          "* Please carefully check each line and make sense of it. Edits to the script that fit your research project’s needs are probably necessary and recommended.",
+          "* Pay special attention to key variables of interest in the different sub-spells to see how these data have been collected and consider missings in sub-spells. Missings can be dealt with by replacing them with valid values from other sub-spells. Routines for that are partially provided in the script.",
           "",
           "********************************************************************************",
+          "* Approach:",
           "",
-          "  * This R script generates a data set in a person-year-format by taking the subspells from the NEPS SUF spell data sets as a baseline for the data preparation.",
+          "* 1. Step: Append all spell data sets into one data set with the original sub-spell information.",
           "",
-          "*  - It is recommended to run this script line by line and make sense of it. ",
-          "*  - Edit the script according to the needs of your research project. ",
-          "*  - Look at key variables of interest in the different subspells to see how these data have been collected and pay attention to missings in subspells.",
-          "*  - Deal with missings by filling these with valid values from other subspells. Routines for that are partially provided in the script.",
+          "* 2. Step: Recode variables on the type of vocational training and working hours of employment. This information is used in the spell prioritisation process. Also recode start and end date information by replacing season codes and dropping spells with missing date information. At this point only sub-spells at the time of the interview date are kept (no harmonized information or sub-spells that weren’t current at the interview date).",
+          "",
+          "* 3. Step: Spell prioritisation process. Sorting of parallel spells is determined by spell order, main/side episode (descending), working hours (descending), duration (descending) and splink (ascending order in which the episodes were reported). You may edit this according to your research question(s). The data set is then reduced to one (the first) spell per person and wave.",
+          "",
+          "* Additional data preparation steps may vary based on the settings configured in the Transform Data tab of the NEPScribe app.",
           "",
           "********************************************************************************",
           "",
@@ -890,7 +905,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           "* Drop harmonized spells",
           "drop if inlist(spstat,30,31)",
           "",
-          "* Note that spell variables may contain missing information across subspells. Therefore, we fill missings in the two recoded variables above with valid values from preceding or subsequent subspells. Edit this, if you prefer a different approach.",
+          "* Note that spell variables may contain missing information across sub spells. Therefore, we fill missings in the two recoded variables above with valid values from preceding or subsequent sub spells. Edit this, if you prefer a different approach.",
           "* First, set missings on variables used for prioritisation later. It is recommended to use the function nepsmiss from the nepstools ado to recode all missing values to specific missing codes. You may install it with: net install nepstools, from(http://nocrypt.neps-data.de/stata). If you want to exclude specific missings from being recoded you might use statas mvdecode function instead.",
           "nepsmiss _all",
           "",
