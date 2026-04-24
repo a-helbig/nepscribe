@@ -266,7 +266,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
       # NEPScribe R base script to transform NEPS SUF data from a spell format into a person-year structured format.
       # Harmonized biography spells are ignored; original spell files are used instead.
 
-      if(dataformat== "R" & subformat == "Original Sub-Spell Format"){
+      if(dataformat== "R" & subformat == "Original Subspell Format"){
         scripts <- c("# NEPScribe R base script to transform NEPS SUF data from a spell format into a person-year format.",
                      "# This is a basic data preparation script that generates a dataset in a person-year-format by taking the original sub-spell information from the NEPS SUF spell datasets as a baseline.",
                      "# Harmonized spells from the biography dataset are ignored.",
@@ -810,7 +810,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
       }
 
 
-      if(dataformat == "STATA" & subformat == "Original Sub-Spell Format"){
+      if(dataformat == "STATA" & subformat == "Original subspell Format"){
         scripts <- c(
           "* NEPScribe base Stata Do-file to transform NEPS SUF data from a spell format into a person-year format.",
           "* This is a basic data preparation script that generates a dataset in a person-year-format by taking the original sub-spell information from the NEPS SUF spell datasets as a baseline. Harmonized spells from the biography dataset are ignored.",
