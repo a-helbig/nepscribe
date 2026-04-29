@@ -569,7 +569,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
                      "  select(-starts_with('ts'), -prio, -spms, -starts_with('ts15201'))",
                      "",
                      if(length(datalist)>0) generate_strings(datalist, english, format = "subspell"), # add variables feature
-                     if(length(datalist)>0) "",
+                     if(length(datalist)>0) ""
         )
 
         if (education) {
