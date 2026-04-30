@@ -27,3 +27,25 @@
     It may be released for other SCs in the future.
     
 -   Added hover texts for all inputs in the UI.
+
+## Version 0.3.0 (2026-04-30)
+
+-   Implemented (retrospective) feature to add work and unemployment experience indicators.
+
+-   Improved commentary on all scripts.
+
+-   Resolved an issue in stata scripts, when prioritisation list was changed. This change was not really applied to the data because a new variable prio_temp was generated in the recoding line, which wasnt used then in the sorting for the prioritisation process.
+
+-   Resolved an issue in educational qualification data preparation chunks.
+
+-   When loading large ptarget datasets in the 'add additional variables' feature, a popup appears to warn users that loading the variable names may take a few moments.
+
+-   Variable first_wave removed from all scripts.
+
+-   Fixed merging issues when adding variables from spVocBreaks, spVocExtExam and spSchoolExtExam.
+
+-   Various small typo fixes.
+
+-   Updated nepstool dependency to 0.1.2
+
+
