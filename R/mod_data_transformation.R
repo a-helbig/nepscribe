@@ -265,13 +265,45 @@ shiny::observeEvent(input$sub_format_select, {
 
       # Update multiInput when dataset is selected
       shiny::observeEvent(input$dataset, {
+
+        is_big_dataset <- grepl("ptarget", input$dataset, ignore.case = TRUE)
+
+        if (is_big_dataset) {
+          shiny::showModal(
+            shiny::modalDialog(
+              title = "Loading variables",
+              "This dataset is large, so loading the variable list may take a few seconds. Please wait.",
+              easyClose = FALSE,
+              footer = NULL
+            )
+          )
+        }
+
+        # Clear the multiInput immediately
         shinyWidgets::updateMultiInput(
           session,
           "multi_vars_input",
           label = NULL,
-          selected = NULL,
-          choices = gen_comb_char(cohort_path(), input$dataset, input$language)
+          selected = character(0),
+          choices = character(0)
         )
+
+        # Compute the variable list
+        new_choices <- gen_comb_char(cohort_path(), input$dataset, input$language)
+
+        # Update multiInput with the new choices
+        shinyWidgets::updateMultiInput(
+          session,
+          "multi_vars_input",
+          label = NULL,
+          selected = character(0),
+          choices = new_choices
+        )
+
+        # Close modal if it was shown
+        if (is_big_dataset) {
+          shiny::removeModal()
+        }
       })
 
       # Reactive list of dataset names for select input

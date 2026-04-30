@@ -219,13 +219,6 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           "# Load interview dates from cohortprofile",
           "cohort_profile <- read_neps(paste0(datapath, '/', sc, '_CohortProfile_D_', suf_version,'.dta'), english = english)",
           "",
-          "# Generate variable for the wave of the first interview",
-          "cohort_profile <- cohort_profile |>",
-          "arrange(ID_t, wave) |>",
-          "group_by(ID_t) |>",
-          "mutate(firstwave= head(wave,1))",
-          "ungroup()",
-          "",
           "# Select Variables, generate a month variable for the interview date and filter for participation waves and non-NA month rows.",
           if(sc == "SC6")" cohort_profile <- cohort_profile |>
       select(ID_t, wave, tx8601y, tx8601m, tx80220) |>
@@ -760,10 +753,10 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           paste0("* recode licences courses and ihk courses to value ",  ifelse(sc != "SC5", "31", "37"), " to place it behind ", ifelse(sc != "SC5", "xmodule", "internship"), " episodes in the prioritisation order because these types of episodes are considered of minor importance in many research projects in regard to spell prioritisation."),
           paste0("recode prio 24 = ", ifelse(sc != "SC5", "31", "37"), " if inrange(vt_typ,13,14)"),
           "",
-          if(sc != "SC5")paste0("recode prio ","(",prio_var[1],  " = 1)"," (",prio_var[2]," = 2)"," (",prio_var[3]," = 3)"," (",prio_var[4]," = 4)"," (",prio_var[5]," = 5)"," (",prio_var[6]," = 6)"," (",prio_var[7]," = 7)"," (",prio_var[8]," = 8)"," (",prio_var[9]," = 9)"," (",prio_var[10]," = 10)",",gen(prio_temp)"),
-          if(sc == "SC5")paste0("recode prio ","(",prio_var[1],  " = 1)"," (",prio_var[2]," = 2)"," (",prio_var[3]," = 3)"," (",prio_var[4]," = 4)"," (",prio_var[5]," = 5)"," (",prio_var[6]," = 6)"," (",prio_var[7]," = 7)"," (",prio_var[8]," = 8)"," (",prio_var[9]," = 9)"," (",prio_var[10]," = 10)"," (",prio_var[11]," = 11)",",gen(prio_temp)"),
+          if(sc != "SC5")paste0("recode prio ","(",prio_var[1],  " = 1)"," (",prio_var[2]," = 2)"," (",prio_var[3]," = 3)"," (",prio_var[4]," = 4)"," (",prio_var[5]," = 5)"," (",prio_var[6]," = 6)"," (",prio_var[7]," = 7)"," (",prio_var[8]," = 8)"," (",prio_var[9]," = 9)"," (",prio_var[10]," = 10)"),
+          if(sc == "SC5")paste0("recode prio ","(",prio_var[1],  " = 1)"," (",prio_var[2]," = 2)"," (",prio_var[3]," = 3)"," (",prio_var[4]," = 4)"," (",prio_var[5]," = 5)"," (",prio_var[6]," = 6)"," (",prio_var[7]," = 7)"," (",prio_var[8]," = 8)"," (",prio_var[9]," = 9)"," (",prio_var[10]," = 10)"," (",prio_var[11]," = 11)"),
           "* For sorting set side episodes und missings to 0",
-          "recode spms (1 = 1) (2 . = 0)",
+          "recode spms (1 = 1) (2 . .x = 0)",
           "",
           "clonevar worktime = ts23223",
           "replace worktime = 0 if missing(ts23223) //recode missings to 0 for sorting",
@@ -773,7 +766,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           if(parallel) gen_parallel_spells_stata(format="harmonized"),
           "* Reduce to the prioritized spells by only keeping the first observation of each month within each individual",
           "by ID_t month: keep if _n == 1",
-          "drop worktime prio prio_temp wave ts23223 vt_typ // drop wave variable from biography file here as there is only one wave for each episode which only indicates in which wave an episode was last reported, regardless of whether it was reported over multiple waves. In the next step the wave variable from cohort profile is added indicating all waves during which an episode was current.",
+          "drop worktime prio wave ts23223 vt_typ // drop wave variable from biography file here as there is only one wave for each episode which only indicates in which wave an episode was last reported, regardless of whether it was reported over multiple waves. In the next step the wave variable from cohort profile is added indicating all waves during which an episode was current.",
           "",
           if(work_exp)"* Generate work experience in months",
           if(work_exp)"gen emp=1 if sptype == 26",
@@ -794,12 +787,8 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           "preserve",
           paste0("use \"$DATA\\", sc, "_CohortProfile_D_$suf.dta\", clear"),
           "",
-          "* Generate variable for the wave of the first interview",
-          "bys ID_t (wave): gen firstwave = wave[1]",
-          "label var firstwave \"Startwelle\"",
-          "",
-          if(sc %in% c("SC3", "SC6"))"keep ID_t wave tx8601y tx8601m tx80220 firstwave",
-          if(sc %in% c("SC4", "SC5"))"keep ID_t wave tx8600y tx8600m tx80220 firstwave",
+          if(sc %in% c("SC3", "SC6"))"keep ID_t wave tx8601y tx8601m tx80220",
+          if(sc %in% c("SC4", "SC5"))"keep ID_t wave tx8600y tx8600m tx80220",
           "",
           "* Gen interview month",
           if(sc %in% c("SC3", "SC6"))"gen month = ym(tx8601y,tx8601m)",
@@ -878,7 +867,6 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
             "label var start \"Date of episode start\"",
             "label var end \"Date of episode end\"",
             "label var dur \"Duration of episode\"",
-            "label var firstwave \"First wave\"",
             "label var month \"Month\""
           )
         }
@@ -1055,8 +1043,8 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           paste0("recode prio 24 = ", ifelse(sc != "SC5", "31", "37"), " if inrange(vt_typ,13,14)"),
           "",
           "* Prioritization of episodes following the order selected in NEPScribe",
-          if(sc != "SC5")paste0("recode prio ","(",prio_var[1],  " = 1)"," (",prio_var[2]," = 2)"," (",prio_var[3]," = 3)"," (",prio_var[4]," = 4)"," (",prio_var[5]," = 5)"," (",prio_var[6]," = 6)"," (",prio_var[7]," = 7)"," (",prio_var[8]," = 8)"," (",prio_var[9]," = 9)"," (",prio_var[10]," = 10)",",gen(prio_temp)"),
-          if(sc == "SC5")paste0("recode prio ","(",prio_var[1],  " = 1)"," (",prio_var[2]," = 2)"," (",prio_var[3]," = 3)"," (",prio_var[4]," = 4)"," (",prio_var[5]," = 5)"," (",prio_var[6]," = 6)"," (",prio_var[7]," = 7)"," (",prio_var[8]," = 8)"," (",prio_var[9]," = 9)"," (",prio_var[10]," = 10)"," (",prio_var[11]," = 11)",",gen(prio_temp)"),
+          if(sc != "SC5")paste0("recode prio ","(",prio_var[1],  " = 1)"," (",prio_var[2]," = 2)"," (",prio_var[3]," = 3)"," (",prio_var[4]," = 4)"," (",prio_var[5]," = 5)"," (",prio_var[6]," = 6)"," (",prio_var[7]," = 7)"," (",prio_var[8]," = 8)"," (",prio_var[9]," = 9)"," (",prio_var[10]," = 10)"),
+          if(sc == "SC5")paste0("recode prio ","(",prio_var[1],  " = 1)"," (",prio_var[2]," = 2)"," (",prio_var[3]," = 3)"," (",prio_var[4]," = 4)"," (",prio_var[5]," = 5)"," (",prio_var[6]," = 6)"," (",prio_var[7]," = 7)"," (",prio_var[8]," = 8)"," (",prio_var[9]," = 9)"," (",prio_var[10]," = 10)"," (",prio_var[11]," = 11)"),
           "* For sorting set side episodes and missings to 0",
           "recode spms (1 = 1) (2 . = 0)",
           "",
@@ -1132,9 +1120,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
             "* Label generated variables with english labels",
             "label var start \"Date of episode start\"",
             "label var end \"Date of episode end\"",
-            "label var dur \"Duration of episode\"",
-            "label var firstwave \"First wave\"",
-            "label var month \"Month\""
+            "label var dur \"Duration of episode\""
           )
         }
 

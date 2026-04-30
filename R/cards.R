@@ -185,7 +185,7 @@ cards_data_trans <- function() {
 
     # Spell Prioritization panel
     bslib::nav_panel(
-      title = htmltools::HTML("<span data-toggle='tooltip' title='Edit spell priorisation order in person year dataset script if desired'>Spell Prioriation</span>"),
+      title = htmltools::HTML("<span data-toggle='tooltip' title='Edit spell prioritisation order in person year dataset script if desired'>Spell Prioritisation</span>"),
       data_transformation_prio_ui("data_transformation")
     ),
 
