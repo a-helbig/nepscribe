@@ -59,7 +59,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           "",
           if(nchar(datapath_local)>0) paste0("datapath = ","'",datapath_local,"/","'"),
           if(nchar(datapath_local)==0)"datapath = \"\" # Specify local datapath here",
-          if(nchar(datapath_local)>0) paste0("suf_version = ", "'", suf_version,"'"),
+          if(nchar(datapath_local)>0) paste0("suf_version = ", "'", suf_version,"'", " # Please adjust if necessary"),
           if(nchar(datapath_local)==0)"suf_version = \"16-0-0\" # Please adjust if necessary",
           paste0("english = ", english),
           paste0("sc = ", "'",sc,"'"),
@@ -324,7 +324,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
                      "# Set working directory and define file paths (adjust as needed)",
                      if(nchar(datapath_local)>0) paste0("datapath = ","'",datapath_local,"/","'"),
                      if(nchar(datapath_local)==0)"datapath = \"\" # Specify local datapath here",
-                     if(nchar(datapath_local)>0) paste0("suf_version = ", "'", suf_version,"'"),
+                     if(nchar(datapath_local)>0) paste0("suf_version = ", "'", suf_version,"'", " # Please adjust if necessary"),
                      if(nchar(datapath_local)==0)"suf_version = \"16-0-0\" # Please adjust if necessary",
                      paste0("english = ", english),
                      paste0("sc = ", "'",sc,"'"),
@@ -639,8 +639,8 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           "* paths ",
           if(nchar(datapath_local)>0)paste0("global DATA ","\"",datapath_local,"/","\""),
           if(nchar(datapath_local)==0)"global DATA = \"\" // Specify local datapath here",
-          if(nchar(datapath_local)>0)paste0("global suf ", "\"",suf_version, "\""),
-          if(nchar(datapath_local)==0)"global suf \"\" // Please specify, e.g. 16-0-0",
+          if(nchar(datapath_local)>0)paste0("global suf ", "\"",suf_version, "\"", " // Please adjust if necessary"),
+          if(nchar(datapath_local)==0)"global suf \"16-0-0\" // Please specify, e.g. 16-0-0",
           "",
           "",
           "********************************************************************************",
@@ -657,15 +657,15 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           "drop startm starty endm endy",
           "",
           "format start end %tm",
-          "lab var start \"Startdatum in Monaten seit Jan 1960\"",
-          "lab var end \"Enddatum in Monaten seit Jan 1960\"",
+          if (!english)"lab var start \"Startdatum in Monaten seit Jan 1960\"",
+          if (!english)"lab var end \"Enddatum in Monaten seit Jan 1960\"",
           "",
           "drop if start == . | end == .",
           "",
           "* Duration",
           "gen dur = end-start+1",
           "sum dur, detail // no negative values",
-          "label var dur \"Dauer des Spells\"",
+          if (!english)"label var dur \"Dauer des Spells\"",
           "",
           "isid ID_t splink // assure that there is only one observation per person and episode",
           "",
@@ -795,6 +795,8 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           if(sc %in% c("SC4", "SC5"))"gen month = ym(tx8600y,tx8600m)",
           "format month %tm",
           "",
+          if (!english) "label var month \"Monat\"",
+          "",
           "* Drop non-participants",
           "drop if tx80220 != 1 | missing(month)",
           "",
@@ -860,14 +862,14 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
         if (english) {
           scripts <- c(
             scripts,
+            "",
             "* Switch variable and value labels to english",
             "label language en",
             "",
-            "* Label generated variables with english labels",
-            "label var start \"Date of episode start\"",
-            "label var end \"Date of episode end\"",
-            "label var dur \"Duration of episode\"",
-            "label var month \"Month\""
+            if (english) "label var start \"Date of episode start (in months since january 1960)\"",
+            if (english) "label var end \"Date of episode end (months since january 1960)\"",
+            if (english) "label var dur \"Duration of episode\"",
+            if (english) "label var month \"Month\""
           )
         }
 
@@ -906,7 +908,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           "* paths ",
           if(nchar(datapath_local)>0)paste0("global DATA ","\"",datapath_local,"/","\""),
           if(nchar(datapath_local)==0)"global DATA = \"\" // Specify local datapath here",
-          if(nchar(datapath_local)>0)paste0("global suf ", "\"",suf_version, "\""),
+          if(nchar(datapath_local)>0)paste0("global suf ", "\"",suf_version, "\"", " // Please adjust if necessary"),
           if(nchar(datapath_local)==0)"global suf \"\" // Please specify, e.g. 16-0-0",
           "",
           "global standard_spell_vars ID_t splink subspell spell spgen spext spstat disagint disagwave wave spms sptype",
@@ -1009,6 +1011,8 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           "* Format this var",
           "format start %tm",
           "format end %tm ",
+          if (!english)"lab var start \"Startdatum in Monaten seit Jan 1960\"",
+          if (!english)"lab var end \"Enddatum in Monaten seit Jan 1960\"",
           "",
           "* Drop spells with missing dates ",
           "drop if start == . | end == .",
@@ -1016,6 +1020,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           "* Duration",
           "gen dur = end-start+1",
           "sum dur, detail // no negative values",
+          if (!english)"label var dur \"Dauer des Spells\"",
           "",
           "* Keep only spells on the interview date: all reported spells that ended before the corresponding interview date are dropped so that the person-year-format with one episode per year (interview) can be generated.",
           "gen keep = .",
@@ -1114,13 +1119,13 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
         if (english) {
           scripts <- c(
             scripts,
+            "",
             "* Switch variable and value labels to english",
             "label language en",
             "",
-            "* Label generated variables with english labels",
-            "label var start \"Date of episode start\"",
-            "label var end \"Date of episode end\"",
-            "label var dur \"Duration of episode\""
+            if (english) "label var start \"Date of episode start (in months since january 1960)\"",
+            if (english) "label var end \"Date of episode end (months since january 1960)\"",
+            if (english) "label var dur \"Duration of episode\""
           )
         }
 

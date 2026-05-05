@@ -6,7 +6,7 @@
 #' @noRd
 app_ui <- function() {
 
-  app_version <- "v0.2.0"  # define your current app version here
+  app_version <- "v0.3.1"  # define your current app version here
 
   # Make package www resources accessible in Shiny
   shiny::addResourcePath(

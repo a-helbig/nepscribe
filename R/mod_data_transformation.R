@@ -37,8 +37,8 @@ data_transformation_sidebar_ui <- function(id) {
     shiny::p(""),
     htmltools::tags$div(title = "Currently supported script formats: R or STATA.",
                         shiny::radioButtons(ns("stata_or_r"), htmltools::tags$b("Script file format"), c("STATA", "R"), selected = "STATA")),
-    htmltools::tags$div(title = "Set missing values: Specific NEPS missing codes will be set to Statas missing notation '.' or NA in R. \n\n Include Parallel Spells: Variables on type and timing of parallel spell will be generated in the script. \n\n Employment experience: Include an indicator that (retrospectively) counts the months spent in any employment. \n\n Unemployment experience: Include an indicator that (retrospectively) counts the months spent in any employment.",
-                        shiny::checkboxGroupInput(ns("settings"), htmltools::tags$b("Settings"), choices = c("Set Missing Values", "Include Parallel Spells", "Retrospective work experience", "Retrospective unemployment experience"))),
+    htmltools::tags$div(title = "Set missing values: Specific NEPS missing codes will be set to Statas missing notation '.' or NA in R. \n\n Include Parallel Spells: Variables on type and timing of parallel spell will be generated in the script. \n\n Work experience: Include an indicator that (retrospectively) counts the months spent in any employment. \n\n Unemployment experience: Include an indicator that (retrospectively) counts the months spent in any unemployment.",
+                        shiny::checkboxGroupInput(ns("settings"), htmltools::tags$b("Settings"), choices = c("Set Missing Values", "Include Parallel Spells", "Work experience", "Unemployment experience"))),
     shiny::p(""),
     htmltools::tags$div(title = "Adds code for data preparation of modules, that cant simply be added via the 'Additional Variables' tab",
     shiny::checkboxGroupInput(ns("add_modules"), htmltools::tags$b("Add exemplary data preparation"), choices = c("Further Training","Children", "Highest Education"))),
@@ -149,47 +149,43 @@ data_transformation_server <- function(id, settings_reactive) {
         path <- system.file("extdata", input$cohort_data_trans, package = "NEPScribe")
       })
 
-      valid_files <- shiny::reactive({
-        path <- input$datapath %||% ""
-        if (path == "" || !dir.exists(path)) {
-          return(character(0))
-        }
-        list.files(path, pattern = "^SC\\d+.*\\.dta$", full.names = TRUE)
-      })
-
-      # Reactive flag is TRUE when valid files found, FALSE otherwise
-      valid_path <- shiny::reactive({
-        length(valid_files()) > 0
-      })
+      # valid_files <- shiny::reactive({
+      #   path <- input$datapath %||% ""
+      #   if (path == "" || !dir.exists(path)) {
+      #     return(character(0))
+      #   }
+      #   list.files(path, pattern = "^SC\\d+.*\\.dta$", full.names = TRUE)
+      # })
+      #
+      # # Reactive flag is TRUE when valid files found, FALSE otherwise
+      # valid_path <- shiny::reactive({
+      #   length(valid_files()) > 0
+      # })
 
       # Feedback based on valid_path
-      shiny::observe({
-        path <- input$datapath %||% ""
-        if (path == "") {
-          shinyFeedback::hideFeedback("datapath")
-          return()
-        }
-
-        if (valid_path()) {
-          shinyFeedback::hideFeedback("datapath")
-          shinyFeedback::showFeedbackSuccess("datapath", "Success: NEPS SUF files found. Local datapath has been added to the script.")
-        } else {
-          shinyFeedback::hideFeedback("datapath")
-          shinyFeedback::feedbackWarning(
-            "datapath",
-            TRUE,
-            "Warning: this is either no filepath or no NEPS SUF files are being detected"
-          )
-        }
-      })
+      # shiny::observe({
+      #   path <- input$datapath %||% ""
+      #   if (path == "") {
+      #     shinyFeedback::hideFeedback("datapath")
+      #     return()
+      #   }
+      #
+      #   if (valid_path()) {
+      #     shinyFeedback::hideFeedback("datapath")
+      #     shinyFeedback::showFeedbackSuccess("datapath", "Success: NEPS SUF files found. Local datapath has been added to the script.")
+      #   } else {
+      #     shinyFeedback::hideFeedback("datapath")
+      #     shinyFeedback::feedbackWarning(
+      #       "datapath",
+      #       TRUE,
+      #       "Warning: this is either no filepath or no NEPS SUF files are being detected"
+      #     )
+      #   }
+      # })
 
       # reactive datapath that will be added to the script
       datapath_local <- shiny::reactive({
-        if (isTRUE(valid_path())) {
           input$datapath
-        } else {
-          ""
-        }
       })
 
 # Update exemplary data preparation further training depending on sc --------
@@ -211,7 +207,7 @@ data_transformation_server <- function(id, settings_reactive) {
 shiny::observeEvent(input$sub_format_select, {
 
   if(input$sub_format_select == "Harmonized Spell Format")
-    choices <- c("Set Missing Values", "Include Parallel Spells", "Retrospective work experience", "Retrospective unemployment experience")
+    choices <- c("Set Missing Values", "Include Parallel Spells", "Work experience", "Unemployment experience")
   else
     choices <- c("Set Missing Values", "Include Parallel Spells")
 
@@ -399,7 +395,7 @@ shiny::observeEvent(input$sub_format_select, {
         script_vector <- gen_script(
           datapath_conv = stringr::str_replace_all(cohort_path(), "\\\\", "/"),
           datapath_local = stringr::str_replace_all(datapath_local(), "\\\\", "/"),
-          suf_version = extract_suf_version(datapath_local()),
+          suf_version = extract_suf_version(cohort_path()),
           dataformat = input$stata_or_r,
           subformat = input$sub_format_select,
           datalist = filter_dataframes(
@@ -410,8 +406,8 @@ shiny::observeEvent(input$sub_format_select, {
           english = input$language,
           set_missings = "Set Missing Values" %in% input$settings,
           parallel = "Include Parallel Spells" %in% input$settings,
-          work_exp = "Retrospective work experience" %in% input$settings,
-          unemp_exp = "Retrospective unemployment experience" %in% input$settings,
+          work_exp = "Work experience" %in% input$settings,
+          unemp_exp = "Unemployment experience" %in% input$settings,
           further_training = "Further Training" %in% input$add_modules,
           education = "Highest Education" %in% input$add_modules,
           children = "Children" %in% input$add_modules
@@ -498,7 +494,7 @@ shiny::observeEvent(input$sub_format_select, {
           script_harm <- gen_script(
             datapath_conv = stringr::str_replace_all(cohort_path(), "\\\\", "/"),
             datapath_local = stringr::str_replace_all(datapath_local(), "\\\\", "/"),
-            suf_version = extract_suf_version(datapath_local()),
+            suf_version = extract_suf_version(cohort_path()),
             dataformat = input$stata_or_r,
             subformat = input$sub_format_select,
             datalist = filter_dataframes(varlist$data, stringr::str_replace_all(input$global_vars, " - .*", "")),
@@ -506,8 +502,8 @@ shiny::observeEvent(input$sub_format_select, {
             english = input$language,
             set_missings = "Set Missing Values" %in% input$settings,
             parallel = "Include Parallel Spells" %in% input$settings,
-            work_exp = "Retrospective work experience" %in% input$settings,
-            unemp_exp = "Retrospective unemployment experience" %in% input$settings,
+            work_exp = "Work experience" %in% input$settings,
+            unemp_exp = "Unemployment experience" %in% input$settings,
             further_training = "Further Training" %in% input$add_modules,
             education = "Highest Education" %in% input$add_modules,
             children = "Children" %in% input$add_modules
