@@ -1318,9 +1318,9 @@ generate_strings <- function(data_list, english, format) {
 generate_strings_stata <- function(data_list, format) {
   # Initialize an empty character vector to store the results
   result_vector <- character()
-  # Initialize an empty character vector to store all variables
+  # Initialize an empty character vector to store all variables added from spellfiles
   intermediate_vector <- character()
-  # Initialize an empty character vector to store all variables
+  # Initialize an empty character vector to store all sptypes for printing variables conditionally later on in row 1417
   sptypes_vector <- character()
 
   # Initialize string that holds regexp which is used to identify datasets that contain the variable spstat because that variable is used to get rid of harmonized episodes
@@ -1403,11 +1403,12 @@ generate_strings_stata <- function(data_list, format) {
       # Do nothing and proceed to the next iteration
     }
 
-  }
+  }   # loop end
 
   # generate and add these strings to the results vector in case that length of intermediate vector is > 0
   if(length(intermediate_vector)>0){
     # outside of the loop, we now add the syntax for fill missings in vars and preceding infotext, we do this only for vars from spelldatasets.
+    # first, we collapse the strings in the intermediate vector to 1 big string without commas for stata purposes
     intermediate_vector <- paste0(intermediate_vector, collapse = " ")
 
     string22 <- ""
@@ -1433,7 +1434,7 @@ generate_strings_stata <- function(data_list, format) {
     string42 <- "*sort ID_t splink wave // sort in natural way again"
 
     # add these strings now to the results vector with all basic strings
-    result_vector <- c(result_vector, string20, string21, string22, string23, string24, string25, string26, string27, string28, string29, string30, string31, string32, string33, string34, string35, string36, string37, string38, string39, string40, string41, string42)
+    result_vector <- c(result_vector, string22, string23, string24, string25, string26, string27, string28, string29, string30, string31, string32, string33, string34, string35, string36, string37, string38, string39, string40, string41, string42)
   }
 
   return(result_vector)
