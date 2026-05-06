@@ -1,7 +1,7 @@
 Package: NEPScribe
 Type: Package
 Title: What the Package Does (Title Case)
-Version: 0.3.0
+Version: 0.3.1
 Authors@R: person("Alexander", "Helbig", email = "alexander.helbig@wzb.eu", role = c("aut", "cre"))
 Description: Explore NEPS datasets and generate scripts to transform the data. 
 License: MIT + file LICENSE
