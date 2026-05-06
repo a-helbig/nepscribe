@@ -1293,15 +1293,17 @@ generate_strings <- function(data_list, english, format) {
     string39 <- paste0("# print(bio |> filter(sptype %in% c(", paste0(unique(sptypes_vector), collapse = ", "), ")) |> select(\"ID_t\", \"wave\", \"splink\", ", intermediate_vector, "), n = 40)", collapse = ", ")
     string40 <- ""
     string41 <- "# Set Missings on selected variables."
-    string42 <- "# bio <- replace_values_with_na(bio)"
+    string42 <- paste0("# bio <- replace_values_with_na(bio, c(", intermediate_vector,"))", collapse = ", ")
     string43 <- ""
     string44 <- "# Now use tidyr::fill to carry non-missing information forward and backward !!where approriate!!."
     string45 <- paste0("# vars_to_fill <- c(",intermediate_vector,")", collapse = ", ")
     string46 <- "# bio <- bio |>
+        # dtplyr::lazy_dt() |>
         # arrange(ID_t, splink, wave) |> # sort ascending
         # group_by(ID_t, splink) |>
         # fill(all_of(vars_to_fill), .direction = 'downup') |> # forward then backward
-        # ungroup()"
+        # ungroup() |>
+        # as_tibble()"
     string47 <- ""
 
     result_vector <- c(result_vector, string32, string33, string34, string35, string36, string37, string38, string39, string40, string41, string42, string43, string44, string45, string46, string47)
