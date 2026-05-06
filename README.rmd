@@ -1,3 +1,6 @@
+---
+output: github_document
+---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
@@ -12,34 +15,31 @@ scripts to transform NEPS Scientific Use File (SUF) datasets into a
 person-year format, a data structure commonly required for many
 analytical tasks. This transformation, and the underlying data
 preparation, can be challenging for new NEPS users because NEPS data
-combine life-course information stored in spell format with panel data
-in a wave format.
+combine life-course information stored in spell format with panel data in
+a wave format.
 
 Furthermore, NEPScribe enables systematic exploration of Scientific Use
 Files (SUFs), including variables and accompanying metadata, by
 utilizing the publicly available semantic SUF files supplied by the
 NEPS.
 
-Access the live application
-[here](https://shiny2.wzb.eu/ahelbig/nepscribe/).
+Access the live application [here](https://shiny2.wzb.eu/ahelbig/nepscribe/).
+
 
 ## Citation
 
-If you use this package in your research, please consider citing it. We
-would greatly appreciate it.
+If you use this package in your research, please consider citing it. We would greatly appreciate it.
 
 Suggested citation:
 
-Alexander Helbig, Insa Grüttgen (2026). *nepscribe*. Shiny application
-to generate NEPS data preparation scripts in Stata and R. Version 0.3.0
-\[Computer software\]. <https://github.com/a-helbig/nepscribe>
+Alexander Helbig, Insa Grüttgen (2026). *nepscribe*. Shiny application to generate NEPS data preparation scripts in Stata and R. Version 0.3.0 [Computer software]. https://github.com/a-helbig/nepscribe
+
 
 ## Installation
 
-If you prefer to run NEPScribe locally, you can install the package from
-GitHub with:
+If you prefer to run NEPScribe locally, you can install the package from GitHub with:
 
-``` r
+```{r install, eval=FALSE}
 # install.packages("remotes") - uncomment this row in case you havent installed package "remotes" yet
 remotes::install_github("a-helbig/nepscribe")
 ```
