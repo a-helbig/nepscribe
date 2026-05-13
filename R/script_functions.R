@@ -534,6 +534,8 @@ gen_parallel_spells_stata <- function(format="harmonized") {
     if(format=="subspell")   "  bys ID_t wave (n): replace sidespell`i'_start = start[_n+`i'] if n == 1",
     if(format=="subspell")   "  bys ID_t wave (n): replace sidespell`i'_end = end[_n+`i'] if n == 1",
     "}",
+    "",
+    "drop n",
     ""
   )
 }
@@ -587,6 +589,8 @@ gen_parallel_spells_r <- function(format="harmonized") {
     "    }",
     "",
     "rm(offset_df)",
+    "",
+    "bio <- bio |> select(-n)",
     ""
   )
 }
@@ -1216,6 +1220,10 @@ generate_strings <- function(data_list, english, format) {
       # here we replace also _S_ in the dataset name with _D_ because this is pasted in the script but comes from the semantic files
       string3 <- paste0(dataset_name, " <- read_neps(paste0(datapath, \"/\",\"", stringr::str_replace_all(stringr::str_extract(df[1, "Dataset"], pattern= "SC\\d_.*_S_"), "_S_", "_D_"),"\"", ",suf_version", ",\".dta\"), ", "col_select = c(", merge_vector, ", ", selected_variables, ifelse(stringr::str_detect(df[1, "Dataset"],  external_exam_regex), ", \"exam\"",""), ifelse(stringr::str_detect(df[1, "Dataset"],  "spVocBreaks"), ", \"break\"",""), ifelse(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex),", \"spstat\"",""), "), english = ", english, ")")
       string4 <- ""
+      string_ptarget_sc3_1 <- if(stringr::str_detect(df[1, "Dataset"],  "SC3.*pTarget")) { "# drop rows that are not recommended by the NEPS for merging" }
+      string_ptarget_sc3_2 <- if(stringr::str_detect(df[1, "Dataset"],  "SC3.*pTarget")) { paste0(dataset_name, " <- ", dataset_name, " |> ") }
+      string_ptarget_sc3_3 <- if(stringr::str_detect(df[1, "Dataset"],  "SC3.*pTarget")) { "filter(tx20100 != 0)" }
+      string_ptarget_sc3_4 <- if(stringr::str_detect(df[1, "Dataset"],  "SC3.*pTarget")) { "" }
       # for external exams dataset we need to reshape wide before merging
       string5 <- if(stringr::str_detect(df[1, "Dataset"],  external_exam_regex)) { "# Dataset needs reshaping to wide format before merging it to the person-year-dataset." }
       string6 <- if(stringr::str_detect(df[1, "Dataset"],  external_exam_regex)) { paste0(dataset_name, " <- ", dataset_name, " |> ") }
@@ -1251,7 +1259,7 @@ generate_strings <- function(data_list, english, format) {
       string31 <- ""
 
       # Concatenate the current strings into the result vector
-      result_vector <- c(result_vector, string1, string2, string3, string4, string5, string6, string7, string8, string9, string10, string11, string12, string13, string14,string15, string16, string17, string18, string19, string20, string21, string22, string23, string24, string25, string26, string27, string28, string29, string30, string31)
+      result_vector <- c(result_vector, string1, string2, string3, string4, string_ptarget_sc3_1, string_ptarget_sc3_2, string_ptarget_sc3_3, string_ptarget_sc3_4, string5, string6, string7, string8, string9, string10, string11, string12, string13, string14,string15, string16, string17, string18, string19, string20, string21, string22, string23, string24, string25, string26, string27, string28, string29, string30, string31)
 
 
       # If spelldatasets are being joined ---------------------------------------
@@ -1364,6 +1372,10 @@ generate_strings_stata <- function(data_list, format) {
       string4 <- "preserve"
       string5 <- paste0("use ", merge_vector," ", selected_variables, ifelse(stringr::str_detect(df[1, "Dataset"],  external_exam_regex)," exam"," "),  ifelse(stringr::str_detect(df[1, "Dataset"],  "spVocBreaks")," break"," "), ifelse(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)," spstat "," "), "using \"$DATA\\",stringr::str_replace_all(full_dataset_name, "_S_", "_D_"), "$suf.dta\", clear")
       string6 <- ""
+      # for pttarget in sc3 we need to delete 2 observations that make ID_t and wave not unique identifiers. NEPS recommends to delete these 2 rows anyway
+      string_ptarget_sc3_1 <- if(stringr::str_detect(df[1, "Dataset"],  "SC3.*pTarget")) { "* drop rows that are not recommended by the NEPS for merging" }
+      string_ptarget_sc3_2 <- if(stringr::str_detect(df[1, "Dataset"],  "SC3.*pTarget")) { "drop if tx20100 == 0" }
+      string_ptarget_sc3_3 <- if(stringr::str_detect(df[1, "Dataset"],  "SC3.*pTarget")) { "" }
       # for external exams dataset we need to reshape wide before merging
       string7 <- if(stringr::str_detect(df[1, "Dataset"],  external_exam_regex)) { "* Dataset needs reshaping to wide format before merging it to the person-year-dataset." }
       string8 <- if(stringr::str_detect(df[1, "Dataset"],  external_exam_regex)) { paste0("reshape wide ", vars_clean <- paste(setdiff(strsplit(selected_variables_collapsed, "\\s+")[[1]], c("ID_t", "wave", "exam")), collapse = " "), ", i(ID_t wave) j(exam)") }
@@ -1386,7 +1398,7 @@ generate_strings_stata <- function(data_list, format) {
       # if we have unique identifier in both datasets we can merge 1:1 - this is the case when we have at least 2 merging variables, however if we only merge by ID_t (eg with Basics), we need to merge m:1
       string21 <- if(length(merge_vector) > 1) paste0("merge 1:1 ", merge_vector, " using `data', keep(1 3)  nogen") else if (length(merge_vector)==1) paste0("merge m:1 ", merge_vector, " using `data', keep(1 3) nogen")
       # Concatenate the current strings into the result vector
-      result_vector <- c(result_vector, string0, string1, string2, string3, string4, string5, string6, string7, string8, string9, string10, string11, string12, string13, string14, string15, string16, string17, string18, string19, string20, string21)
+      result_vector <- c(result_vector, string0, string1, string2, string3, string4, string5, string6, string_ptarget_sc3_1, string_ptarget_sc3_2, string_ptarget_sc3_3, string7, string8, string9, string10, string11, string12, string13, string14, string15, string16, string17, string18, string19, string20, string21)
 
       # Create an intermediate vector to accumulate all variables added from spell files,
       # so that filling missing values can be performed once at the end of the variable addition code chunk.
