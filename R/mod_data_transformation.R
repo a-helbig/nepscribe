@@ -79,38 +79,108 @@ data_transformation_sidebar_ui <- function(id) {
 #' @noRd
 data_transformation_add_variables_ui <- function(id) {
   ns <- shiny::NS(id)
+
   shiny::tagList(
     shiny::fluidRow(
-      shiny::column(htmltools::tags$b(shiny::div("1. Step: Select Dataset")), width = 2),
-      shiny::column(htmltools::tags$b(shiny::div("3. Step: Confirm selected variables")), width = 2),
-    ),
-    shiny::fluidRow(
-      shiny::column(shiny::selectizeInput(ns("dataset"), label = NULL, choices = NULL, multiple = TRUE, options = list(maxItems = 1)), width = 2),
       shiny::column(
-        shiny::actionButton(ns("confirm_variables"), "Confirm Vars", style = "width: 145px; height: 40px", class = "btn btn-info"), width = 2)
-        ,
-        htmltools::tags$b(shiny::div("2. Step: Select Variables"))
-
-    ),
-    shiny::fluidRow(
-      shinyWidgets::multiInput(
-        ns("multi_vars_input"), label = NULL,  choices = c(""), width = "50%",  options = list(
-          enable_search = TRUE,
-          non_selected_header = "Select Variables:",
-          selected_header = "You have selected:"
-        )
+        htmltools::tags$b(shiny::div("1. Step: Select Dataset")),
+        width = 2
       ),
       shiny::column(
-        htmltools::tags$b(shiny::div("Inspect selected Variables or reset everything (Button)")),
-        shinyWidgets::pickerInput(
-          ns("global_vars"),
+        htmltools::tags$b(shiny::div("3. Step: Confirm selected variables")),
+        width = 2
+      )
+    ),
+
+    shiny::fluidRow(
+      shiny::column(
+        shiny::selectizeInput(
+          ns("dataset"),
           label = NULL,
           choices = NULL,
           multiple = TRUE,
-          selected = NULL,
-          options = list('actions-box' = TRUE)
+          options = list(maxItems = 1)
         ),
-        shiny::actionButton(ns("reset_variables"), "Reset Vars", style = "width: 145px; height: 40px", class = "btn btn-info"), width = 2
+        width = 2
+      ),
+      shiny::column(
+        shiny::actionButton(
+          ns("confirm_variables"),
+          "Confirm Vars",
+          style = "width: 145px; height: 40px",
+          class = "btn btn-info"
+        ),
+        width = 2
+      ),
+      htmltools::tags$b(shiny::div("2. Step: Select Variables"))
+    ),
+
+    shiny::fluidRow(
+      shiny::column(
+        width = 7,
+        shinyWidgets::multiInput(
+          ns("multi_vars_input"),
+          label = NULL,
+          choices = c(""),
+          width = "100%",
+          options = list(
+            enable_search = TRUE,
+            non_selected_header = "Select Variables:",
+            selected_header = "You have selected:"
+          )
+        )
+      ),
+      shiny::column(
+        width = 5,
+        shiny::div(
+          style = "width: 320px;",
+
+          htmltools::tags$b(shiny::div("Inspect selected Variables or reset everything (Button)")),
+
+          shinyWidgets::pickerInput(
+            ns("global_vars"),
+            label = NULL,
+            choices = NULL,
+            multiple = TRUE,
+            selected = NULL,
+            width = "100%",
+            options = list('actions-box' = TRUE)
+          ),
+
+          shiny::actionButton(
+            ns("reset_variables"),
+            "Reset Vars",
+            style = "width: 145px; height: 40px",
+            class = "btn btn-info"
+          ),
+          htmltools::tags$br(),
+          htmltools::tags$br(),
+          htmltools::tags$div(
+            style = paste(
+              "width: 100%;",
+              "box-sizing: border-box;",
+              "min-height: 120px;",
+              "padding: 12px 14px;",
+              "background-color: #f1f8ff;",
+              "border: 1px solid #cfe2ff;",
+              "border-radius: 8px;",
+              "font-family: inherit;",
+              "font-size: 0.95rem;",
+              "line-height: 1.5;"
+            ),
+            htmltools::tags$b("Note"),
+            htmltools::tags$br(),
+            htmltools::tags$br(),
+            htmltools::tags$p(
+              style = "margin-bottom: 0.5rem;",
+              "1. Note that if you do not use the current SUF version, you might accidentally add variables here that do not yet exist in your SUF version."
+            ),
+            htmltools::tags$p(
+              style = "margin-bottom: 0;",
+              "2. Since the semantic structured files are based on remote SUF versions, some variable choices here might not be available in the downloaded SUF version. We are working on a solution for this issue."
+            )
+          )
+        )
       )
     )
   )
@@ -127,8 +197,6 @@ data_transformation_prio_ui <- function(id) {
     shiny::uiOutput(ns("prio_ui"))
   )
 }
-
-
 
 
 #' Main func for the data trans server
