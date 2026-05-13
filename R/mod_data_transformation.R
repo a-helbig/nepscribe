@@ -327,7 +327,7 @@ shiny::observeEvent(input$sub_format_select, {
         )
       })
 
-      # Update multiInput when dataset is selected
+      # Update multiInput when dataset is selecteds
       shiny::observeEvent(input$dataset, {
 
           shiny::showModal(
