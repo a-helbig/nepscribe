@@ -30,6 +30,47 @@ app_server <- function(input, output, session) {
     )
   })
 
+  shiny::observeEvent(input$show_impressum, {
+    shiny::showModal(
+      shiny::modalDialog(
+        shiny::HTML("
+        <div style='font-family: Georgia, serif; line-height: 1.7; color: #2c2c2c;'>
+
+          <section style='margin-bottom: 1.5rem;'>
+            <h5 style='font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em;
+                       text-transform: uppercase; color: #888; margin-bottom: 0.6rem;'>
+              Angaben gemäß § 5 DDG und § 18 MStV
+            </h5>
+            <p style='margin: 0;'>
+              Alexander Helbig<br>
+              Hanauer Str. 23<br>
+              63549 Ronneburg
+            </p>
+          </section>
+
+          <section>
+            <h5 style='font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em;
+                       text-transform: uppercase; color: #888; margin-bottom: 0.6rem;'>
+              Kontakt
+            </h5>
+            <p style='margin: 0;'>
+              E-Mail: <a href='mailto:alexander.helbig@yahoo.de'
+                         style='color: #3a6ea5; text-decoration: none;'>
+                alexander.helbig@yahoo.de
+              </a>
+            </p>
+          </section>
+
+        </div>
+      "),
+        title = "Impressum",
+        size = "l",
+        easyClose = TRUE,
+        footer = shiny::modalButton("Schließen")
+      )
+    )
+  })
+
   # --- Settings reactive for sidebar width, language, etc. ---
   settings_reactive <- settings_server("settings")
 
