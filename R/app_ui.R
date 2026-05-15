@@ -26,6 +26,9 @@ bslib::page_navbar(
       type = "text/css",
       href = "www/css/styles.css"
     ),
+    tags$head(
+      tags$meta(name = "robots", content = "noindex, nofollow")
+    ),
     # make green ticks in picker inputs appear on the left side instead of right
       htmltools::tags$style(htmltools::HTML("
     .bootstrap-select .dropdown-menu li a span.check-mark {
@@ -84,7 +87,7 @@ bslib::page_navbar(
     title = "Start",
     htmltools::HTML(
       "<div style='display: flex; align-items: center;'>
-       <img src='www/images/neps_logo.jpg' width='200' height='100' style='margin-right: 10px;'>
+       <img src='www/images/lizard_instead_of_neps.jpg' width='200' height='100' style='margin-right: 10px;'>
        <div>
          <p style='font-size:22px; margin: 0;'><b>NEPScribe</b>
          <span style='font-size:14px; margin-left: 5px;'>Beta</span></p>

@@ -202,25 +202,30 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           "bio <- bio[!duplicated(bio[c('ID_t', 'month')]), ]",
           "",
           "# Drop unnecessary variables",
-          "bio <- bio |> select(-wave, -spms, -prio, -ts23223, -vt_typ) # drop wave variable from biography file here as there is only one wave for each episode which only indicates in which wave an episode was last reported, regardless of whether it was reported over multiple waves. In the next step the wave variable from cohort profile is added indicating all waves during which an episode was current.",
+          "bio <- bio |> select(-wave, -spms, -prio, -ts23223, -vt_typ) # drop wave variable from biography file here as there is only one wave for each episode which only indicates in which wave an episode was last reported, regardless of whether it was reported over multiple waves. In the next step the wave variable from cohort profile is added indicating all waves during which an episode was current. Drop also some other variables that are not required anymore.",
           "",
           if(work_exp)"# Generate work experience in months",
           if(work_exp)"bio <- bio  |> ",
+          if(work_exp)  "mutate(emp = ifelse(sptype == 26, 1, NA_real_)) |>",
+          if(work_exp)  "arrange(ID_t) |>",
           if(work_exp)  "group_by(ID_t)  |> ",
-          if(work_exp)  "mutate(work_exp = sum(sptype == 26, na.rm = TRUE)) |>",
+          if(work_exp)  "mutate(work_exp = cumsum(replace_na(emp, 0))) |>",
           if(work_exp)  "ungroup()",
           if(work_exp)"",
           if(work_exp)"attr(bio$work_exp, 'label') <- 'Work experience'",
+          if(work_exp)"bio <- bio |> select(-emp)",
           if(work_exp)"",
           if(unemp_exp)"# Generate unemployment experience in months",
           if(unemp_exp)"bio <- bio  |> ",
+          if(unemp_exp)  "mutate(unemp = ifelse(sptype == 27, 1, NA_real_)) |>",
+          if(unemp_exp)  "arrange(ID_t) |>",
           if(unemp_exp)  "group_by(ID_t)  |> ",
-          if(unemp_exp)  "mutate(unemp_exp = sum(sptype == 27, na.rm = TRUE)) |>",
+          if(unemp_exp)  "mutate(unemp_exp = cumsum(replace_na(unemp, 0))) |>",
           if(unemp_exp)  "ungroup()",
           if(unemp_exp)"",
           if(unemp_exp)"attr(bio$unemp_exp, 'label') <- 'Unemployment experience'",
+          if(unemp_exp)"bio <- bio |> select(-unemp)",
           if(unemp_exp)"",
-
           "# 6. Create person year format -------------------------------------",
           "",
           "# Finally we switch from a monthly format to a yearly format by taking the interview dates from cohort profile and left-joining the biography data to it.",
@@ -255,6 +260,17 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           if(length(datalist)>0) ""
         )
 
+      if (set_missings) {
+        chapter <- chapter + 1
+        scripts <- c(
+          scripts,
+          paste0("# ", chapter, " Additional Settings------------------------------------"),
+          "",
+          "# set missings for all vars",
+          "bio <- replace_values_with_na(bio)"
+        )
+      }
+
       if (education) {
         chapter <- chapter + 1
         scripts <- c(scripts, gen_qualification_prep_code_r(english, sc, chapter), "")
@@ -273,17 +289,6 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
       if (children && sc %in% c("SC3", "SC4")) {
         chapter <- chapter + 1
         scripts <- c(scripts, gen_children_example_r_sc3_4(english, sc, chapter), "")
-      }
-
-      if (set_missings) {
-        chapter <- chapter + 1
-        scripts <- c(
-          scripts,
-          paste0("# ", chapter, " Additional Settings------------------------------------"),
-          "",
-          "# set missings for all vars",
-          "bio <- replace_values_with_na(bio)"
-        )
       }
 
       }
@@ -387,7 +392,8 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
                      "bio <- bind_rows(",
                      "  school, vocprep, voctrain, ",
                      "  military, emp, unemp, ",
-                     "  parleave, gap",
+                     if(sc == "SC5")"  parleave, gap, internship",
+                     if(sc != "SC5")"  parleave, gap",
                      ")",
                      "",
                      "# After binding rows of numerical variables they lose their attached variable labels, so we reassign them.",
@@ -405,7 +411,8 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
                      "# Remove single spell data files",
                      "rm(school, vocprep, voctrain, ",
                      "   military, emp, unemp, ",
-                     "   parleave, gap)",
+                     if(sc != "SC5")"   parleave, gap)",
+                     if(sc == "SC5")"   parleave, gap, internship)",
                      "",
                      "# Keep only specified variables",
                      "bio <- bio  |> ",
@@ -580,6 +587,17 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
                      if(length(datalist)>0) ""
         )
 
+        if (set_missings) {
+          chapter <- chapter + 1
+          scripts <- c(
+            scripts,
+            paste0("# ", chapter, " Additional Settings------------------------------------"),
+            "",
+            "# set missings for all vars",
+            "bio <- replace_values_with_na(bio)"
+          )
+        }
+
         if (education) {
           chapter <- chapter + 1
           scripts <- c(scripts, gen_qualification_prep_code_r(english, sc, chapter), "")
@@ -598,17 +616,6 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
         if (children && sc %in% c("SC3", "SC4")) {
           chapter <- chapter + 1
           scripts <- c(scripts, gen_children_example_r_sc3_4(english, sc, chapter), "")
-        }
-
-        if (set_missings) {
-          chapter <- chapter + 1
-          scripts <- c(
-            scripts,
-            paste0("# ", chapter, " Additional Settings------------------------------------"),
-            "",
-            "# set missings for all vars",
-            "bio <- replace_values_with_na(bio)"
-          )
         }
 
       }
@@ -785,19 +792,17 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           if(parallel) gen_parallel_spells_stata(format="harmonized"),
           "* Reduce to the prioritized spells by only keeping the first observation of each month within each individual",
           "by ID_t month: keep if _n == 1",
-          "drop worktime prio wave ts23223 vt_typ // drop wave variable from biography file here as there is only one wave for each episode which only indicates in which wave an episode was last reported, regardless of whether it was reported over multiple waves. In the next step the wave variable from cohort profile is added indicating all waves during which an episode was current.",
+          "drop wave worktime prio spms ts23223 vt_typ // drop wave variable from biography file here as there is only one wave for each episode which only indicates in which wave an episode was last reported, regardless of whether it was reported over multiple waves. In the next step the wave variable from cohort profile is added indicating all waves during which an episode was current. Drop also some other variables that are not required anymore.",
           "",
           if(work_exp)"* Generate work experience in months",
           if(work_exp)"gen emp=1 if sptype == 26",
           if(work_exp)"bys ID_t: gen work_exp = sum(emp)",
-          if(work_exp)"label var work_exp 'work experience'",
           if(work_exp)"",
           if(work_exp)"drop emp",
           if(work_exp)"",
           if(unemp_exp)"* Generate unemployment experience in months",
           if(unemp_exp)"gen unemp=1 if sptype == 27",
           if(unemp_exp)"bys ID_t: gen unemp_exp = sum(unemp)",
-          if(unemp_exp)"label var unemp_exp 'unemployment experience'",
           if(unemp_exp)"",
           if(unemp_exp)"drop unemp",
           if(unemp_exp)"",
@@ -840,29 +845,13 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           "",
           "merge 1:1 ID_t month using `intd', nogen keep(match)",
           "",
+          "* Drop unnecessary variables",
+          "drop month splast",
+          "",
           if(length(datalist)>0) generate_strings_stata(datalist, format = "harmonized"), # add variables feature
           if(length(datalist)>0) ""
         )
 
-        if (education) {
-          chapter <- chapter + 1
-          scripts <- c(scripts, gen_qualification_prep_code_stata(english, sc, chapter), "")
-        }
-
-        if (further_training) {
-          chapter <- chapter + 1
-          scripts <- c(scripts, further_training_gen_stata(english, chapter), "")
-        }
-
-        if (children && sc %in% c("SC5", "SC6")) {
-          chapter <- chapter + 1
-          scripts <- c(scripts, gen_children_example_stata_sc5_6(english, sc, chapter), "")
-        }
-
-        if (children && sc %in% c("SC3", "SC4")) {
-          chapter <- chapter + 1
-          scripts <- c(scripts, gen_children_example_stata_sc3_4(english, sc, chapter), "")
-        }
 
         if (set_missings || english) {
           chapter <- chapter + 1
@@ -894,8 +883,30 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
             if (english) "label var start \"Date of episode start (in months since january 1960)\"",
             if (english) "label var end \"Date of episode end (months since january 1960)\"",
             if (english) "label var dur \"Duration of episode\"",
-            if (english) "label var month \"Month\""
+            if(unemp_exp)"label var unemp_exp \"unemployment experience\"",
+            if(work_exp)"label var work_exp \"work experience\""
           )
+        }
+
+
+        if (education) {
+          chapter <- chapter + 1
+          scripts <- c(scripts, gen_qualification_prep_code_stata(english, sc, chapter), "")
+        }
+
+        if (further_training) {
+          chapter <- chapter + 1
+          scripts <- c(scripts, further_training_gen_stata(english, chapter), "")
+        }
+
+        if (children && sc %in% c("SC5", "SC6")) {
+          chapter <- chapter + 1
+          scripts <- c(scripts, gen_children_example_stata_sc5_6(english, sc, chapter), "")
+        }
+
+        if (children && sc %in% c("SC3", "SC4")) {
+          chapter <- chapter + 1
+          scripts <- c(scripts, gen_children_example_stata_sc3_4(english, sc, chapter), "")
         }
 
       }
@@ -1111,25 +1122,6 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           if(length(datalist)>0)""
         )
 
-        if (education) {
-          chapter <- chapter + 1
-          scripts <- c(scripts, gen_qualification_prep_code_stata(english, sc, chapter), "")
-        }
-
-        if (further_training) {
-          chapter <- chapter + 1
-          scripts <- c(scripts, further_training_gen_stata(english, chapter), "")
-        }
-
-        if (children && sc %in% c("SC5", "SC6")) {
-          chapter <- chapter + 1
-          scripts <- c(scripts, gen_children_example_stata_sc5_6(english, sc, chapter), "")
-        }
-
-        if (children && sc %in% c("SC3", "SC4")) {
-          chapter <- chapter + 1
-          scripts <- c(scripts, gen_children_example_stata_sc3_4(english, sc, chapter), "")
-        }
 
         if (set_missings || english) {
           chapter <- chapter + 1
@@ -1160,8 +1152,30 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
             "",
             if (english) "label var start \"Date of episode start (in months since january 1960)\"",
             if (english) "label var end \"Date of episode end (months since january 1960)\"",
-            if (english) "label var dur \"Duration of episode\""
+            if (english) "label var dur \"Duration of episode\"",
+            ""
           )
+        }
+
+
+        if (education) {
+          chapter <- chapter + 1
+          scripts <- c(scripts, gen_qualification_prep_code_stata(english, sc, chapter), "")
+        }
+
+        if (further_training) {
+          chapter <- chapter + 1
+          scripts <- c(scripts, further_training_gen_stata(english, chapter), "")
+        }
+
+        if (children && sc %in% c("SC5", "SC6")) {
+          chapter <- chapter + 1
+          scripts <- c(scripts, gen_children_example_stata_sc5_6(english, sc, chapter), "")
+        }
+
+        if (children && sc %in% c("SC3", "SC4")) {
+          chapter <- chapter + 1
+          scripts <- c(scripts, gen_children_example_stata_sc3_4(english, sc, chapter), "")
         }
 
       }
