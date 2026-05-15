@@ -152,6 +152,7 @@ bslib::page_navbar(
   bslib::nav_menu(
     title = "Help",
     align = "right",
+    bslib::nav_item(shiny::actionLink("show_impressum", "Impressum")),
     bslib::nav_item(htmltools::tags$a("NEPS Website", href = "https://www.neps-data.de/", target="_blank")),
     bslib::nav_item(htmltools::tags$a("NEPS Documentation", href = "https://www.neps-data.de/Data-Center/Data-and-Documentation", target="_blank")),
     # bslib::nav_item(htmltools::tags$a("SUF-Explorer Documentation", href = "", target="_blank")),
