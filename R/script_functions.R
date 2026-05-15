@@ -287,7 +287,7 @@ further_training_gen_stata <- function(english, chapter) {
     "* We need the interview date from this module to identify and delete retrospective courses, that were recorded more than 2 years ago.",
     "",
     "preserve",
-    "* Load cohortprofile in order to get access to interview dates",
+    "* Load CohortProfile in order to get access to interview dates",
     "use \"$DATA\\SC6_CohortProfile_D_$suf.dta\", clear",
     "keep ID_t wave tx8601y tx8601m",
     "rename tx8601y tx8600y",
@@ -446,11 +446,14 @@ further_training_gen_stata <- function(english, chapter) {
     "bysort ID_t wave: egen max_jobrelated_course = max(jobrelated_course)",
     "replace jobrelated_course = max_jobrelated_course",
     "drop max_jobrelated_course",
+    "",
     "* Create jobrelated_course_n as sum within group",
     "bys ID_t wave: egen jobrelated_course_n = total(jobrelated_course)",
+    "",
     "* Create helper variable: tx28203 only when jobrelated_course == 1, else 0",
     "gen tx28203_jobrelated = tx28203 if jobrelated_course == 1",
     "replace tx28203_jobrelated = 0 if tx28203_jobrelated == .",
+    "",
     "* Sum tx28203_jobrelated within group",
     "bysort ID_t wave: egen jobrelated_course_hours = total(tx28203_jobrelated)",
     "drop  tx28203_jobrelated ",
@@ -470,10 +473,10 @@ further_training_gen_stata <- function(english, chapter) {
     if(english) "label val jobrelated_course jobrelated_course",
     "",
     if(!english)"label var jobrelated_course_n \"Anzahl berufsbezogener Weiterbildungen\"",
-    if(english)"*label var jobrelated_course_n \"Number of job-related training courses\"",
+    if(english)"label var jobrelated_course_n \"Number of job-related training courses\"",
     "",
     if(!english)"label var jobrelated_course_hours \"Berufsbezogene Weiterbildung: Teilnahme in Stunden\"",
-    if(english)"*label var jobrelated_course_hours \"Job-related training hours\"",
+    if(english)"label var jobrelated_course_hours \"Job-related training hours\"",
     "",
     "*  Set NA values in jobrelated_course_hours to 0 hours",
     "replace jobrelated_course_hours = 0 if jobrelated_course_hours == .",
@@ -483,10 +486,12 @@ further_training_gen_stata <- function(english, chapter) {
     "",
     "use `person_year_data', clear",
     "",
-    "merge 1:1 ID_t wave using `ft_data', keep(master match)",
+    "merge 1:1 ID_t wave using `ft_data', nogen keep(master match)",
     "",
     "* Set NA values in the further training indicators to 0, these are essential waves, where no course was reported, while 0 in further training preparation actually meant that there was a course but no jobrelated course",
     "replace jobrelated_course = 0 if jobrelated_course == .",
+    "replace jobrelated_course_n = 0 if jobrelated_course_n == .",
+    "replace jobrelated_course_hours = 0 if jobrelated_course_hours == .",
     "",
     "* Illustrative inspection of the new job related training dummy variable",
     "tab wave jobrelated_course, row"
@@ -1252,6 +1257,8 @@ generate_strings <- function(data_list, english, format) {
          filter(spstat < 30)")
       }
       string26 <- ""
+      string26_5 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)){"bio <- bio |> select(-spstat)"}
+      string26_5 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)){""}
       string27 <- if(length(base::strsplit(merge_vector, " ")[[1]])==3) {""}
       string28 <- paste0("bio <- left_join(bio, ", dataset_name, ", by = c(", merge_vector,"))")
       string29 <- ""
@@ -1259,7 +1266,7 @@ generate_strings <- function(data_list, english, format) {
       string31 <- ""
 
       # Concatenate the current strings into the result vector
-      result_vector <- c(result_vector, string1, string2, string3, string4, string_ptarget_sc3_1, string_ptarget_sc3_2, string_ptarget_sc3_3, string_ptarget_sc3_4, string5, string6, string7, string8, string9, string10, string11, string12, string13, string14,string15, string16, string17, string18, string19, string20, string21, string22, string23, string24, string25, string26, string27, string28, string29, string30, string31)
+      result_vector <- c(result_vector, string1, string2, string3, string4, string_ptarget_sc3_1, string_ptarget_sc3_2, string_ptarget_sc3_3, string_ptarget_sc3_4, string5, string6, string7, string8, string9, string10, string11, string12, string13, string14,string15, string16, string17, string18, string19, string20, string21, string22, string23, string24, string25, string26, string26_5, string27, string28, string29, string30, string31)
 
 
       # If spelldatasets are being joined ---------------------------------------

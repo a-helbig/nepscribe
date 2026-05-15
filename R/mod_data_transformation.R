@@ -256,6 +256,29 @@ data_transformation_server <- function(id, settings_reactive) {
           input$datapath
       })
 
+# give warning when users select sc3-sc5 --------
+      shiny::observeEvent(input$cohort_data_trans, {
+        if (input$cohort_data_trans %in% c("sc5_semantic_files", "sc4_semantic_files", "sc3_semantic_files")) {
+          shiny::showModal(
+            shiny::modalDialog(
+              shiny::HTML("
+          <div style='display: flex; align-items: flex-start; gap: 1rem;'>
+            <span style='font-size: 1.5rem;'>⚠️</span>
+            <p style='margin: 0; line-height: 1.6;'>
+              The script for the selected starting cohort has not been fully tested yet
+              and may contain errors. Please use it with caution and run scripts line by line.
+            </p>
+          </div>
+        "),
+              title = "Warning: Script was not tested for this cohort",
+              size = "m",
+              easyClose = TRUE,
+              footer = shiny::modalButton("Understood")
+            )
+          )
+        }
+      })
+
 # Update exemplary data preparation further training depending on sc --------
 
       shiny::observeEvent(input$cohort_data_trans, {
