@@ -4,9 +4,10 @@
 #'
 #' @keywords internal
 #' @noRd
+#' @importFrom htmltools tags
 app_ui <- function() {
 
-  app_version <- "v0.3.1"  # define your current app version here
+  app_version <- "v0.3.2"  # define your current app version here
 
   # Make package www resources accessible in Shiny
   shiny::addResourcePath(
@@ -26,8 +27,8 @@ bslib::page_navbar(
       type = "text/css",
       href = "www/css/styles.css"
     ),
-    tags$head(
-      tags$meta(name = "robots", content = "noindex, nofollow")
+    htmltools::tags$head(
+      htmltools::tags$meta(name = "robots", content = "noindex, nofollow")
     ),
     # make green ticks in picker inputs appear on the left side instead of right
       htmltools::tags$style(htmltools::HTML("

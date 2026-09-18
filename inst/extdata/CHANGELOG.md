@@ -39,3 +39,9 @@ It may be released for other SCs in the future.
 * Improved readme file
 * Updated nepstool dependency to 0.1.4
 
+## Version 0.3.2 (2026-09-18)
+
+* Updated SC6 semantic structured files to 17-0-0
+* Updated SC8 semantic structured files to 2-0-0
+* Added some additional commentary to carry forward approach in stata script
+
