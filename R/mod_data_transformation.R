@@ -256,9 +256,34 @@ data_transformation_server <- function(id, settings_reactive) {
           input$datapath
       })
 
-# give warning when users select sc3-sc5 --------
+      # give warning when users select sc3-sc5 --------
       shiny::observeEvent(input$cohort_data_trans, {
-        if (input$cohort_data_trans %in% c("sc5_semantic_files", "sc4_semantic_files", "sc3_semantic_files")) {
+
+        # 1. Specific Warning for sc3
+        if (input$cohort_data_trans == "sc3_semantic_files") {
+          shiny::showModal(
+            shiny::modalDialog(
+              shiny::HTML("
+          <div style='display: flex; align-items: flex-start; gap: 1rem;'>
+            <span style='font-size: 1.5rem;'>⚠️</span>
+            <p style='margin: 0; line-height: 1.6;'>
+              The script for the selected starting cohort has not been fully tested yet
+              and may contain errors. Please use it with caution and run scripts line by line.
+              <br><br>
+              <strong>Note:</strong> Full biographies, including all person-years of schooling,
+              are only available when selecting the 'harmonized spell format'.
+            </p>
+          </div>
+        "),
+              title = "Warning: Script not fully tested (SC3)",
+              size = "m",
+              easyClose = TRUE,
+              footer = shiny::modalButton("Understood")
+            )
+          )
+
+          # 2. General Warning for sc4 and sc5
+        } else if (input$cohort_data_trans %in% c("sc4_semantic_files", "sc5_semantic_files")) {
           shiny::showModal(
             shiny::modalDialog(
               shiny::HTML("
