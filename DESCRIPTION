@@ -1,9 +1,11 @@
 Package: NEPScribe
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Explore NEPS Datasets and Generate Data Preparation Scripts
 Version: 0.3.2
 Authors@R: person("Alexander", "Helbig", email = "alexander.helbig@wzb.eu", role = c("aut", "cre"))
-Description: Explore NEPS datasets and generate scripts to transform the data. 
+Description: Provides a Shiny application to explore NEPS Scientific Use File
+    datasets and to generate Stata and R scripts that transform them into a
+    person-year format.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
@@ -30,4 +32,6 @@ Imports:
     stringr (>= 1.6.0),
     tibble (>= 3.3.0),
     tidyr (>= 1.3.2)
+Remotes:
+    a-helbig/nepstools
 RoxygenNote: 7.3.3
