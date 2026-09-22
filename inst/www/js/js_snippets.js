@@ -4,37 +4,54 @@ Shiny.addCustomMessageHandler('sidebarWidth', function(width) {
 });
 
 // Attach hover tooltips with question text to items in the "Additional Variables" picker.
-// shinyWidgets::updateMultiInput() rebuilds the picker's DOM asynchronously, in more than one
-// step (it's first cleared, then re-populated), each with variable delay. Instead of guessing a
-// timeout, watch for that rebuild to actually happen via MutationObserver, re-applying on every
-// mutation and only disconnecting once mutations have settled, so we land on the final DOM state.
+// shinyWidgets::multiInput's underlying multi.js fully destroys and rebuilds EVERY item in
+// both columns (via innerHTML = "") on every click, not just on dataset/language switches - so
+// this keeps a single MutationObserver alive for as long as the picker exists, both to attach
+// tooltips to freshly-created elements and to dispose any tooltip whose trigger element was
+// just removed (otherwise a tooltip that's actively being shown becomes an orphaned, stuck
+// popup the instant its trigger vanishes mid-hover, since nothing else would ever dispose it).
+// Uses Bootstrap 5's native JS API (bootstrap.Tooltip), NOT the jQuery $.fn.tooltip() plugin -
+// this app only loads Bootstrap 5's bundle (bslib theme), which doesn't provide that jQuery
+// plugin at all, so $.fn.tooltip is never defined here.
 Shiny.addCustomMessageHandler('variableQuestiontexts', function(map) {
   var wrapper = document.querySelector('.multi-wrapper');
   if (!wrapper) return;
 
+  function disposeTooltip(el) {
+    var existing = bootstrap.Tooltip.getInstance(el);
+    if (existing) existing.dispose();
+  }
+
   function applyTooltips() {
+    if (typeof window.bootstrap === 'undefined' || !window.bootstrap.Tooltip) return;
     document.querySelectorAll('.multi-wrapper .item[data-value]').forEach(function (el) {
+      if (bootstrap.Tooltip.getInstance(el)) return; // this exact DOM node is already set up
       var qtext = map[el.getAttribute('data-value')];
       if (qtext) {
         el.setAttribute('data-toggle', 'tooltip');
         el.setAttribute('title', qtext);
-      } else {
-        el.removeAttribute('data-toggle');
-        el.removeAttribute('title');
+        new bootstrap.Tooltip(el, { trigger: 'hover', delay: { show: 500, hide: 100 } });
       }
     });
-    $('.multi-wrapper .item[data-toggle="tooltip"]').tooltip({ trigger: 'hover', delay: { show: 500, hide: 100 } });
   }
 
+  // Only one of these should ever be watching at a time - replace, don't stack, across
+  // successive dataset/language switches (each of which sends a fresh map/call here).
+  if (window.__variableTooltipObserver) window.__variableTooltipObserver.disconnect();
+
   applyTooltips();
-  var settleTimer;
-  var observer = new MutationObserver(function () {
+  var observer = new MutationObserver(function (mutations) {
+    mutations.forEach(function (m) {
+      m.removedNodes.forEach(function (node) {
+        if (node.nodeType !== 1) return;
+        if (node.matches && node.matches('.item[data-value]')) disposeTooltip(node);
+        if (node.querySelectorAll) node.querySelectorAll('.item[data-value]').forEach(disposeTooltip);
+      });
+    });
     applyTooltips();
-    clearTimeout(settleTimer);
-    settleTimer = setTimeout(function () { observer.disconnect(); }, 200);
   });
   observer.observe(wrapper, { childList: true, subtree: true });
-  settleTimer = setTimeout(function () { observer.disconnect(); }, 200);
+  window.__variableTooltipObserver = observer;
 });
 
 // Define a globally available JS function that will show NA in datatables
