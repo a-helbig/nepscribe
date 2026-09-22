@@ -28,7 +28,7 @@ tt <- function(text, tip, bold = FALSE) {
 #' @keywords internal
 #' @noRd
 .add_modules_tooltips <- c(
-  "Further Training" = "Adds example code for preparing:<br>1. A dummy variable on participation in further training,<br>2. A variable on the number of further training courses in the person-year dataset,<br>3. A variable on the overall hours of further training participation.<br>Currently only available for Starting Cohort 6.",
+  "Further Training" = "Adds example code for preparing:<br>1. A dummy variable on participation in further training,<br>2. A variable on the number of further training courses,<br>3. A variable on the overall hours of further training participation.<br>Currently only available for Starting Cohort 6.",
   "Children" = "Adds example code for preparing a specific indicator on whether the respondent's children are in tertiary education (SC5-SC6), or children cared for at home (SC3-SC4).",
   "Highest Education" = "Adds example code for preparing CASMIN, ISCED, and full education/qualification variables."
 )
