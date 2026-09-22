@@ -173,11 +173,15 @@ data_transformation_add_variables_ui <- function(id) {
             htmltools::tags$br(),
             htmltools::tags$p(
               style = "margin-bottom: 0.5rem;",
-              "1. Note that if you do not use the current SUF version, you might accidentally add variables here that do not yet exist in your SUF version."
+              "1. Not all NEPS datasets are available here: some (e.g. spFurtherEdu1, spChild, spPartner) need additional data preparation before they can be merged into a person-year dataset. For some of these, we instead provide exemplary data preparation code in the sidebar. More examples are planned for future releases."
+            ),
+            htmltools::tags$p(
+              style = "margin-bottom: 0.5rem;",
+              "2. Note that if you do not use the current SUF version, you might accidentally add variables here that do not yet exist in your SUF version."
             ),
             htmltools::tags$p(
               style = "margin-bottom: 0;",
-              "2. Since the semantic structured files are based on remote SUF versions, some variable choices here might not be available in the downloaded SUF version. We are working on a solution for this issue."
+              "3. Since the semantic structured files are based on remote SUF versions, some variable choices here might not be available in the download SUF version. We are working on a solution for this issue."
             )
           )
         )
@@ -375,8 +379,10 @@ shiny::observeEvent(input$sub_format_select, {
         )
       })
 
-      # Update multiInput when dataset is selecteds
-      shiny::observeEvent(input$dataset, {
+      # Update multiInput when dataset is selected, or when the language is switched
+      # while a dataset is already loaded (so labels/question texts follow the switch too)
+      shiny::observeEvent(list(input$dataset, input$language), {
+          shiny::req(input$dataset)
 
           shiny::showModal(
             shiny::modalDialog(
@@ -409,10 +415,14 @@ shiny::observeEvent(input$sub_format_select, {
           choices = new_choices
         )
 
-        # Send question texts for the new choices, so the picker can show them as hover tooltips
+        # Send question texts for the new choices, so the picker can show them as hover tooltips.
+        # Variables without one (mostly derived/administrative vars) get a fallback message
+        # instead of no tooltip at all, so hovering them doesn't look like it's just not working.
         qtexts <- gen_comb_questiontext(cohort_path(), input$dataset, input$language)
         vars_short <- stringr::str_replace_all(new_choices, " - .*", "")
-        qtext_map <- stats::setNames(as.list(base::unname(qtexts[vars_short])), new_choices)
+        qtext_values <- base::unname(qtexts[vars_short])
+        qtext_values[base::is.na(qtext_values)] <- "No question text available for this variable."
+        qtext_map <- stats::setNames(as.list(qtext_values), new_choices)
         session$sendCustomMessage("variableQuestiontexts", qtext_map)
 
         # Close modal
