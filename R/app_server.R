@@ -39,7 +39,7 @@ app_server <- function(input, output, session) {
           <section style='margin-bottom: 1.5rem;'>
             <h5 style='font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em;
                        text-transform: uppercase; color: #888; margin-bottom: 0.6rem;'>
-              Angaben gemäß § 5 DDG und § 18 MStV
+              Angaben gem\u00e4\u00df \u00a7 5 DDG und \u00a7 18 MStV
             </h5>
             <p style='margin: 0;'>
               Alexander Helbig<br>
@@ -66,9 +66,14 @@ app_server <- function(input, output, session) {
         title = "Impressum",
         size = "l",
         easyClose = TRUE,
-        footer = shiny::modalButton("Schließen")
+        footer = shiny::modalButton("Schlie\u00dfen")
       )
     )
+  })
+
+  # Collapse the sidebar by default on the Start page (not needed there); keep it open elsewhere
+  shiny::observeEvent(input$nav, {
+    bslib::sidebar_toggle(id = "sidebar", open = input$nav != "Start", session = session)
   })
 
   # --- Settings reactive for sidebar width, language, etc. ---

@@ -265,7 +265,7 @@ data_transformation_server <- function(id, settings_reactive) {
             shiny::modalDialog(
               shiny::HTML("
           <div style='display: flex; align-items: flex-start; gap: 1rem;'>
-            <span style='font-size: 1.5rem;'>⚠️</span>
+            <span style='font-size: 1.5rem;'>\u26a0\ufe0f</span>
             <p style='margin: 0; line-height: 1.6;'>
               The script for the selected starting cohort has not been fully tested yet
               and may contain errors. Please use it with caution and run scripts line by line.
@@ -288,7 +288,7 @@ data_transformation_server <- function(id, settings_reactive) {
             shiny::modalDialog(
               shiny::HTML("
           <div style='display: flex; align-items: flex-start; gap: 1rem;'>
-            <span style='font-size: 1.5rem;'>⚠️</span>
+            <span style='font-size: 1.5rem;'>\u26a0\ufe0f</span>
             <p style='margin: 0; line-height: 1.6;'>
               The script for the selected starting cohort has not been fully tested yet
               and may contain errors. Please use it with caution and run scripts line by line.

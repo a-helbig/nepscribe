@@ -15,7 +15,7 @@ dataset_exploration_card <- function() {
       htmltools::tags$script(
         htmltools::HTML(
           '$(document).on("shiny:inputchanged", function(event) {
-               $(\'span[data-toggle="tooltip\']\').tooltip({
+               $(\'span[data-toggle="tooltip"]\').tooltip({
                    html: true,
                    trigger: "hover"
                });

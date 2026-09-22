@@ -7,7 +7,7 @@
 #' @importFrom htmltools tags
 app_ui <- function() {
 
-  app_version <- "v0.3.2"  # define your current app version here
+  app_version <- "v0.3.3"  # define your current app version here
 
   # Make package www resources accessible in Shiny
   shiny::addResourcePath(
@@ -80,14 +80,15 @@ bslib::page_navbar(
       condition = "input.nav === 'Explore Datasets  '",
       dataset_ui("explore_dataset")
     ),
-    open = TRUE
+    open = FALSE
   ),
 
   # --- Main panels ---
   bslib::nav_panel(
     title = "Start",
     htmltools::HTML(
-      "<div style='display: flex; align-items: center;'>
+      "<div style='max-width: 900px; margin: 0 auto;'>
+     <div style='display: flex; align-items: center;'>
        <img src='www/images/lizard_instead_of_neps.jpg' width='200' height='100' style='margin-right: 10px;'>
        <div>
          <p style='font-size:22px; margin: 0;'><b>NEPScribe</b>
@@ -98,7 +99,7 @@ bslib::page_navbar(
      <br>
 
      <!-- Features Box -->
-     <div style='max-width: 900px; padding: 15px; border: 1px solid #ccc; border-radius: 8px; background-color: #f9f9f9;'>
+     <div style='padding: 15px; border: 1px solid #ccc; border-radius: 8px; background-color: #f9f9f9;'>
        <p style='font-size:18px; font-weight: bold; margin-bottom: 10px;'>Features</p>
        <ul style='margin-left: 20px; line-height: 1.6;'>
                   <li>
@@ -129,7 +130,7 @@ bslib::page_navbar(
      </div>
      <br>
      <!-- Notes Box -->
-     <div style='max-width: 900px; padding: 15px; border: 1px solid #ccc; border-radius: 8px; background-color: #f1f8ff;'>
+     <div style='padding: 15px; border: 1px solid #ccc; border-radius: 8px; background-color: #f1f8ff;'>
             <p style='font-size:18px; font-weight: bold; margin-bottom: 10px;'>Note</p>
               <ul style='margin-left: 20px; line-height: 1.6;'>
                 <li>
@@ -144,6 +145,7 @@ bslib::page_navbar(
                 If you find any issues or bugs in the app or in the generated scripts, please report them to alexander.helbig@wzb.eu or open an issue on the app's github page (See help tab in the navbar).
                 </li>
               </ul>
+     </div>
      </div>"
     ),
     icon = shiny::icon("door-open")

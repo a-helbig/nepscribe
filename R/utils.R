@@ -525,7 +525,7 @@ create_dataset_names <- function(datapath){
 gen_labels_for_multi <- function(datapath, dataset) {
   data <- haven::read_dta(base::paste0(datapath,"/", dataset), n_max = 1)
   varlabels <- base::paste(names(data), "-", base::unname(base::sapply(data, base::attr, which="label")))
-  return(varlabels[!varlabels %in% c("wave - Welle","ID_t - Target-ID","splink - Link für Spell-Merging")])
+  return(varlabels[!varlabels %in% c("wave - Welle","ID_t - Target-ID","splink - Link f\u00fcr Spell-Merging")])
 }
 
 #' Assign value labels to dataset

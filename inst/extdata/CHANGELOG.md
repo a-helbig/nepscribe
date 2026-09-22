@@ -45,3 +45,11 @@ It may be released for other SCs in the future.
 * Updated SC8 semantic structured files to 2-0-0
 * Added some additional commentary to carry forward approach in stata script
 
+## Version 0.3.3 (2026-09-22)
+
+* The sidebar can now be resized by clicking and dragging its edge, and it collapses by default on the Start page, where it isn't needed.
+* Multiple smaller fixes and changes to the generated Stata and R scripts.
+* Centered the content on the Start page.
+* Resolved two warnings raised during package checks: internal app functions were being exported unintentionally, and non-ASCII characters (ä, ö, ü, ß, etc.) in the source code caused encoding warnings.
+* Fixed a JavaScript error in the 'Explore Datasets' tab that broke the variable tooltips.
+
