@@ -3,6 +3,40 @@ Shiny.addCustomMessageHandler('sidebarWidth', function(width) {
   document.querySelector('.bslib-sidebar-layout').style.setProperty('--_sidebar-width', width + 'px');
 });
 
+// Attach hover tooltips with question text to items in the "Additional Variables" picker.
+// shinyWidgets::updateMultiInput() rebuilds the picker's DOM asynchronously, in more than one
+// step (it's first cleared, then re-populated), each with variable delay. Instead of guessing a
+// timeout, watch for that rebuild to actually happen via MutationObserver, re-applying on every
+// mutation and only disconnecting once mutations have settled, so we land on the final DOM state.
+Shiny.addCustomMessageHandler('variableQuestiontexts', function(map) {
+  var wrapper = document.querySelector('.multi-wrapper');
+  if (!wrapper) return;
+
+  function applyTooltips() {
+    document.querySelectorAll('.multi-wrapper .item[data-value]').forEach(function (el) {
+      var qtext = map[el.getAttribute('data-value')];
+      if (qtext) {
+        el.setAttribute('data-toggle', 'tooltip');
+        el.setAttribute('title', qtext);
+      } else {
+        el.removeAttribute('data-toggle');
+        el.removeAttribute('title');
+      }
+    });
+    $('.multi-wrapper .item[data-toggle="tooltip"]').tooltip({ trigger: 'hover', delay: { show: 500, hide: 100 } });
+  }
+
+  applyTooltips();
+  var settleTimer;
+  var observer = new MutationObserver(function () {
+    applyTooltips();
+    clearTimeout(settleTimer);
+    settleTimer = setTimeout(function () { observer.disconnect(); }, 200);
+  });
+  observer.observe(wrapper, { childList: true, subtree: true });
+  settleTimer = setTimeout(function () { observer.disconnect(); }, 200);
+});
+
 // Define a globally available JS function that will show NA in datatables
 function customRowCallback(row, data) {
   for(var i=0; i<data.length; i++){

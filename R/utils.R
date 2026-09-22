@@ -336,6 +336,19 @@ gen_comb_char <- function(datapath, dataset, language){
   base::paste(names(data), "-", base::unname(base::sapply(data, base::attr, which = "label")))
 }
 
+#' Generate named vector of question texts per variable in a dataset
+#' @keywords internal
+#' @noRd
+gen_comb_questiontext <- function(datapath, dataset, language){
+  if(!stringr::str_detect(dataset, "SC.*\\d\\d-\\d-\\d\\.dta$")) return(base::character(0))
+
+  attr_type <- if(language) "NEPS_questiontext_en" else "NEPS_questiontext_de"
+
+  qtexts <- read_exp_fields(base::file.path(datapath, dataset), attr_type = attr_type)
+
+  stats::setNames(qtexts$value, qtexts$variable)
+}
+
 
 #' generates table with meta info
 #' @keywords internal

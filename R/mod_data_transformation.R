@@ -409,6 +409,12 @@ shiny::observeEvent(input$sub_format_select, {
           choices = new_choices
         )
 
+        # Send question texts for the new choices, so the picker can show them as hover tooltips
+        qtexts <- gen_comb_questiontext(cohort_path(), input$dataset, input$language)
+        vars_short <- stringr::str_replace_all(new_choices, " - .*", "")
+        qtext_map <- stats::setNames(as.list(base::unname(qtexts[vars_short])), new_choices)
+        session$sendCustomMessage("variableQuestiontexts", qtext_map)
+
         # Close modal
           shiny::removeModal()
       })
