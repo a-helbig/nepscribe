@@ -189,25 +189,25 @@ data_transformation_add_variables_ui <- function(id) {
         shiny::div(
           style = "width: 320px;",
 
-          htmltools::tags$b(shiny::div("Inspect selected Variables or reset everything (Button)")),
-
-          shinyWidgets::pickerInput(
-            ns("global_vars"),
-            label = NULL,
-            choices = NULL,
-            multiple = TRUE,
-            selected = NULL,
-            width = "100%",
-            options = list('actions-box' = TRUE)
-          ),
-
-          shiny::actionButton(
-            ns("reset_variables"),
-            "Reset Vars",
-            style = "width: 145px; height: 40px",
-            class = "btn btn-info"
+          htmltools::tags$div(
+            title = "Resets all datasets and variables in this UI, and removes everything already added to the script so far.",
+            shiny::actionButton(
+              ns("reset_variables"),
+              "Reset Everything",
+              style = "width: 180px; height: 40px; white-space: nowrap;",
+              class = "btn btn-info"
+            )
           ),
           htmltools::tags$br(),
+          htmltools::tags$br(),
+
+          htmltools::tags$b(shiny::div("Selected Variables")),
+          htmltools::tags$br(),
+
+          shiny::div(
+            style = "max-height: 350px; overflow-y: auto;",
+            shiny::uiOutput(ns("variable_summary"))
+          ),
           htmltools::tags$br(),
           htmltools::tags$div(
             style = paste(
@@ -511,7 +511,8 @@ shiny::observeEvent(input$sub_format_select, {
         # put this df into the list of dfs
         varlist$data[[input$dataset]] <- dataframe
 
-        # Update picker input for global_vars
+        # Add the selected variables list under the selected dataset; the
+        # variable_summary accordion re-renders reactively off this.
         new_list <- gen_list_for_picker(input$dataset, input$multi_vars_input)
         # read the current stored list into current_lists
         current_lists <- all_lists()
@@ -520,13 +521,6 @@ shiny::observeEvent(input$sub_format_select, {
         # save the updated combined list back into the reactive value. This is how the app remembers all dataset-variable lists across clicks.
         all_lists(current_lists)
 
-        # update the pickerInput on the right side of the UI, that shows all selected datasets and variables
-        shinyWidgets::updatePickerInput(
-          session,
-          "global_vars",
-          choices = current_lists,
-          selected = base::unique(base::unlist(current_lists))
-        )
         # confirmation/success message popup
         shinyalert::shinyalert(
           title = "",
@@ -547,14 +541,6 @@ shiny::observeEvent(input$sub_format_select, {
           # Reset the form / inputs
           shinyjs::reset("dataset")
 
-          # update global_vars input
-          shinyWidgets::updatePickerInput(
-            session,
-            "global_vars",
-            choices = c(""),
-            selected = NULL
-          )
-
           # update multi_vars_input
           shinyWidgets::updateMultiInput(
             session,
@@ -568,6 +554,67 @@ shiny::observeEvent(input$sub_format_select, {
           all_lists(list())
         }
       )
+
+      # Build a stable, valid Shiny-input-id fragment identifying a dataset
+      dataset_short_id <- function(dataset) {
+        short <- stringr::str_match(dataset, "SC\\d+_(.*?)_S")[, 2]
+        base::gsub("[^A-Za-z0-9_]", "_", short)
+      }
+
+      # Collapsible per-dataset summary of confirmed variables, replacing the old global_vars picker.
+      # Each dataset's checkboxes double as the include/exclude filter used at script-generation time.
+      output$variable_summary <- shiny::renderUI({
+        current_lists <- all_lists()
+
+        if (base::length(current_lists) == 0) {
+          return(shiny::div(style = "color: #888; font-style: italic;", "No variables selected yet."))
+        }
+
+        panels <- base::lapply(base::names(current_lists), function(dataset) {
+          vars <- base::unname(base::unlist(current_lists[[dataset]]))
+          short <- stringr::str_match(dataset, "SC\\d+_(.*?)_S")[, 2]
+
+          bslib::accordion_panel(
+            title = base::paste0(short, " (", base::length(vars), ")"),
+            htmltools::tags$a(
+              href = "#",
+              style = "font-size: 0.85rem;",
+              onclick = base::sprintf(
+                "Shiny.setInputValue('%s', '%s', {priority: 'event'}); return false;",
+                session$ns("remove_dataset"), dataset
+              ),
+              "Remove this dataset"
+            ),
+            shiny::checkboxGroupInput(
+              session$ns(base::paste0("include_", dataset_short_id(dataset))),
+              label = NULL,
+              choices = vars,
+              selected = vars
+            )
+          )
+        })
+
+        base::do.call(bslib::accordion, c(panels, list(open = TRUE)))
+      })
+
+      # Currently-included variables (bare varnames) across all confirmed datasets;
+      # replaces input$global_vars as the include/exclude filter for script generation.
+      included_vars <- shiny::reactive({
+        current_lists <- all_lists()
+        selected <- base::unlist(base::lapply(base::names(current_lists), function(dataset) {
+          input[[base::paste0("include_", dataset_short_id(dataset))]]
+        }))
+        stringr::str_replace_all(selected, " - .*", "")
+      })
+
+      # Remove a single dataset's confirmed variables (triggered by the "Remove this dataset" link)
+      shiny::observeEvent(input$remove_dataset, {
+        varlist$data[[input$remove_dataset]] <- NULL
+
+        current_lists <- all_lists()
+        current_lists[[input$remove_dataset]] <- NULL
+        all_lists(current_lists)
+      })
 
 
 # Preview script  ---------------------------------------------------------
@@ -583,7 +630,7 @@ shiny::observeEvent(input$sub_format_select, {
           subformat = input$sub_format_select,
           datalist = filter_dataframes(
             varlist$data,
-            stringr::str_replace_all(input$global_vars, " - .*", "")
+            included_vars()
           ),
           prio = input$prio_swap_list,
           english = input$language,
@@ -680,7 +727,7 @@ shiny::observeEvent(input$sub_format_select, {
             suf_version = extract_suf_version(cohort_path()),
             dataformat = input$stata_or_r,
             subformat = input$sub_format_select,
-            datalist = filter_dataframes(varlist$data, stringr::str_replace_all(input$global_vars, " - .*", "")),
+            datalist = filter_dataframes(varlist$data, included_vars()),
             prio = input$prio_swap_list,
             english = input$language,
             set_missings = "Set Missing Values" %in% input$settings,
