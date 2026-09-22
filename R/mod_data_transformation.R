@@ -5,47 +5,98 @@
 #' script preview, and download.
 
 
+#' Wrap a bit of text in a Bootstrap-styled hover tooltip (grey, matches the
+#' rest of the app), instead of the browser's native (black) title tooltip.
+#' @keywords internal
+#' @noRd
+tt <- function(text, tip, bold = FALSE) {
+  inner <- if (bold) htmltools::tags$b(text) else text
+  htmltools::tags$span(`data-toggle` = "tooltip", title = tip, inner)
+}
+
+#' Hover text per "Settings" checkbox choice, keyed by choice value
+#' @keywords internal
+#' @noRd
+.settings_tooltips <- c(
+  "Set Missing Values" = "Specific NEPS missing codes will be set to Stata's missing notation '.' or NA in R.",
+  "Include Parallel Spells" = "Variables on type and timing of parallel spell will be generated in the script.",
+  "Work experience" = "Include an indicator that (retrospectively) counts the months spent in any employment.",
+  "Unemployment experience" = "Include an indicator that (retrospectively) counts the months spent in any unemployment."
+)
+
+#' Hover text per "Add exemplary data preparation" checkbox choice, keyed by choice value
+#' @keywords internal
+#' @noRd
+.add_modules_tooltips <- c(
+  "Further Training" = "Adds example code for preparing:<br>1. A dummy variable on participation in further training,<br>2. A variable on the number of further training courses in the person-year dataset,<br>3. A variable on the overall hours of further training participation.<br>Currently only available for Starting Cohort 6.",
+  "Children" = "Adds example code for preparing a specific indicator on whether the respondent's children are in tertiary education (SC5-SC6), or children cared for at home (SC3-SC4).",
+  "Highest Education" = "Adds example code for preparing CASMIN, ISCED, and full education/qualification variables."
+)
+
+#' Build tooltip-wrapped choiceNames for a (possibly filtered) subset of choice values,
+#' looking up each one's hover text from a named vector like .settings_tooltips.
+#' @keywords internal
+#' @noRd
+tooltip_choice_names <- function(values, tooltips) {
+  lapply(values, function(v) tt(v, tooltips[[v]]))
+}
+
 #' UI func for the sidebar
 #'
 #' @keywords internal
 #' @noRd
 data_transformation_sidebar_ui <- function(id) {
   ns <- shiny::NS(id)
+
   shiny::tagList(
-    htmltools::tags$div(title = "Harmonized Format: The data preparation of life-course trajectories is based on the edited and cleaned biography file.\n\nSubspell Format: The data preparation of life-course trajectories is based on the originally recorded subspell episodes.",
-                        shiny::selectizeInput(
-                          ns("sub_format_select"),
-                          htmltools::tags$b("Person-Year-Data: Format"),
-                          choices = c("Harmonized Spell Format", "Original Subspell Format"),
-                          multiple = TRUE,
-                          selected = "Harmonized Spell Format",
-                          options = list(maxItems = 1)
-                        )),
-    htmltools::tags$div(title = "Please select NEPS Starting Cohort.",
-                        shiny::radioButtons(
+    shiny::selectizeInput(
+      ns("sub_format_select"),
+      tt("Person-Year-Data: Format", "Harmonized Format: The data preparation of life-course trajectories is based on the edited and cleaned biography file.<br><br>Subspell Format: The data preparation of life-course trajectories is based on the originally recorded subspell episodes.", bold = TRUE),
+      choices = c("Harmonized Spell Format", "Original Subspell Format"),
+      multiple = TRUE,
+      selected = "Harmonized Spell Format",
+      options = list(maxItems = 1)
+    ),
+    shiny::radioButtons(
       inputId = ns("cohort_data_trans"),
-      label = htmltools::tags$b("Starting Cohort"),
-      choices = c(
-        "Starting Cohort 6" = "sc6_semantic_files",
-        "Starting Cohort 5" = "sc5_semantic_files",
-        "Starting Cohort 4" = "sc4_semantic_files",
-        "Starting Cohort 3" = "sc3_semantic_files"
+      label = tt("Starting Cohort", "Please select NEPS Starting Cohort.", bold = TRUE),
+      choiceNames = list(
+        tt("Starting Cohort 6", "Uses NEPS Starting Cohort 6 semantic structure files and scripts."),
+        tt("Starting Cohort 5", "Uses NEPS Starting Cohort 5 semantic structure files and scripts."),
+        tt("Starting Cohort 4", "Uses NEPS Starting Cohort 4 semantic structure files and scripts."),
+        tt("Starting Cohort 3", "Uses NEPS Starting Cohort 3 semantic structure files and scripts.")
       ),
+      choiceValues = c("sc6_semantic_files", "sc5_semantic_files", "sc4_semantic_files", "sc3_semantic_files"),
       selected = "sc6_semantic_files",
       inline = TRUE
-    )),
+    ),
     shiny::p(""),
-    htmltools::tags$div(title = "Currently supported script formats: R or STATA.",
-                        shiny::radioButtons(ns("stata_or_r"), htmltools::tags$b("Script file format"), c("STATA", "R"), selected = "STATA")),
-    htmltools::tags$div(title = "Set missing values: Specific NEPS missing codes will be set to Statas missing notation '.' or NA in R. \n\n Include Parallel Spells: Variables on type and timing of parallel spell will be generated in the script. \n\n Work experience: Include an indicator that (retrospectively) counts the months spent in any employment. \n\n Unemployment experience: Include an indicator that (retrospectively) counts the months spent in any unemployment.",
-                        shiny::checkboxGroupInput(ns("settings"), htmltools::tags$b("Settings"), choices = c("Set Missing Values", "Include Parallel Spells", "Work experience", "Unemployment experience"))),
+    shiny::radioButtons(
+      ns("stata_or_r"),
+      tt("Script file format", "Currently supported script formats: R or STATA.", bold = TRUE),
+      choiceNames = list(
+        tt("STATA", "Generates a Stata do-file."),
+        tt("R", "Generates an R script.")
+      ),
+      choiceValues = c("STATA", "R"),
+      selected = "STATA"
+    ),
+    shiny::checkboxGroupInput(
+      ns("settings"),
+      tt("Settings", "Optional settings that add extra code to the generated script.", bold = TRUE),
+      choiceNames = tooltip_choice_names(names(.settings_tooltips), .settings_tooltips),
+      choiceValues = names(.settings_tooltips)
+    ),
     shiny::p(""),
-    htmltools::tags$div(title = "Adds code for data preparation of modules, that cant simply be added via the 'Additional Variables' tab",
-    shiny::checkboxGroupInput(ns("add_modules"), htmltools::tags$b("Add exemplary data preparation"), choices = c("Further Training","Children", "Highest Education"))),
+    shiny::checkboxGroupInput(
+      ns("add_modules"),
+      tt("Add exemplary data preparation", "Adds code for data preparation of modules, that cant simply be added via the 'Additional Variables' tab", bold = TRUE),
+      choiceNames = tooltip_choice_names(names(.add_modules_tooltips), .add_modules_tooltips),
+      choiceValues = names(.add_modules_tooltips)
+    ),
     shiny::p(""),
-    htmltools::tags$div(title = "Switch language of variables in the data preparation script",
-    shiny::p(htmltools::HTML("<b>Variable Labels</b>")),
-                            shinyWidgets::switchInput(
+    shiny::p(tt(htmltools::HTML("<b>Variable Labels</b>"), "Switch language of variables in the data preparation script")),
+    shinyWidgets::switchInput(
       ns("language"),
       label = htmltools::tags$b("Labels"),
       value = TRUE,
@@ -54,21 +105,24 @@ data_transformation_sidebar_ui <- function(id) {
       onStatus = "info",
       offStatus = "success",
       inline = FALSE
-    )),
-    htmltools::tags$div(title = "Show a preview of the script with the actual settings.",
-                        shiny::actionButton(ns("previewScript"), label = "Preview Script", shiny::icon("eye"), class = "btn btn-info")),
-    htmltools::tags$div(title = "Download the script with the actual settings.",
-                        shiny::downloadButton(ns("downloadScript"), label = "Download Script", class = "btn btn-info",)),
+    ),
+    shiny::actionButton(
+      ns("previewScript"), label = "Preview Script", shiny::icon("eye"), class = "btn btn-info",
+      `data-toggle` = "tooltip", title = "Show a preview of the script with the actual settings."
+    ),
+    shiny::downloadButton(
+      ns("downloadScript"), label = "Download Script", class = "btn btn-info",
+      `data-toggle` = "tooltip", title = "Download the script with the actual settings."
+    ),
     shiny::p(""),
-    htmltools::tags$div(title = "You can paste an URL to your local SUF files. This datapath will then be added at the beginning of the script.",
-    shiny::p(htmltools::HTML("<b>Optional: Add local SUF URL</b>")),
-                        shiny::textInput(
+    shiny::p(tt(htmltools::HTML("<b>Optional: Add local SUF URL</b>"), "You can paste an URL to your local SUF files. This datapath will then be added at the beginning of the script.")),
+    shiny::textInput(
       inputId = ns("datapath"),
       "Datapath",
       value = "",
       placeholder = "Optional: Paste local URL",
       width = "100%"
-    ))
+    )
   )
 }
 
@@ -319,7 +373,8 @@ data_transformation_server <- function(id, settings_reactive) {
 
         shiny::updateCheckboxGroupInput(session,
                                         "add_modules",
-                                          choices = choices)
+                                        choiceNames = tooltip_choice_names(choices, .add_modules_tooltips),
+                                        choiceValues = choices)
       })
 
 # Update settings options depending on format --------
@@ -333,7 +388,8 @@ shiny::observeEvent(input$sub_format_select, {
 
   shiny::updateCheckboxGroupInput(session,
                                   "settings",
-                                  choices = choices)
+                                  choiceNames = tooltip_choice_names(choices, .settings_tooltips),
+                                  choiceValues = choices)
 })
 
 # Spell Prioritisation  ----------------------------------------------------
