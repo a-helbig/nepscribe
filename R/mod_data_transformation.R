@@ -231,7 +231,7 @@ data_transformation_add_variables_ui <- function(id) {
             ),
             htmltools::tags$p(
               style = "margin-bottom: 0.5rem;",
-              "2. Note that if you do not use the current SUF version, you might accidentally add variables here that do not yet exist in your SUF version."
+              "2. If you do not use the current SUF version, you might accidentally add variables here that do not yet exist in your SUF version."
             ),
             htmltools::tags$p(
               style = "margin-bottom: 0;",
