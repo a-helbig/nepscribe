@@ -7,8 +7,8 @@
 
 <!-- badges: end -->
 
-NEPScribe is a Shiny application that generates dynamic Stata and R
-scripts to transform NEPS Scientific Use File (SUF) datasets into a
+NEPScribe is a Shiny application that generates a dynamic Stata or R
+script to transform NEPS Scientific Use File (SUF) datasets into a
 person-year format, a data structure commonly required for many
 analytical tasks. This transformation, and the underlying data
 preparation, can be challenging for new NEPS users because NEPS data
@@ -31,7 +31,7 @@ would greatly appreciate it.
 Suggested citation:
 
 Alexander Helbig, Insa Grüttgen (2026). *nepscribe*. Shiny application
-to generate NEPS data preparation scripts in Stata and R. Version 0.3.0
+to generate NEPS data preparation scripts in Stata and R. Version 0.3.3
 \[Computer software\]. <https://github.com/a-helbig/nepscribe>
 
 ## Installation

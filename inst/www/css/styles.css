@@ -65,5 +65,17 @@ css snippet that makes it look like we are/n't able click the tab (with outchang
 pre code .hljs-comment {
   color: #2a9d8f !important;
   font-style: italic !important;
-}le: italic !important;
+}
+
+.bslib-sidebar-layout { position: relative; }
+
+.sidebar-resizer {
+  position: absolute; top: 0; bottom: 0;
+  left: calc(var(--_sidebar-width) - 3px);   /* tracks the sidebar edge */
+  width: 6px; cursor: col-resize; z-index: 20;
+  background: transparent; transition: background-color .15s ease;
+}
+.sidebar-resizer:hover { background-color: rgba(0,0,0,.15); }
+body.sidebar-resizing, body.sidebar-resizing * {
+  user-select: none !important; cursor: col-resize !important;
 }

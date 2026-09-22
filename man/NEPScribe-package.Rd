@@ -4,9 +4,9 @@
 \name{NEPScribe-package}
 \alias{NEPScribe}
 \alias{NEPScribe-package}
-\title{NEPScribe: What the Package Does (Title Case)}
+\title{NEPScribe: Explore NEPS Datasets and Generate Data Preparation Scripts}
 \description{
-Explore NEPS datasets and generate scripts to transform the data.
+Provides a Shiny application to explore NEPS Scientific Use File datasets and to generate Stata and R scripts that transform them into a person-year format.
 }
 \author{
 \strong{Maintainer}: Alexander Helbig \email{alexander.helbig@wzb.eu}
