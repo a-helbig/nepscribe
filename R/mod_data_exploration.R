@@ -6,10 +6,9 @@ dataset_ui <- function(id) {
   shiny::tagList(
 
     # Multi-select cohort picker
-    htmltools::tags$div(title = "Select one or multiple starting cohorts.",
     shinyWidgets::pickerInput(
       inputId = ns("cohort_data_explore"),
-      label = htmltools::tags$b("Select Starting Cohorts"),
+      label = tt("Select Starting Cohorts", "Select one or multiple starting cohorts.", bold = TRUE),
       choices = c(
         "SC1" = "sc1_semantic_files",
         "SC2" = "sc2_semantic_files",
@@ -26,13 +25,12 @@ dataset_ui <- function(id) {
         `deselect-all-text` = "Deselect All",
         `select-all-text` = "Select All"
       )
-    )),
+    ),
 
     # Multi-select dataset picker
-    htmltools::tags$div(title = "Select one or multiple datasets of the selected starting cohort(s).",
-                        shinyWidgets::pickerInput(
+    shinyWidgets::pickerInput(
       inputId = ns("dataset"),
-      label = htmltools::tags$b("Dataset"),
+      label = tt("Dataset", "Select one or multiple datasets of the selected starting cohort(s).", bold = TRUE),
       choices = NULL,
       multiple = TRUE,
       options = list(
@@ -43,13 +41,12 @@ dataset_ui <- function(id) {
         `tick-icon` = "glyphicon glyphicon-ok"  # optional, default is check
       ),
       width = "100%"
-    )),
+    ),
 
     # Meta selector
-    htmltools::tags$div(title = "Filter the datatable with available meta infos on variables in the selected datasets",
     shinyWidgets::pickerInput(
       inputId = ns("meta_selector"),
-      label = htmltools::tags$b("Meta Selection"),
+      label = tt("Meta Selection", "Filter the datatable with available meta infos on variables in the selected datasets", bold = TRUE),
       choices = NULL,
       selected = NULL,
       multiple = TRUE,
@@ -61,9 +58,8 @@ dataset_ui <- function(id) {
         `tick-icon` = "glyphicon glyphicon-ok"  # optional, default is check
       ),
       width = "100%"
-    )),
-    htmltools::tags$div(title = "Switch language of variables in the datatable",
-    shiny::p(htmltools::HTML("<b>Variable Labels</b>")),
+    ),
+    shiny::p(tt(htmltools::HTML("<b>Variable Labels</b>"), "Switch language of variables in the datatable")),
     shinyWidgets::switchInput(
       ns("language"),
       label = htmltools::tags$b("Labels"),
@@ -73,7 +69,7 @@ dataset_ui <- function(id) {
       onStatus = "info",
       offStatus = "success",
       inline = FALSE
-    )),
+    ),
     # Value boxes
     bslib::value_box(
       title = "Datasets",
