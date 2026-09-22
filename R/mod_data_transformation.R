@@ -483,6 +483,30 @@ shiny::observeEvent(input$sub_format_select, {
         }
       )
 
+      # Re-label already-confirmed variables when the language toggle changes, without touching
+      # the underlying selection: create_dataframe()/varlist$data only ever stores bare variable
+      # names, never labels, so the generated script itself was always language-consistent - this
+      # only fixes the accordion display, which otherwise kept showing whatever language was
+      # active when each dataset was confirmed (mixed languages across datasets confirmed at
+      # different times).
+      shiny::observeEvent(input$language, {
+        current_lists <- all_lists()
+        if (base::length(current_lists) == 0) return()
+
+        relabeled <- base::lapply(base::names(current_lists), function(dataset) {
+          vars_short <- stringr::str_replace_all(base::unname(base::unlist(current_lists[[dataset]])), " - .*", "")
+
+          all_choices <- gen_comb_char(cohort_path(), dataset, input$language)
+          all_vars_short <- stringr::str_replace_all(all_choices, " - .*", "")
+
+          new_choices <- all_choices[base::match(vars_short, all_vars_short)]
+          new_choices <- new_choices[!base::is.na(new_choices)]
+          gen_list_for_picker(dataset, new_choices)
+        })
+        base::names(relabeled) <- base::names(current_lists)
+        all_lists(relabeled)
+      })
+
       # Build a stable, valid Shiny-input-id fragment identifying a dataset
       dataset_short_id <- function(dataset) {
         short <- stringr::str_match(dataset, "SC\\d+_(.*?)_S")[, 2]
