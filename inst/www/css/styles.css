@@ -38,7 +38,16 @@ i.add-marker-icon {
 
 /* breathing room between the button row and the table */
 div.dataTables_wrapper div.dt-buttons {
-  margin-bottom: 14px;
+  margin-bottom: 10px;
+}
+
+/* the lone + between the buttons and the table; its explanation shows on hover */
+div.dt-add-hint {
+  margin: 0 0 10px 4px;
+  font-size: 1.1rem;
+}
+div.dt-add-hint i {
+  cursor: help;
 }
 
 /* Make the table's search field easy to spot: a small tinted card behind label + input */
