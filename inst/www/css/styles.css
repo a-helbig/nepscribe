@@ -30,24 +30,27 @@ css snippet that makes it look like we are/n't able click the tab (with outchang
   filter: brightness(0.92);
 }
 
-/* Explore Datasets: caption next to the table buttons explaining the "add" marker */
-/* the same grey "add" icon in the marker column, the caption and the Add button */
-.dataTables_wrapper i.fa-circle-plus {
-  color: #888;
+/* Explore Datasets: the same grey "add" icon in the marker column, the sidebar note and the
+   Add Selected to Script button */
+i.add-marker-icon {
+  color: #888 !important;
 }
 
-div.dt-add-caption {
-  display: inline-block;
-  vertical-align: middle;
-  margin: 10px 0 14px 12px;
-  max-width: 460px;
-  font-size: 0.8rem;
-  line-height: 1.4;
-  color: #666;
-}
 /* breathing room between the button row and the table */
 div.dataTables_wrapper div.dt-buttons {
   margin-bottom: 14px;
+}
+
+/* Make the table's search field easy to spot: a small tinted card behind label + input */
+div.dataTables_wrapper div.dataTables_filter label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background-color: #e6f6fa;
+  border: 1px solid var(--bs-info);
+  border-radius: 8px;
+  font-weight: 600;
 }
 
 
