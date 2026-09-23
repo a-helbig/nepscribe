@@ -13,23 +13,34 @@ css snippet that makes it look like we are/n't able click the tab (with outchang
   resize: vertical;
 }
 
-/* 2. Styling DT buttons */
+/* 2. Styling DT buttons - same blue as the app's other (btn-info) buttons */
 .dt-buttons .btn {
-  background-color: #ADD8E6;   /* Light Blue background */
-  color: black;                /* Black text */
+  background-color: var(--bs-info);
+  color: #fff;
   border-radius: 5px;          /* Rounded corners */
   padding: 6px 8px;            /* Button padding */
   font-size: 14px;             /* Font size */
   border: 1px solid transparent; /* Added a border style */
 }
 
-.dt-buttons .btn:hover {
-  background-color: #0ec3e7;   /* Darker Light Blue on hover */
+.dt-buttons .btn:hover,
+.dt-buttons .btn:active {
+  background-color: var(--bs-info);
+  color: #fff;
+  filter: brightness(0.92);
 }
 
-.dt-buttons .btn:active {
-  background-color: #10b7d8;   /* Even darker Light Blue green on click */
+/* Explore Datasets: caption next to the table buttons explaining the "add" marker */
+div.dt-add-caption {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 12px;
+  max-width: 340px;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  color: #666;
 }
+
 
 
 /* "show more/less" feature css*/
@@ -78,18 +89,4 @@ pre code .hljs-comment {
 .sidebar-resizer:hover { background-color: rgba(0,0,0,.15); }
 body.sidebar-resizing, body.sidebar-resizing * {
   user-select: none !important; cursor: col-resize !important;
-}
-
-/* Lizard sitting on top of the Start page's Features box. The SVG (viewBox 280x110) has the
-   box corner at (70, 70), so at 320px wide both offsets are 70 * 320/280 = 80px. */
-.hanging-lizard {
-  position: absolute;
-  top: -80px;
-  left: -80px;
-  width: 320px;
-  pointer-events: none;
-}
-/* Hidden where the box has too little margin for the lizard to hang outside it */
-@media (max-width: 1080px) {
-  .hanging-lizard { display: none; }
 }

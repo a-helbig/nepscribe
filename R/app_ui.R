@@ -88,15 +88,17 @@ bslib::page_navbar(
     title = "Start",
     htmltools::HTML(
       "<div style='max-width: 900px; margin: 0 auto;'>
-     <div style='text-align: center; margin-bottom: 45px;'>
+     <div style='text-align: center;'>
        <p style='font-size:22px; margin: 0;'><b>NEPScribe</b>
        <span style='font-size:14px; margin-left: 5px;'>Beta</span></p>
        <small style='font-size:12px; color:gray;'>Version: ", app_version, "</small>
+       <br>
+       <img src='www/images/lizard_instead_of_neps.jpg' width='200' height='100' alt=''>
      </div>
+     <br>
 
      <!-- Features Box -->
-     <div style='position: relative; padding: 15px; border: 1px solid #ccc; border-radius: 8px; background-color: #f9f9f9;'>
-       <img src='www/images/lizard_hanging.svg' class='hanging-lizard' alt=''>
+     <div style='padding: 15px; border: 1px solid #ccc; border-radius: 8px; background-color: #f9f9f9;'>
        <p style='font-size:18px; font-weight: bold; margin-bottom: 10px;'>Features</p>
        <ul style='margin-left: 20px; line-height: 1.6;'>
                   <li>

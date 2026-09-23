@@ -92,31 +92,10 @@ dataset_ui <- function(id) {
 #' @noRd
 dataset_overview_ui <- function(id) {
   ns <- shiny::NS(id)
-  shiny::tagList(
-    # Only shown once at least one dataset is selected (the table is empty before that)
-    shiny::conditionalPanel(
-      condition = "input.dataset && input.dataset.length > 0",
-      ns = ns,
-      shiny::div(
-        style = "display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;",
-        shiny::actionButton(
-          ns("add_to_script"),
-          "Add Selected to Script",
-          icon = shiny::icon("circle-plus"),
-          class = "btn btn-info"
-        ),
-        htmltools::tags$small(
-          style = "color: #666;",
-          shiny::icon("circle-plus"),
-          " marks variables that can be added to the script (click rows to select them): only datasets that can be merged into a person-year dataset, from the starting cohort currently selected in Transform Data."
-        )
-      )
-    ),
-    shiny::fluidRow(
-      shinycssloaders::withSpinner(
-      DT::DTOutput(ns("data_overview")),
-      caption = .captiontext
-      )
+  shiny::fluidRow(
+    shinycssloaders::withSpinner(
+    DT::DTOutput(ns("data_overview")),
+    caption = .captiontext
     )
   )
 }
@@ -291,6 +270,21 @@ dataset_explorer_server <- function(id, settings_reactive, cross_module) {
         marker <- base::ifelse(data$Dataset %in% cross_module$available_datasets, marker_icon, "")
         data <- dplyr::mutate(data, ` ` = marker, .before = 1)
 
+        # Export buttons leave out the marker column; plus an "Add Selected to Script" button
+        # in the same toolbar, which triggers input$add_to_script
+        buttons <- c(
+          base::lapply(.buttons, function(b) c(b, list(exportOptions = list(columns = ":not(.dt-marker)")))),
+          list(list(
+            # DT requires a built-in button type to extend; the custom action replaces copy's
+            extend = "copy",
+            text = "<i class='fas fa-circle-plus'></i> Add Selected to Script",
+            action = htmlwidgets::JS(base::sprintf(
+              "function() { Shiny.setInputValue('%s', Date.now(), {priority: 'event'}); }",
+              session$ns("add_to_script")
+            ))
+          ))
+        )
+
         DT::datatable(
           data,
           extensions = "Buttons",
@@ -301,9 +295,18 @@ dataset_explorer_server <- function(id, settings_reactive, cross_module) {
             # table pages are fetched separately from Shiny's own update cycle, so the marker
             # tooltips need initializing after every redraw, not just on shiny:idle
             drawCallback = htmlwidgets::JS("function() { if (window.initAppTooltips) window.initAppTooltips(); }"),
+            # fill the caption slot (dt-add-caption, placed right after the buttons in dom)
+            initComplete = htmlwidgets::JS(
+              "function() {",
+              "  $(this.api().table().container()).find('div.dt-add-caption').html(",
+              "    \"<i class='fas fa-circle-plus'></i> marks variables you can add to the script: from mergeable datasets of the starting cohort selected in Transform Data. Click rows to select them.\"",
+              "  );",
+              "}"
+            ),
+            columnDefs = list(list(targets = 1, className = "dt-marker", orderable = FALSE)),
             pageLength = 50,
-            dom = 'lfBrtip',
-            buttons = .buttons,
+            dom = 'lfB<"dt-add-caption">rtip',
+            buttons = buttons,
             searchHighlight = TRUE
           )
         )
