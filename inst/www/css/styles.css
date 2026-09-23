@@ -31,10 +31,15 @@ css snippet that makes it look like we are/n't able click the tab (with outchang
 }
 
 /* Explore Datasets: caption next to the table buttons explaining the "add" marker */
+/* the same grey "add" icon in the marker column, the caption and the Add button */
+.dataTables_wrapper i.fa-circle-plus {
+  color: #888;
+}
+
 div.dt-add-caption {
   display: inline-block;
   vertical-align: middle;
-  margin: 4px 0 14px 12px;
+  margin: 10px 0 14px 12px;
   max-width: 460px;
   font-size: 0.8rem;
   line-height: 1.4;

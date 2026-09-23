@@ -263,7 +263,6 @@ dataset_explorer_server <- function(id, settings_reactive, cross_module) {
         # Additional Variables (mergeable dataset of the cohort currently selected there)
         marker_icon <- as.character(shiny::icon(
           "circle-plus",
-          style = "color: #888;",
           `data-toggle` = "tooltip",
           title = "Can be added to the script"
         ))
