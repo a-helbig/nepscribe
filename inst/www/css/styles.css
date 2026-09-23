@@ -48,6 +48,16 @@ div.dataTables_wrapper div.dt-toolbar {
 div.dataTables_wrapper div.dt-toolbar div.dt-buttons {
   float: none;
   margin: 0;
+  gap: 6px;
+}
+/* DT puts its buttons in a Bootstrap btn-group, which glues them into one block; give each
+   button its own rounded corners and a gap, and set the Add button a bit further apart */
+div.dataTables_wrapper div.dt-buttons > .btn {
+  border-radius: 5px !important;
+  margin-left: 0 !important;
+}
+div.dataTables_wrapper div.dt-buttons > .btn:last-child {
+  margin-left: 8px !important;
 }
 div.dataTables_wrapper div.dt-toolbar div.dataTables_filter {
   float: none;
