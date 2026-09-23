@@ -36,15 +36,31 @@ i.add-marker-icon {
   color: #888 !important;
 }
 
-/* breathing room between the button row and the table */
-div.dataTables_wrapper div.dt-buttons {
-  margin-bottom: 10px;
+/* Explore Datasets toolbar: buttons, the + hint and the search field in one aligned row
+   (search pushed to the right), with breathing room above the table */
+div.dataTables_wrapper div.dt-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+div.dataTables_wrapper div.dt-toolbar div.dt-buttons {
+  float: none;
+  margin: 0;
+}
+div.dataTables_wrapper div.dt-toolbar div.dataTables_filter {
+  float: none;
+  margin: 0 0 0 auto;
+}
+div.dataTables_wrapper div.dt-toolbar div.dataTables_filter label {
+  margin: 0;
 }
 
-/* the lone + between the buttons and the table; its explanation shows on hover */
+/* the lone + right of the buttons; its explanation shows on hover */
 div.dt-add-hint {
-  margin: 0 0 10px 4px;
   font-size: 1.1rem;
+  line-height: 1;
 }
 div.dt-add-hint i {
   cursor: help;

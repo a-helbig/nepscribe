@@ -309,7 +309,8 @@ dataset_explorer_server <- function(id, settings_reactive, cross_module) {
             ),
             columnDefs = list(list(targets = 1, className = "dt-marker", orderable = FALSE)),
             pageLength = 50,
-            dom = 'lfB<"dt-add-hint">rtip',
+            # buttons, the + hint and the search field share one toolbar row
+            dom = 'l<"dt-toolbar"B<"dt-add-hint">f>rtip',
             buttons = buttons,
             searchHighlight = TRUE
           )
