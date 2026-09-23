@@ -83,17 +83,6 @@ dataset_ui <- function(id) {
       value = shiny::textOutput(ns("vars_summary")),
       theme = "info",
       id = "value_box_short4"
-    ),
-    # How to send variables from the table to Transform Data
-    bslib::card(
-      bslib::card_body(
-        style = "font-size: 0.85rem; line-height: 1.4;",
-        htmltools::tags$span(
-          "Note that ",
-          shiny::icon("circle-plus", class = "add-marker-icon"),
-          " marks variables you can add from here directly to the person-year script in Transform Data. However, the selected starting cohorts in both tabs must match. Click rows to select them and confirm with the \"Add Selected to Script\" button."
-        )
-      )
     )
   )
 }
@@ -306,9 +295,21 @@ dataset_explorer_server <- function(id, settings_reactive, cross_module) {
             # table pages are fetched separately from Shiny's own update cycle, so the marker
             # tooltips need initializing after every redraw, not just on shiny:idle
             drawCallback = htmlwidgets::JS("function() { if (window.initAppTooltips) window.initAppTooltips(); }"),
+            # a single grey + between the buttons and the table, explaining the marker on hover
+            initComplete = htmlwidgets::JS(
+              "function() {",
+              "  $(this.api().table().container()).find('div.dt-add-hint').empty().append(",
+              "    $('<i>', {'class': 'fas fa-circle-plus add-marker-icon', 'data-toggle': 'tooltip',",
+              "      title: 'Marks variables you can add from here directly to the person-year script in Transform Data. ' +",
+              "        'However, the selected starting cohorts in both tabs must match. ' +",
+              "        'Click rows to select them and confirm with the \"Add Selected to Script\" button.'})",
+              "  );",
+              "  if (window.initAppTooltips) window.initAppTooltips();",
+              "}"
+            ),
             columnDefs = list(list(targets = 1, className = "dt-marker", orderable = FALSE)),
             pageLength = 50,
-            dom = 'lfBrtip',
+            dom = 'lfB<"dt-add-hint">rtip',
             buttons = buttons,
             searchHighlight = TRUE
           )
