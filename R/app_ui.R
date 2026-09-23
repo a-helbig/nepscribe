@@ -14,6 +14,11 @@ app_ui <- function() {
     "www",
     system.file("www", package = "NEPScribe")
   )
+  # cache-busting: append the file's modification time so browsers reload changed CSS/JS
+  www_version <- function(file) {
+    mtime <- base::file.mtime(system.file("www", file, package = "NEPScribe"))
+    base::paste0("www/", file, "?v=", base::format(mtime, "%Y%m%d%H%M%S"))
+  }
 
 bslib::page_navbar(
   # --- Header includes CSS and JS from package, plus Shiny feedback/js initialization ---
@@ -25,7 +30,7 @@ bslib::page_navbar(
     htmltools::tags$link(
       rel = "stylesheet",
       type = "text/css",
-      href = "www/css/styles.css"
+      href = www_version("css/styles.css")
     ),
     htmltools::tags$head(
       htmltools::tags$meta(name = "robots", content = "noindex, nofollow")
@@ -51,7 +56,7 @@ bslib::page_navbar(
 
     # Serve JS from package via URL
     htmltools::tags$script(
-      src = "www/js/js_snippets.js"
+      src = www_version("js/js_snippets.js")
     )
   ),
   id = "nav",
