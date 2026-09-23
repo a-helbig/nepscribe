@@ -88,7 +88,7 @@ bslib::page_navbar(
     title = "Start",
     htmltools::HTML(
       "<div style='max-width: 900px; margin: 0 auto;'>
-     <div style='text-align: center; margin-bottom: 70px;'>
+     <div style='text-align: center; margin-bottom: 45px;'>
        <p style='font-size:22px; margin: 0;'><b>NEPScribe</b>
        <span style='font-size:14px; margin-left: 5px;'>Beta</span></p>
        <small style='font-size:12px; color:gray;'>Version: ", app_version, "</small>
