@@ -166,7 +166,29 @@ data_transformation_add_variables_ui <- function(id) {
         ),
         width = 2
       ),
-      htmltools::tags$b(shiny::div("2. Step: Select Variables"))
+      # right-aligned so it ends flush with the top-right corner of the variable picker below
+      shiny::column(
+        width = 3,
+        shiny::div(
+          style = "text-align: right;",
+          htmltools::tags$div(
+            style = "display: inline-block;",
+            title = "Resets all datasets and variables in this UI, and removes everything already added to the script so far.",
+            shiny::actionButton(
+              ns("reset_variables"),
+              "Reset Everything",
+              style = "width: 180px; height: 40px; white-space: nowrap;",
+              class = "btn btn-info"
+            )
+          )
+        )
+      )
+    ),
+
+    # headers for the picker and the summary, so both start at the same height below
+    shiny::fluidRow(
+      shiny::column(width = 7, htmltools::tags$b(shiny::div("2. Step: Select Variables"))),
+      shiny::column(width = 5, htmltools::tags$b(shiny::div("Selected Variables")))
     ),
 
     shiny::fluidRow(
@@ -188,21 +210,6 @@ data_transformation_add_variables_ui <- function(id) {
         width = 5,
         shiny::div(
           style = "width: 320px;",
-
-          htmltools::tags$div(
-            title = "Resets all datasets and variables in this UI, and removes everything already added to the script so far.",
-            shiny::actionButton(
-              ns("reset_variables"),
-              "Reset Everything",
-              style = "width: 180px; height: 40px; white-space: nowrap;",
-              class = "btn btn-info"
-            )
-          ),
-          htmltools::tags$br(),
-          htmltools::tags$br(),
-
-          htmltools::tags$b(shiny::div("Selected Variables")),
-          htmltools::tags$br(),
 
           shiny::div(
             style = "max-height: 350px; overflow-y: auto;",
