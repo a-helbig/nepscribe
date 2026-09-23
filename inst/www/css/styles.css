@@ -80,13 +80,13 @@ body.sidebar-resizing, body.sidebar-resizing * {
   user-select: none !important; cursor: col-resize !important;
 }
 
-/* Lizard perched on the Start page's Features box. The SVG's box corner sits at 70/220 of its
-   width, so the offsets are that fraction of the rendered width (250px -> ~80px). */
+/* Lizard sitting on top of the Start page's Features box. The SVG (viewBox 280x110) has the
+   box corner at (70, 70), so at 320px wide both offsets are 70 * 320/280 = 80px. */
 .hanging-lizard {
   position: absolute;
   top: -80px;
   left: -80px;
-  width: 250px;
+  width: 320px;
   pointer-events: none;
 }
 /* Hidden where the box has too little margin for the lizard to hang outside it */
