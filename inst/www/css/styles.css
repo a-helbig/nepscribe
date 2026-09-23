@@ -62,8 +62,16 @@ div.dt-add-hint {
   font-size: 1.1rem;
   line-height: 1;
 }
-div.dt-add-hint i {
+div.dt-add-hint span {
   cursor: help;
+  white-space: nowrap;
+}
+/* the small ? next to the +, signalling "hover here for an explanation" */
+div.dt-add-hint i.add-hint-question {
+  color: #aaa;
+  font-size: 0.7rem;
+  margin-left: 3px;
+  vertical-align: super;
 }
 
 /* Make the table's search field easy to spot: a small tinted card behind label + input */

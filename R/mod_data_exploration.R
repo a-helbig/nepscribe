@@ -277,7 +277,7 @@ dataset_explorer_server <- function(id, settings_reactive, cross_module) {
           list(list(
             # DT requires a built-in button type to extend; the custom action replaces copy's
             extend = "copy",
-            text = "<i class='fas fa-circle-plus add-marker-icon'></i> Add Selected to Script",
+            text = "Add Selected to Script",
             action = htmlwidgets::JS(base::sprintf(
               "function() { Shiny.setInputValue('%s', Date.now(), {priority: 'event'}); }",
               session$ns("add_to_script")
@@ -295,14 +295,16 @@ dataset_explorer_server <- function(id, settings_reactive, cross_module) {
             # table pages are fetched separately from Shiny's own update cycle, so the marker
             # tooltips need initializing after every redraw, not just on shiny:idle
             drawCallback = htmlwidgets::JS("function() { if (window.initAppTooltips) window.initAppTooltips(); }"),
-            # a single grey + between the buttons and the table, explaining the marker on hover
+            # a grey + with a small ? next to the buttons, explaining the marker on hover
             initComplete = htmlwidgets::JS(
               "function() {",
               "  $(this.api().table().container()).find('div.dt-add-hint').empty().append(",
-              "    $('<i>', {'class': 'fas fa-circle-plus add-marker-icon', 'data-toggle': 'tooltip',",
+              "    $('<span>', {'data-toggle': 'tooltip',",
               "      title: 'Marks variables you can add from here directly to the person-year script in Transform Data. ' +",
               "        'However, the selected starting cohorts in both tabs must match. ' +",
               "        'Click rows to select them and confirm with the \"Add Selected to Script\" button.'})",
+              "      .append($('<i>', {'class': 'fas fa-circle-plus add-marker-icon'}))",
+              "      .append($('<i>', {'class': 'fas fa-circle-question add-hint-question'}))",
               "  );",
               "  if (window.initAppTooltips) window.initAppTooltips();",
               "}"
