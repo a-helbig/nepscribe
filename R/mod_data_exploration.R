@@ -93,18 +93,23 @@ dataset_ui <- function(id) {
 dataset_overview_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
-    shiny::div(
-      style = "display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;",
-      shiny::actionButton(
-        ns("add_to_script"),
-        "Add Selected to Script",
-        icon = shiny::icon("circle-plus"),
-        class = "btn btn-outline-secondary btn-sm"
-      ),
-      htmltools::tags$small(
-        style = "color: #666;",
-        shiny::icon("circle-plus"),
-        " marks variables that can be added to the script (click rows to select them): only datasets that can be merged into a person-year dataset, from the starting cohort currently selected in Transform Data."
+    # Only shown once at least one dataset is selected (the table is empty before that)
+    shiny::conditionalPanel(
+      condition = "input.dataset && input.dataset.length > 0",
+      ns = ns,
+      shiny::div(
+        style = "display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;",
+        shiny::actionButton(
+          ns("add_to_script"),
+          "Add Selected to Script",
+          icon = shiny::icon("circle-plus"),
+          class = "btn btn-info"
+        ),
+        htmltools::tags$small(
+          style = "color: #666;",
+          shiny::icon("circle-plus"),
+          " marks variables that can be added to the script (click rows to select them): only datasets that can be merged into a person-year dataset, from the starting cohort currently selected in Transform Data."
+        )
       )
     ),
     shiny::fluidRow(
