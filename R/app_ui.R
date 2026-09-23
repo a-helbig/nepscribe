@@ -14,6 +14,11 @@ app_ui <- function() {
     "www",
     system.file("www", package = "NEPScribe")
   )
+  # cache-busting: append the file's modification time so browsers reload changed CSS/JS
+  www_version <- function(file) {
+    mtime <- base::file.mtime(system.file("www", file, package = "NEPScribe"))
+    base::paste0("www/", file, "?v=", base::format(mtime, "%Y%m%d%H%M%S"))
+  }
 
 bslib::page_navbar(
   # --- Header includes CSS and JS from package, plus Shiny feedback/js initialization ---
@@ -25,7 +30,7 @@ bslib::page_navbar(
     htmltools::tags$link(
       rel = "stylesheet",
       type = "text/css",
-      href = "www/css/styles.css"
+      href = www_version("css/styles.css")
     ),
     htmltools::tags$head(
       htmltools::tags$meta(name = "robots", content = "noindex, nofollow")
@@ -51,7 +56,7 @@ bslib::page_navbar(
 
     # Serve JS from package via URL
     htmltools::tags$script(
-      src = "www/js/js_snippets.js"
+      src = www_version("js/js_snippets.js")
     )
   ),
   id = "nav",
@@ -88,13 +93,15 @@ bslib::page_navbar(
     title = "Start",
     htmltools::HTML(
       "<div style='max-width: 900px; margin: 0 auto;'>
-     <div style='display: flex; align-items: center;'>
-       <img src='www/images/lizard_instead_of_neps.jpg' width='200' height='100' style='margin-right: 10px;'>
+     <!-- 3 columns so the title sits exactly centered, with the lizard to its left -->
+     <div style='display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;'>
+       <img src='www/images/lizard_instead_of_neps.jpg' width='200' height='100' style='justify-self: end; margin-right: 10px;' alt=''>
        <div>
-         <p style='font-size:22px; margin: 0;'><b>NEPScribe</b>
-         <span style='font-size:14px; margin-left: 5px;'>Beta</span></p>
+         <p style='font-size:32px; margin: 0;'><b>NEPScribe</b>
+         <span style='font-size:16px; margin-left: 6px;'>Beta</span></p>
          <small style='font-size:12px; color:gray;'>Version: ", app_version, "</small>
        </div>
+       <div></div>
      </div>
      <br>
 

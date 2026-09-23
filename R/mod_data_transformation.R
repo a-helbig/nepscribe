@@ -262,7 +262,7 @@ data_transformation_prio_ui <- function(id) {
 #' @importFrom shiny reactive observe observeEvent req updateTextInput
 #' @keywords internal
 #' @noRd
-data_transformation_server <- function(id, settings_reactive) {
+data_transformation_server <- function(id, settings_reactive, cross_module) {
   shiny::moduleServer(
     id,
     function(input, output, session) {
@@ -433,6 +433,10 @@ shiny::observeEvent(input$sub_format_select, {
           selected = NULL,
           choices = datasets()
         )
+
+        # Let Explore Datasets know which datasets (of which cohort) can be added from there
+        cross_module$available_datasets <- datasets()
+        cross_module$cohort <- base::toupper(identify_sc(cohort_path()))
       })
 
       # Update multiInput when dataset is selected, or when the language is switched
@@ -495,31 +499,34 @@ shiny::observeEvent(input$sub_format_select, {
       varlist <- shiny::reactiveValues(data = list())
       all_lists <- shiny::reactiveVal(list())
 
-      # Confirm selected variables
-      shiny::observeEvent(input$confirm_variables, {
-        shiny::req(input$dataset, input$multi_vars_input)
-
+      # Store one dataset's confirmed variables (given as "varname - label" strings) for the
+      # script, replacing whatever was stored for that dataset before. Shared by the
+      # "Confirm Vars" button and by variables sent over from Explore Datasets.
+      store_confirmed_vars <- function(dataset, labelled_vars) {
         # delete variable label and the - from selected vars
-        vars_vec_short <- stringr::str_replace_all(input$multi_vars_input, " - .*", "")
+        vars_vec_short <- stringr::str_replace_all(labelled_vars, " - .*", "")
 
         # create a df with selected dataset and selected variables
-        dataframe <- create_dataframe(input$dataset, vars_vec_short)
+        dataframe <- create_dataframe(dataset, vars_vec_short)
 
         # join linkage/merge key information from a package filed named linkage_keys.csv to the dataframe so each dataset gets the appropriate merge variables
         dataframe <- dplyr::left_join(dataframe, create_linkage_data(cohort_path()), by = "Dataset")
 
         # put this df into the list of dfs
-        varlist$data[[input$dataset]] <- dataframe
+        varlist$data[[dataset]] <- dataframe
 
-        # Add the selected variables list under the selected dataset; the
-        # variable_summary accordion re-renders reactively off this.
-        new_list <- gen_list_for_picker(input$dataset, input$multi_vars_input)
-        # read the current stored list into current_lists
+        # Add the selected variables list under the dataset; the variable_summary
+        # accordion re-renders reactively off this.
         current_lists <- all_lists()
-        # add the selected variables list to current_lists under the selected dataset
-        current_lists[[input$dataset]] <- new_list
-        # save the updated combined list back into the reactive value. This is how the app remembers all dataset-variable lists across clicks.
+        current_lists[[dataset]] <- gen_list_for_picker(dataset, labelled_vars)
         all_lists(current_lists)
+      }
+
+      # Confirm selected variables
+      shiny::observeEvent(input$confirm_variables, {
+        shiny::req(input$dataset, input$multi_vars_input)
+
+        store_confirmed_vars(input$dataset, input$multi_vars_input)
 
         # confirmation/success message popup
         shinyalert::shinyalert(
@@ -530,6 +537,19 @@ shiny::observeEvent(input$sub_format_select, {
           type = "success",
           confirmButtonCol = "#AEDEF4"
         )
+      })
+
+      # Variables sent over from Explore Datasets: add them to whatever is already confirmed
+      # for each dataset (union, not replace), since users may send several batches.
+      shiny::observeEvent(cross_module$add_request, {
+        request <- cross_module$add_request
+        for (dataset in base::names(request$vars)) {
+          labelled <- gen_comb_char(cohort_path(), dataset, input$language)
+          labelled_short <- stringr::str_replace_all(labelled, " - .*", "")
+          already <- stringr::str_replace_all(base::unname(base::unlist(all_lists()[[dataset]])), " - .*", "")
+          wanted <- base::union(already, request$vars[[dataset]])
+          store_confirmed_vars(dataset, labelled[labelled_short %in% wanted])
+        }
       })
 
 
