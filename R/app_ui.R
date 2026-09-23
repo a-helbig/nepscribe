@@ -88,18 +88,15 @@ bslib::page_navbar(
     title = "Start",
     htmltools::HTML(
       "<div style='max-width: 900px; margin: 0 auto;'>
-     <div style='display: flex; align-items: center; justify-content: center;'>
-       <img src='www/images/lizard_instead_of_neps.jpg' width='200' height='100' style='margin-right: 10px;'>
-       <div>
-         <p style='font-size:22px; margin: 0;'><b>NEPScribe</b>
-         <span style='font-size:14px; margin-left: 5px;'>Beta</span></p>
-         <small style='font-size:12px; color:gray;'>Version: ", app_version, "</small>
-       </div>
+     <div style='text-align: center; margin-bottom: 70px;'>
+       <p style='font-size:22px; margin: 0;'><b>NEPScribe</b>
+       <span style='font-size:14px; margin-left: 5px;'>Beta</span></p>
+       <small style='font-size:12px; color:gray;'>Version: ", app_version, "</small>
      </div>
-     <br>
 
      <!-- Features Box -->
-     <div style='padding: 15px; border: 1px solid #ccc; border-radius: 8px; background-color: #f9f9f9;'>
+     <div style='position: relative; padding: 15px; border: 1px solid #ccc; border-radius: 8px; background-color: #f9f9f9;'>
+       <img src='www/images/lizard_hanging.svg' class='hanging-lizard' alt=''>
        <p style='font-size:18px; font-weight: bold; margin-bottom: 10px;'>Features</p>
        <ul style='margin-left: 20px; line-height: 1.6;'>
                   <li>
