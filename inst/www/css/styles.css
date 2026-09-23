@@ -34,11 +34,15 @@ css snippet that makes it look like we are/n't able click the tab (with outchang
 div.dt-add-caption {
   display: inline-block;
   vertical-align: middle;
-  margin-left: 12px;
-  max-width: 340px;
+  margin: 4px 0 14px 12px;
+  max-width: 460px;
   font-size: 0.8rem;
-  line-height: 1.3;
+  line-height: 1.4;
   color: #666;
+}
+/* breathing room between the button row and the table */
+div.dataTables_wrapper div.dt-buttons {
+  margin-bottom: 14px;
 }
 
 

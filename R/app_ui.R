@@ -88,12 +88,13 @@ bslib::page_navbar(
     title = "Start",
     htmltools::HTML(
       "<div style='max-width: 900px; margin: 0 auto;'>
-     <div style='text-align: center;'>
-       <p style='font-size:22px; margin: 0;'><b>NEPScribe</b>
-       <span style='font-size:14px; margin-left: 5px;'>Beta</span></p>
-       <small style='font-size:12px; color:gray;'>Version: ", app_version, "</small>
-       <br>
-       <img src='www/images/lizard_instead_of_neps.jpg' width='200' height='100' alt=''>
+     <div style='display: flex; align-items: center; justify-content: center;'>
+       <img src='www/images/lizard_instead_of_neps.jpg' width='200' height='100' style='margin-right: 10px;' alt=''>
+       <div>
+         <p style='font-size:32px; margin: 0;'><b>NEPScribe</b>
+         <span style='font-size:16px; margin-left: 6px;'>Beta</span></p>
+         <small style='font-size:12px; color:gray;'>Version: ", app_version, "</small>
+       </div>
      </div>
      <br>
 

@@ -299,7 +299,7 @@ dataset_explorer_server <- function(id, settings_reactive, cross_module) {
             initComplete = htmlwidgets::JS(
               "function() {",
               "  $(this.api().table().container()).find('div.dt-add-caption').html(",
-              "    \"<i class='fas fa-circle-plus'></i> marks variables you can add to the script: from mergeable datasets of the starting cohort selected in Transform Data. Click rows to select them.\"",
+              "    \"<i class='fas fa-circle-plus'></i> Marks variables you can add from here directly to the person-year script in Transform Data. However, the selected starting cohorts in both tabs must match. Click rows to select them and confirm with the button.\"",
               "  );",
               "}"
             ),
