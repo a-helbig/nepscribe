@@ -465,13 +465,15 @@ shiny::observeEvent(input$sub_format_select, {
 
         # Compute the variable list
         new_choices <- gen_comb_char(cohort_path(), input$dataset, input$language)
+        current_choices(new_choices)
 
-        # Update multiInput with the new choices
+        # Update multiInput with the new choices, pre-selecting the variables already confirmed
+        # for this dataset, so "Confirm Vars" adds to them instead of replacing them
         shinyWidgets::updateMultiInput(
           session,
           "multi_vars_input",
           label = NULL,
-          selected = character(0),
+          selected = confirmed_selection(input$dataset, new_choices),
           choices = new_choices
         )
 
@@ -498,6 +500,28 @@ shiny::observeEvent(input$sub_format_select, {
       # Reactive values for selected variables
       varlist <- shiny::reactiveValues(data = list())
       all_lists <- shiny::reactiveVal(list())
+      # the variable choices currently loaded into the multiInput
+      current_choices <- shiny::reactiveVal(character(0))
+
+      # The subset of `choices` ("varname - label" strings) already confirmed for `dataset`,
+      # matched by variable name so it works in either label language
+      confirmed_selection <- function(dataset, choices) {
+        confirmed <- base::unname(base::unlist(shiny::isolate(all_lists())[[dataset]]))
+        confirmed_short <- stringr::str_replace_all(confirmed, " - .*", "")
+        choices[stringr::str_replace_all(choices, " - .*", "") %in% confirmed_short]
+      }
+
+      # Keep the multiInput's selection in sync with what's confirmed for the dataset shown
+      # there - e.g. after variables were sent over from Explore Datasets or a dataset was
+      # removed - so a later "Confirm Vars" never silently drops confirmed variables
+      shiny::observeEvent(all_lists(), {
+        shiny::req(input$dataset, base::length(current_choices()) > 0)
+        shinyWidgets::updateMultiInput(
+          session,
+          "multi_vars_input",
+          selected = confirmed_selection(input$dataset, current_choices())
+        )
+      }, ignoreInit = TRUE)
 
       # Store one dataset's confirmed variables (given as "varname - label" strings) for the
       # script, replacing whatever was stored for that dataset before. Shared by the
@@ -571,6 +595,7 @@ shiny::observeEvent(input$sub_format_select, {
 
           # Reset internal reactive values
           varlist$data <- NULL
+          current_choices(character(0))
           all_lists(list())
         }
       )
