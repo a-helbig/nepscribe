@@ -92,10 +92,26 @@ dataset_ui <- function(id) {
 #' @noRd
 dataset_overview_ui <- function(id) {
   ns <- shiny::NS(id)
-  shiny::fluidRow(
-    shinycssloaders::withSpinner(
-    DT::DTOutput(ns("data_overview")),
-    caption = .captiontext
+  shiny::tagList(
+    shiny::div(
+      style = "display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;",
+      shiny::actionButton(
+        ns("add_to_script"),
+        "Add Selected to Script",
+        icon = shiny::icon("circle-plus"),
+        class = "btn btn-outline-secondary btn-sm"
+      ),
+      htmltools::tags$small(
+        style = "color: #666;",
+        shiny::icon("circle-plus"),
+        " marks variables that can be added to the script (click rows to select them): only datasets that can be merged into a person-year dataset, from the starting cohort currently selected in Transform Data."
+      )
+    ),
+    shiny::fluidRow(
+      shinycssloaders::withSpinner(
+      DT::DTOutput(ns("data_overview")),
+      caption = .captiontext
+      )
     )
   )
 }
@@ -105,7 +121,7 @@ dataset_overview_ui <- function(id) {
 #' @importFrom shiny reactive observe observeEvent req updateTextInput
 #' @keywords internal
 #' @noRd
-dataset_explorer_server <- function(id, settings_reactive) {
+dataset_explorer_server <- function(id, settings_reactive, cross_module) {
 
   shiny::moduleServer(
     id,
@@ -258,18 +274,97 @@ dataset_explorer_server <- function(id, settings_reactive) {
         } else {
           data <- data |> dplyr::select(Dataset, Variable, dplyr::starts_with("NEPS_varlabel"))
         }
+
+        # Leading marker column: a small icon on rows that can be sent to Transform Data's
+        # Additional Variables (mergeable dataset of the cohort currently selected there)
+        marker_icon <- as.character(shiny::icon(
+          "circle-plus",
+          style = "color: #888;",
+          `data-toggle` = "tooltip",
+          title = "Can be added to the script"
+        ))
+        marker <- base::ifelse(data$Dataset %in% cross_module$available_datasets, marker_icon, "")
+        data <- dplyr::mutate(data, ` ` = marker, .before = 1)
+
         DT::datatable(
           data,
           extensions = "Buttons",
           selection = list(mode = "multiple", target = 'row'),
+          escape = base::setdiff(base::names(data), " "),
           options = list(
             rowCallback = htmlwidgets::JS("customRowCallback"),
+            # table pages are fetched separately from Shiny's own update cycle, so the marker
+            # tooltips need initializing after every redraw, not just on shiny:idle
+            drawCallback = htmlwidgets::JS("function() { if (window.initAppTooltips) window.initAppTooltips(); }"),
             pageLength = 50,
             dom = 'lfBrtip',
             buttons = .buttons,
             searchHighlight = TRUE
           )
         )
+      })
+
+      # --- Send selected rows to Transform Data's Additional Variables ---
+      shiny::observeEvent(input$add_to_script, {
+        rows <- input$data_overview_rows_selected
+        data <- data_overview_r()
+
+        alert <- function(text, type) {
+          shinyalert::shinyalert(
+            title = "",
+            text = text,
+            html = TRUE,
+            size = "s",
+            type = type,
+            closeOnClickOutside = TRUE,
+            confirmButtonCol = "#AEDEF4"
+          )
+        }
+
+        if (base::length(rows) == 0 || base::is.null(data)) {
+          alert("Select one or more variables in the table first by clicking on their rows.", "info")
+          return()
+        }
+
+        selected <- data[rows, c("Dataset", "Variable")]
+        trans_cohort <- if (base::is.null(cross_module$cohort)) "" else cross_module$cohort
+        row_cohort <- stringr::str_extract(selected$Dataset, "^SC\\d+")
+        wrong_cohort <- base::is.na(row_cohort) | row_cohort != trans_cohort
+        addable <- !wrong_cohort & selected$Dataset %in% cross_module$available_datasets
+        not_mergeable <- !wrong_cohort & !addable
+
+        to_add <- selected[addable, ]
+        if (base::nrow(to_add) > 0) {
+          cross_module$add_request <- list(
+            vars = base::split(to_add$Variable, to_add$Dataset),
+            nonce = stats::runif(1)
+          )
+          DT::selectRows(DT::dataTableProxy("data_overview"), NULL)
+        }
+
+        esc <- function(x) htmltools::htmlEscape(base::paste(base::unique(x), collapse = ", "))
+        msg <- character(0)
+        if (base::any(addable)) {
+          msg <- c(msg, base::sprintf(
+            "Added %d variable(s) from %s to the script. You can review them under Transform Data &rarr; Additional Variables.",
+            base::sum(addable), esc(to_add$Dataset)
+          ))
+        }
+        if (base::any(wrong_cohort)) {
+          msg <- c(msg, base::sprintf(
+            "Skipped %d variable(s) from a different starting cohort (%s): Transform Data is currently set to %s. Variables can only be added from the starting cohort selected there (Starting Cohorts 3 to 6 are supported).",
+            base::sum(wrong_cohort), esc(row_cohort[wrong_cohort]), htmltools::htmlEscape(trans_cohort)
+          ))
+        }
+        if (base::any(not_mergeable)) {
+          msg <- c(msg, base::sprintf(
+            "Skipped %d variable(s) from datasets that can't be merged directly into a person-year dataset (%s). For some of these, exemplary data preparation code is available in the Transform Data sidebar.",
+            base::sum(not_mergeable), esc(selected$Dataset[not_mergeable])
+          ))
+        }
+
+        type <- if (!base::any(addable)) "warning" else if (base::all(addable)) "success" else "info"
+        alert(base::paste(msg, collapse = "<br><br>"), type)
       })
 
     }

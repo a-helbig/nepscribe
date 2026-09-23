@@ -84,17 +84,28 @@ app_server <- function(input, output, session) {
     session$sendCustomMessage("sidebarWidth", settings_reactive()$sidebarWidth)
   })
 
+  # --- Shared state between Explore Datasets and Transform Data ---
+  # Transform Data publishes which datasets (and cohort) its Additional Variables can take;
+  # Explore Datasets sends selected variables back via add_request.
+  cross_module <- shiny::reactiveValues(
+    available_datasets = character(0),
+    cohort = NULL,
+    add_request = NULL
+  )
+
   # --- Dataset explorer module ---
   # Uses cohort_path() reactive; can return single or multiple cohort folders
   dataset_explorer_server(
     id = "explore_dataset",
-    settings_reactive = settings_reactive
+    settings_reactive = settings_reactive,
+    cross_module = cross_module
   )
 
   # --- Data transformation module ---
   # Always uses a single cohort
   data_transformation_server(
     "data_transformation",
-    settings_reactive = settings_reactive
+    settings_reactive = settings_reactive,
+    cross_module = cross_module
   )
 }

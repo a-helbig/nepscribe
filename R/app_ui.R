@@ -88,7 +88,7 @@ bslib::page_navbar(
     title = "Start",
     htmltools::HTML(
       "<div style='max-width: 900px; margin: 0 auto;'>
-     <div style='display: flex; align-items: center;'>
+     <div style='display: flex; align-items: center; justify-content: center;'>
        <img src='www/images/lizard_instead_of_neps.jpg' width='200' height='100' style='margin-right: 10px;'>
        <div>
          <p style='font-size:22px; margin: 0;'><b>NEPScribe</b>
