@@ -5,10 +5,14 @@
 #' @noRd
 app_server <- function(input, output, session) {
 
-  # Stop the app cleanly when session ends
-  session$onSessionEnded(function() {
-    shiny::stopApp()
-  })
+  # When run locally from an interactive R session (e.g. RStudio), stop the app when the
+  # browser tab is closed. Never on a server: there several users can share one R process,
+  # and stopping it would disconnect everyone else on it.
+  if (base::interactive()) {
+    session$onSessionEnded(function() {
+      shiny::stopApp()
+    })
+  }
 
   shiny::observeEvent(input$show_changelog, {
 
