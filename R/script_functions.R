@@ -55,7 +55,7 @@ further_training_gen_r <- function(english, chapter) {
     "rm(interview_data)",
     "",
     "# Some courses ended a long time before the interview.",
-    "tabyl(ft_data$timegap)",
+    "janitor::tabyl(ft_data$timegap)",
     "",
     "# 1. Respondents who did not participate in a given wave may have returned in a later wave and then reported episodes since their last interview, which may have occurred in the penultimate wave, up to 2\u20133 years earlier.",
     "# 2. In waves 2 and 4, vocational training episodes were collected retrospectively. As a result, episodes reported as courses in spVocTrain may have ended several years before the interview.",
@@ -1254,12 +1254,12 @@ generate_strings <- function(data_list, english, format) {
       string23 <- if(stringr::str_detect(df[1, "Dataset"],  "spVocBreaks")) { "  )" }
       # now we filter for spstat < 30 and get rid of those episodes but only when spstat exists and if we have 3 linkage keys
       string24 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) { "# filter for non-harmonized episodes in order to only merge the wave specific subspell information" }
+      # spstat is then dropped again (unless the user selected it), otherwise every further spell dataset would add another spstat and left_join() would create spstat.x, spstat.y
       string25 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) { paste0(dataset_name, " <- ",dataset_name," |>
-         filter(spstat < 30)")
+         filter(spstat < 30)", if(!"spstat" %in% df$variable) " |>
+         select(-spstat) # spstat was only needed for this filter")
       }
       string26 <- ""
-      string26_5 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)){"bio <- bio |> select(-spstat)"}
-      string26_5 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)){""}
       string27 <- if(length(base::strsplit(merge_vector, " ")[[1]])==3) {""}
       string28 <- paste0("bio <- left_join(bio, ", dataset_name, ", by = c(", merge_vector,"))")
       string29 <- ""
@@ -1267,7 +1267,7 @@ generate_strings <- function(data_list, english, format) {
       string31 <- ""
 
       # Concatenate the current strings into the result vector
-      result_vector <- c(result_vector, string1, string2, string3, string4, string_ptarget_sc3_1, string_ptarget_sc3_2, string_ptarget_sc3_3, string_ptarget_sc3_4, string5, string6, string7, string8, string9, string10, string11, string12, string13, string14,string15, string16, string17, string18, string19, string20, string21, string22, string23, string24, string25, string26, string26_5, string27, string28, string29, string30, string31)
+      result_vector <- c(result_vector, string1, string2, string3, string4, string_ptarget_sc3_1, string_ptarget_sc3_2, string_ptarget_sc3_3, string_ptarget_sc3_4, string5, string6, string7, string8, string9, string10, string11, string12, string13, string14,string15, string16, string17, string18, string19, string20, string21, string22, string23, string24, string25, string26, string27, string28, string29, string30, string31)
 
 
       # If spelldatasets are being joined ---------------------------------------

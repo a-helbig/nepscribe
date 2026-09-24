@@ -70,3 +70,4 @@ It may be released for other SCs in the future.
 * Fixed the exemplary highest-education preparation for SC4 in Stata scripts, which left most values missing. R and Stata scripts now classify education the same way.
 * Fixed the SC3/SC4 exemplary children preparation in R and Stata scripts.
 * R scripts in original subspell format now load the janitor package, which the further training example needs.
+* R scripts: adding variables from more than one spell dataset no longer leaves duplicate spstat.x / spstat.y columns in the person-year data.
