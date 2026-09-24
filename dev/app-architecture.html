@@ -621,10 +621,6 @@ if (education) {                                           <span class="cm"># op
       <b>A closed tab stops the whole app</b>
       <p><code>app_server()</code> calls <code>shiny::stopApp()</code> when a session ends. That’s handy for local use (closing the browser ends R), but on a server where several users share one R process, one user closing their tab disconnects everyone else on that process.</p>
     </li>
-    <li class="flag">
-      <b>A leftover write to the global environment</b>
-      <p><code>gen_list_for_picker()</code> also assigns each confirmed dataset’s list into <code>.GlobalEnv</code> under its short name. Nothing reads it, and on a shared process it’s visible to every session, so it could be removed.</p>
-    </li>
     <li>
       <b>Each tab has its own language switch</b>
       <p><code>settings_reactive()</code> also returns <code>language</code>, but the settings module has no such input, so it’s always <code>NULL</code>. Explore and Transform each use their own labels switch.</p>
