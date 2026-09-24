@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Backend notes: architecture of the whole NEPScribe app (v0.3.4). Open this file in a browser. -->
+<style>body { margin: 0; }</style>
+<title>NEPScribe App Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Fira+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+  :root {
+    --bg: #F4F7F7;
+    --surface: #FFFFFF;
+    --band: #EBF1F2;
+    --ink: #1C2B2F;
+    --muted: #5A6C71;
+    --line: #D5DFE1;
+    --code-bg: #EAF0F1;
+    --transform: #2F6F9F;
+    --transform-soft: #E4EEF6;
+    --explore: #2E8A6A;
+    --explore-soft: #E2F2EC;
+    --channel: #A86C12;
+    --channel-soft: #FBF1DF;
+    --data: #6A5AA8;
+    --data-soft: #EEEBF8;
+    --warn: #B4532A;
+    --warn-soft: #F8E6DD;
+    --font-body: "Fira Sans", "Segoe UI", system-ui, sans-serif;
+    --font-code: "Fira Code", ui-monospace, "Cascadia Code", Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #11181A;
+      --surface: #182225;
+      --band: #1A2528;
+      --ink: #E2EBED;
+      --muted: #93A6AB;
+      --line: #2C3A3E;
+      --code-bg: #1F2B2E;
+      --transform: #7FB6E0;
+      --transform-soft: #1B2D3A;
+      --explore: #6FCBA6;
+      --explore-soft: #16302A;
+      --channel: #E6B35A;
+      --channel-soft: #33291A;
+      --data: #B3A6E6;
+      --data-soft: #26213A;
+      --warn: #E58B63;
+      --warn-soft: #3A2319;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #11181A;
+    --surface: #182225;
+    --band: #1A2528;
+    --ink: #E2EBED;
+    --muted: #93A6AB;
+    --line: #2C3A3E;
+    --code-bg: #1F2B2E;
+    --transform: #7FB6E0;
+    --transform-soft: #1B2D3A;
+    --explore: #6FCBA6;
+    --explore-soft: #16302A;
+    --channel: #E6B35A;
+    --channel-soft: #33291A;
+    --data: #B3A6E6;
+    --data-soft: #26213A;
+    --warn: #E58B63;
+    --warn-soft: #3A2319;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+  }
+  .page { max-width: 1000px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 72px; }
+  .prose { max-width: 70ch; }
+
+  header { display: grid; gap: 10px; margin-bottom: 28px; }
+  .eyebrow { font-family: var(--font-code); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  h1, h2, h3 { font-family: var(--font-code); font-weight: 600; text-wrap: balance; line-height: 1.25; }
+  h1 { font-size: clamp(26px, 4vw, 36px); margin: 0; }
+  h2 { font-size: 22px; margin: 56px 0 12px; }
+  h3 { font-size: 17px; margin: 28px 0 8px; }
+  p { margin: 0 0 14px; }
+  .lede { font-size: 18px; color: var(--muted); margin: 0; }
+
+  code { font-family: var(--font-code); font-size: 0.86em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+  pre.code {
+    font-family: var(--font-code); font-size: 13.5px; line-height: 1.55;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+    padding: 14px 16px; overflow-x: auto; margin: 14px 0 18px;
+  }
+  pre.code .cm { color: var(--muted); font-style: italic; }
+  .c-explore { color: var(--explore); font-weight: 600; }
+  .c-transform { color: var(--transform); font-weight: 600; }
+  .c-channel { color: var(--channel); font-weight: 600; }
+  .c-data { color: var(--data); font-weight: 600; }
+
+  nav.toc { display: flex; flex-wrap: wrap; gap: 8px; margin: 22px 0 0; }
+  nav.toc a {
+    font-family: var(--font-code); font-size: 13px; color: var(--ink); text-decoration: none;
+    border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 4px 12px;
+  }
+  nav.toc a:hover, nav.toc a:focus-visible { border-color: var(--transform); color: var(--transform); outline: none; }
+
+  .tldr { background: var(--transform-soft); border: 1px solid color-mix(in srgb, var(--transform) 30%, transparent); border-radius: 10px; padding: 18px 20px; max-width: 78ch; }
+  .tldr b { font-family: var(--font-code); font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--transform); display: block; margin-bottom: 6px; }
+  .tldr p:last-child { margin-bottom: 0; }
+
+  figure { margin: 22px 0 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px 18px 14px; }
+  .fig-scroll { overflow-x: auto; }
+  figure svg { display: block; width: 100%; height: auto; }
+  figcaption { font-size: 14px; color: var(--muted); margin-top: 10px; max-width: 84ch; }
+  figcaption b { color: var(--ink); font-weight: 600; }
+
+  svg text { font-family: var(--font-body); fill: var(--ink); }
+  svg .mono { font-family: var(--font-code); }
+  svg .muted { fill: var(--muted); }
+  svg .small { font-size: 12.5px; }
+  svg .tiny { font-size: 11px; }
+  svg .title { font-size: 15px; font-weight: 600; }
+  svg .band { fill: var(--band); }
+  svg .band-label { font-family: var(--font-code); font-size: 11px; letter-spacing: 0.06em; fill: var(--muted); text-transform: uppercase; }
+  svg .box { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+  svg .box-explore { fill: var(--explore-soft); stroke: var(--explore); stroke-width: 1.5; }
+  svg .box-transform { fill: var(--transform-soft); stroke: var(--transform); stroke-width: 1.5; }
+  svg .box-channel { fill: var(--channel-soft); stroke: var(--channel); stroke-width: 1.5; }
+  svg .box-data { fill: var(--data-soft); stroke: var(--data); stroke-width: 1.5; }
+  svg .box-input { fill: var(--surface); stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 5 4; }
+  svg .outline { fill: none; stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 3 4; }
+  svg .t-explore { fill: var(--explore); }
+  svg .t-transform { fill: var(--transform); }
+  svg .t-channel { fill: var(--channel); }
+  svg .t-data { fill: var(--data); }
+  svg .ln { fill: none; stroke-width: 2; }
+  svg .ln-explore { stroke: var(--explore); }
+  svg .ln-transform { stroke: var(--transform); }
+  svg .ln-data { stroke: var(--data); }
+  svg .ln-muted { stroke: var(--muted); }
+  svg .dashed { stroke-dasharray: 5 5; }
+  svg .head-explore { fill: var(--explore); }
+  svg .head-transform { fill: var(--transform); }
+  svg .head-data { fill: var(--data); }
+  svg .head-muted { fill: var(--muted); }
+  svg .seg-fixed { fill: var(--band); stroke: var(--line); }
+  svg .seg-cond { fill: var(--channel-soft); stroke: var(--channel); stroke-dasharray: 4 3; }
+  svg .seg-vars { fill: var(--explore-soft); stroke: var(--explore); }
+  svg .seg-chapter { fill: var(--transform-soft); stroke: var(--transform); }
+
+  .filename { display: flex; flex-wrap: wrap; gap: 6px; align-items: stretch; margin: 16px 0 6px; }
+  .part { display: grid; gap: 4px; text-align: center; }
+  .part .chip { font-family: var(--font-code); font-size: 18px; font-weight: 500; padding: 6px 10px; border-radius: 6px; background: var(--surface); border: 1px solid var(--line); }
+  .part .lab { font-size: 12px; color: var(--muted); line-height: 1.3; max-width: 16ch; margin: 0 auto; }
+  .part.sep .chip { background: transparent; border-color: transparent; color: var(--muted); padding-inline: 0; }
+  .part.k1 .chip { border-color: var(--data); color: var(--data); }
+  .part.k2 .chip { border-color: var(--explore); color: var(--explore); }
+  .part.k3 .chip { border-color: var(--channel); color: var(--channel); }
+  .part.k4 .chip { border-color: var(--transform); color: var(--transform); }
+
+  table { border-collapse: collapse; width: 100%; font-size: 15px; }
+  .table-wrap { overflow-x: auto; margin: 16px 0 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  th { font-family: var(--font-code); font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+  td.num { font-variant-numeric: tabular-nums; text-align: right; color: var(--muted); }
+  td code { white-space: nowrap; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin: 16px 0 0; padding: 0; list-style: none; }
+  .cards li { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .cards li b { display: block; font-weight: 600; margin-bottom: 4px; }
+  .cards li p { margin: 0; }
+  .cards li.flag { border-color: color-mix(in srgb, var(--warn) 55%, transparent); background: var(--warn-soft); }
+  .cards li.flag b { color: var(--warn); }
+
+  footer { margin-top: 56px; font-size: 14px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
+
+  @media (max-width: 600px) {
+    body { font-size: 15px; }
+    h2 { margin-top: 44px; }
+    .fig-scroll svg { min-width: 680px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <header>
+    <div class="eyebrow">NEPScribe · backend notes · v0.3.4</div>
+    <h1>How NEPScribe is put together</h1>
+    <p class="lede">A map of the whole app: what runs where, where the data comes from, how each tab works, and how a person-year script gets assembled.</p>
+    <nav class="toc" aria-label="Sections">
+      <a href="#overview">Overview</a>
+      <a href="#files">Files</a>
+      <a href="#data">The data</a>
+      <a href="#explore">Explore Datasets</a>
+      <a href="#transform">Transform Data</a>
+      <a href="#script">Script generation</a>
+      <a href="#wiring">Shared state</a>
+      <a href="#quirks">Worth knowing</a>
+      <a href="#recipes">Common changes</a>
+    </nav>
+  </header>
+
+  <div class="tldr">
+    <b>In one paragraph</b>
+    <p>NEPScribe is an R package that wraps a single Shiny app (<code>run_app()</code>). It has no database and never touches real survey data. It ships NEPS <em>semantic structure files</em>: the SUF <code>.dta</code> files with every observation removed, leaving only variable names, labels and metadata. <span class="c-explore">Explore Datasets</span> reads that metadata into a searchable table. <span class="c-transform">Transform Data</span> collects the user’s choices and hands them to <code>gen_script()</code>, which assembles an R or Stata script line by line. The user then runs that script on their own copy of the real data.</p>
+  </div>
+
+  <!-- 1 -->
+  <h2 id="overview">1 · The big picture</h2>
+  <div class="prose">
+    <p>There are four layers. The browser shows the UI. For each browser tab, one R session runs the server logic. That logic calls plain helper functions, and the helpers read files that ship inside the package. Nothing is written back to disk. The only thing that leaves the app is the generated script.</p>
+  </div>
+
+  <figure>
+    <div class="fig-scroll">
+      <svg viewBox="0 0 1000 560" role="img" aria-label="Four layers: browser tabs, per-session Shiny server modules, helper functions, and package files. Transform Data calls gen_script and utils; Explore Datasets calls utils; utils reads inst/extdata; gen_script produces the preview and download.">
+        <defs>
+          <marker id="a1m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="head-muted"/></marker>
+          <marker id="a1t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="head-transform"/></marker>
+          <marker id="a1e" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="head-explore"/></marker>
+          <marker id="a1d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="head-data"/></marker>
+        </defs>
+
+        <!-- bands -->
+        <rect x="0" y="10" width="1000" height="120" rx="10" class="band"/>
+        <text x="16" y="34" class="band-label">Browser</text>
+        <rect x="0" y="146" width="1000" height="168" rx="10" class="band"/>
+        <text x="16" y="170" class="band-label">R session</text>
+        <text x="16" y="186" class="tiny muted">one per tab</text>
+        <rect x="0" y="330" width="1000" height="96" rx="10" class="band"/>
+        <text x="16" y="354" class="band-label">Helpers</text>
+        <rect x="0" y="442" width="1000" height="108" rx="10" class="band"/>
+        <text x="16" y="466" class="band-label">Files</text>
+
+        <!-- browser tabs -->
+        <rect x="140" y="26" width="170" height="88" rx="10" class="box"/>
+        <text x="156" y="52" class="title">Start</text>
+        <text x="156" y="74" class="small muted">feature overview</text>
+        <text x="156" y="94" class="small muted">sidebar width slider</text>
+
+        <rect x="330" y="26" width="300" height="88" rx="10" class="box-transform"/>
+        <text x="346" y="52" class="title t-transform">Transform Data</text>
+        <text x="346" y="74" class="small">sidebar: cohort, format, R/Stata, options</text>
+        <text x="346" y="94" class="small">Info · Spell Prioritisation · Additional Vars</text>
+
+        <rect x="700" y="26" width="284" height="88" rx="10" class="box-explore"/>
+        <text x="716" y="52" class="title t-explore">Explore Datasets</text>
+        <text x="716" y="74" class="small">sidebar: cohorts, datasets, meta, labels</text>
+        <text x="716" y="94" class="small">Variable Table (DataTables)</text>
+
+        <!-- server -->
+        <rect x="120" y="160" width="870" height="144" rx="12" class="outline"/>
+        <text x="136" y="182" class="mono small muted">app_server()</text>
+
+        <rect x="140" y="196" width="170" height="92" rx="10" class="box"/>
+        <text x="156" y="222" class="mono small" font-weight="600">settings_server</text>
+        <text x="156" y="244" class="tiny muted">mod_settings.R</text>
+        <text x="156" y="264" class="tiny muted">sends sidebar width to JS</text>
+
+        <rect x="330" y="196" width="300" height="92" rx="10" class="box-transform"/>
+        <text x="346" y="222" class="mono small t-transform" font-weight="600">data_transformation_server</text>
+        <text x="346" y="244" class="tiny muted">mod_data_transformation.R</text>
+        <text x="346" y="264" class="tiny muted">collects choices, confirmed variables</text>
+
+        <rect x="642" y="222" width="46" height="40" rx="8" class="box-channel"/>
+        <text x="665" y="247" text-anchor="middle" class="mono tiny t-channel">⇄</text>
+        <text x="665" y="301" text-anchor="middle" class="mono tiny t-channel">cross_module</text>
+
+        <rect x="700" y="196" width="284" height="92" rx="10" class="box-explore"/>
+        <text x="716" y="222" class="mono small t-explore" font-weight="600">dataset_explorer_server</text>
+        <text x="716" y="244" class="tiny muted">mod_data_exploration.R</text>
+        <text x="716" y="264" class="tiny muted">builds the metadata table</text>
+
+        <!-- browser <-> server -->
+        <path d="M225,116 V194" class="ln ln-muted" marker-start="url(#a1m)" marker-end="url(#a1m)"/>
+        <path d="M480,116 V194" class="ln ln-transform" marker-start="url(#a1t)" marker-end="url(#a1t)"/>
+        <path d="M842,116 V194" class="ln ln-explore" marker-start="url(#a1e)" marker-end="url(#a1e)"/>
+        <text x="490" y="141" class="tiny muted">input$… up, output$… down</text>
+
+        <!-- helpers -->
+        <rect x="140" y="344" width="340" height="70" rx="10" class="box"/>
+        <text x="156" y="370" class="mono small" font-weight="600">gen_script.R + script_functions.R</text>
+        <text x="156" y="392" class="tiny muted">assembles the script as a character vector</text>
+
+        <rect x="520" y="344" width="464" height="70" rx="10" class="box"/>
+        <text x="536" y="370" class="mono small" font-weight="600">utils.R</text>
+        <text x="536" y="392" class="tiny muted">reads variable names, labels, metadata, linkage keys</text>
+
+        <path d="M430,290 L330,342" class="ln ln-transform" marker-end="url(#a1t)"/>
+        <path d="M560,290 L620,342" class="ln ln-transform" marker-end="url(#a1t)"/>
+        <path d="M842,290 V342" class="ln ln-explore" marker-end="url(#a1e)"/>
+
+        <!-- files -->
+        <rect x="140" y="456" width="340" height="80" rx="10" class="box-transform"/>
+        <text x="156" y="482" class="small t-transform" font-weight="600">Generated script</text>
+        <text x="156" y="504" class="tiny muted">Preview Script modal</text>
+        <text x="156" y="522" class="tiny muted">Download Script → .R or .do</text>
+
+        <rect x="520" y="456" width="464" height="80" rx="10" class="box-data"/>
+        <text x="536" y="482" class="mono small t-data" font-weight="600">inst/extdata/</text>
+        <text x="536" y="504" class="mono tiny">sc1…sc8_semantic_files/*.dta · linkage_keys.csv</text>
+        <text x="536" y="522" class="mono tiny">CHANGELOG.md</text>
+
+        <path d="M310,416 V454" class="ln ln-transform" marker-end="url(#a1t)"/>
+        <path d="M752,454 V416" class="ln ln-data" marker-end="url(#a1d)"/>
+        <text x="762" y="440" class="tiny t-data">read</text>
+      </svg>
+    </div>
+    <figcaption><b>Figure 1.</b> The layers. Blue marks Transform Data, green marks Explore Datasets, and purple marks shipped data. The small amber box is the shared channel between the two main modules (section 7).</figcaption>
+  </figure>
+
+  <!-- 2 -->
+  <h2 id="files">2 · Where everything lives</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>File</th><th>Role</th><th>Lines</th></tr></thead>
+      <tbody>
+        <tr><td><code>R/run_app.R</code></td><td>Exported entry point <code>run_app()</code>: builds <code>shinyApp(app_ui(), app_server)</code></td><td class="num">6</td></tr>
+        <tr><td><code>R/app_ui.R</code></td><td>Page skeleton: navbar, theme (bslib “minty”, Fira fonts), sidebar, Start page, Help menu, CSS/JS links</td><td class="num">178</td></tr>
+        <tr><td><code>R/cards.R</code></td><td>The main-area cards of both tabs (Info text, Spell Prioritisation, Additional Variables, Variable Table)</td><td class="num">206</td></tr>
+        <tr><td><code>R/app_server.R</code></td><td>Per-session server: changelog and Impressum modals, sidebar behaviour, wires up the three modules and <code>cross_module</code></td><td class="num">111</td></tr>
+        <tr><td><code>R/mod_settings.R</code></td><td>Settings module (sidebar width slider on the Start page)</td><td class="num">28</td></tr>
+        <tr><td><code>R/mod_data_exploration.R</code></td><td>Explore Datasets module: sidebar UI and server</td><td class="num">387</td></tr>
+        <tr><td><code>R/mod_data_transformation.R</code></td><td>Transform Data module: sidebar, Additional Variables UI, server, preview and download</td><td class="num">823</td></tr>
+        <tr><td><code>R/utils.R</code></td><td>Helpers that read the <code>.dta</code> files and <code>linkage_keys.csv</code>, plus small string/data utilities</td><td class="num">600</td></tr>
+        <tr><td><code>R/gen_script.R</code></td><td><code>gen_script()</code>: the four script templates (R/Stata × two formats)</td><td class="num">1191</td></tr>
+        <tr><td><code>R/script_functions.R</code></td><td>Script building blocks: Additional Variables merges, parallel spells, exemplary modules</td><td class="num">1465</td></tr>
+        <tr><td><code>R/constants.R</code></td><td>Default spell-priority lists (SC3/4/6 and SC5), DataTables button labels</td><td class="num">39</td></tr>
+        <tr><td><code>inst/www/css/styles.css</code></td><td>App-wide styling (DT toolbar, tooltips, sidebar resizer…)</td><td class="num">—</td></tr>
+        <tr><td><code>inst/www/js/js_snippets.js</code></td><td>Browser-side helpers: sidebar width, tooltips, question-text hovers, NA display in tables</td><td class="num">—</td></tr>
+        <tr><td><code>inst/extdata/</code></td><td>Semantic structure files per cohort, <code>linkage_keys.csv</code>, <code>CHANGELOG.md</code></td><td class="num">—</td></tr>
+        <tr><td><code>dev/</code></td><td>These notes. Excluded from the package build via <code>.Rbuildignore</code></td><td class="num">—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 3 -->
+  <h2 id="data">3 · The data the app runs on</h2>
+  <div class="prose">
+    <p>Each folder <code>inst/extdata/scN_semantic_files/</code> holds one starting cohort’s semantic structure files. They look like SUF datasets but have zero rows, so they can ship publicly. A lot of logic reads information straight from the <strong>file name</strong>:</p>
+  </div>
+
+  <figure>
+    <div class="filename" aria-label="Anatomy of the file name SC6_Basics_S_17-0-0.dta">
+      <div class="part k1"><span class="chip">SC6</span><span class="lab">starting cohort, via <code>identify_sc()</code></span></div>
+      <div class="part sep"><span class="chip">_</span></div>
+      <div class="part k2"><span class="chip">Basics</span><span class="lab">dataset name, shown shortened in the UI</span></div>
+      <div class="part sep"><span class="chip">_</span></div>
+      <div class="part k3"><span class="chip">S</span><span class="lab">semantic file; the generated scripts load <code>_D_</code> (download SUF)</span></div>
+      <div class="part sep"><span class="chip">_</span></div>
+      <div class="part k4"><span class="chip">17-0-0</span><span class="lab">SUF version, via <code>extract_suf_version()</code></span></div>
+      <div class="part sep"><span class="chip">.dta</span></div>
+    </div>
+    <figcaption><b>Figure 2.</b> Anatomy of a semantic file name. <code>identify_sc()</code> requires a folder to contain exactly one cohort. <code>extract_suf_version()</code> takes the highest version found in the folder.</figcaption>
+  </figure>
+
+  <div class="prose">
+    <h3>Metadata lives in Stata “characteristics”</h3>
+    <p>Beyond names and labels, every NEPS variable carries metadata stored in the <code>.dta</code> file as Stata characteristics (called <em>expansion fields</em> by <code>readstata13</code>): <code>NEPS_varlabel_en</code>, <code>NEPS_questiontext_de</code>, <code>NEPS_questiontext_en</code> and so on. <code>read_exp_fields()</code> in <code>utils.R</code> is the single reader for all of it. It opens a file with one column and one row, and returns a long table with the columns <code>variable</code>, <code>type</code> and <code>value</code>. Everything with <code>_de</code> / <code>_en</code> suffixes is how the German/English label switches work.</p>
+
+    <h3><code>linkage_keys.csv</code>: which datasets can be merged</h3>
+    <p>This semicolon-separated table lists every dataset with its merge keys. A dataset with an empty <code>Linkage</code> column can’t be merged into a person-year dataset as-is. The <code>Info</code> column (in German) says why. The first rows:</p>
+  </div>
+<pre class="code">Dataset;Linkage;Info;Sptype
+SC6_Basics_S_.dta;"""ID_t""";;
+SC6_Biography_S_.dta;;nicht mergebar da schon im personenjahresdatensatz;
+SC6_Children_S_.dta;;Nicht mergebar - separat anbieten;
+SC6_CohortProfile_S_.dta;"""ID_t"" ""wave""";;</pre>
+  <div class="prose">
+    <p>Two helpers read it: <code>create_dataset_names()</code> produces the list for the Additional Variables dropdown, and <code>create_linkage_data()</code> adds the merge keys to each confirmed dataset so the script knows how to join it (<code>ID_t</code>, <code>ID_t wave</code>, or spell keys with <code>splink</code>).</p>
+  </div>
+
+  <!-- 4 -->
+  <h2 id="explore">4 · Explore Datasets</h2>
+  <div class="prose">
+    <p>A read-only browser for metadata, built as a chain of reactives. Each step waits (<code>req()</code>) for the one before it, so nothing is read until the user has picked something.</p>
+  </div>
+
+  <figure>
+    <div class="fig-scroll">
+      <svg viewBox="0 0 1000 250" role="img" aria-label="Explore pipeline: cohort picker to datasets_available to dataset picker to data_overview_r to the DT table. The dataset picker also feeds available_meta, which fills the meta picker, which chooses the table's columns.">
+        <defs>
+          <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="head-explore"/></marker>
+        </defs>
+        <rect x="6" y="30" width="168" height="64" rx="10" class="box-input"/>
+        <text x="90" y="56" text-anchor="middle" class="small" font-weight="600">Cohort picker</text>
+        <text x="90" y="76" text-anchor="middle" class="mono tiny muted">cohort_data_explore</text>
+
+        <rect x="210" y="30" width="168" height="64" rx="10" class="box-explore"/>
+        <text x="294" y="56" text-anchor="middle" class="mono small" font-weight="600">datasets_available()</text>
+        <text x="294" y="76" text-anchor="middle" class="tiny muted">lists .dta files per cohort</text>
+
+        <rect x="414" y="30" width="168" height="64" rx="10" class="box-input"/>
+        <text x="498" y="56" text-anchor="middle" class="small" font-weight="600">Dataset picker</text>
+        <text x="498" y="76" text-anchor="middle" class="mono tiny muted">dataset</text>
+
+        <rect x="618" y="30" width="168" height="64" rx="10" class="box-explore"/>
+        <text x="702" y="56" text-anchor="middle" class="mono small" font-weight="600">data_overview_r()</text>
+        <text x="702" y="76" text-anchor="middle" class="tiny muted">gen_data_overview() per file</text>
+
+        <rect x="822" y="30" width="172" height="64" rx="10" class="box"/>
+        <text x="908" y="56" text-anchor="middle" class="small" font-weight="600">Variable Table</text>
+        <text x="908" y="76" text-anchor="middle" class="mono tiny muted">output$data_overview</text>
+
+        <path d="M176,62 H206" class="ln ln-explore" marker-end="url(#a3)"/>
+        <path d="M380,62 H410" class="ln ln-explore" marker-end="url(#a3)"/>
+        <path d="M584,62 H614" class="ln ln-explore" marker-end="url(#a3)"/>
+        <path d="M788,62 H818" class="ln ln-explore" marker-end="url(#a3)"/>
+
+        <rect x="414" y="150" width="168" height="64" rx="10" class="box-explore"/>
+        <text x="498" y="176" text-anchor="middle" class="mono small" font-weight="600">available_meta()</text>
+        <text x="498" y="196" text-anchor="middle" class="tiny muted">metadata types in files</text>
+
+        <rect x="618" y="150" width="168" height="64" rx="10" class="box-input"/>
+        <text x="702" y="176" text-anchor="middle" class="small" font-weight="600">Meta picker</text>
+        <text x="702" y="196" text-anchor="middle" class="mono tiny muted">meta_selector</text>
+
+        <path d="M498,96 V146" class="ln ln-explore" marker-end="url(#a3)"/>
+        <path d="M584,182 H614" class="ln ln-explore" marker-end="url(#a3)"/>
+        <path d="M788,182 H908 V98" class="ln ln-explore" marker-end="url(#a3)"/>
+        <text x="850" y="174" text-anchor="middle" class="tiny muted">which columns</text>
+
+        <rect x="6" y="150" width="168" height="64" rx="10" class="box-input"/>
+        <text x="90" y="176" text-anchor="middle" class="small" font-weight="600">Labels switch</text>
+        <text x="90" y="196" text-anchor="middle" class="mono tiny muted">language</text>
+        <path d="M176,182 H300 V120 H702 V98" class="ln ln-explore dashed" marker-end="url(#a3)"/>
+        <text x="236" y="174" text-anchor="middle" class="tiny muted">en / de</text>
+      </svg>
+    </div>
+    <figcaption><b>Figure 3.</b> Dashed outlines are inputs the user controls, and filled boxes are reactives. <code>gen_data_overview()</code> reads a file’s metadata with <code>read_exp_fields()</code> and pivots it wide (one row per variable, one column per metadata type). It keeps only the chosen language’s columns. The two value boxes in the sidebar (Datasets, Variables) also read <code>data_overview_r()</code>.</figcaption>
+  </figure>
+
+  <div class="prose">
+    <p>The table is a DataTables widget in <em>server-side</em> mode, so paging, sorting and searching are handled by R and the browser only ever holds one page. A leading marker column shows a grey ＋ on variables that can be sent to Transform Data. That feature is covered in the separate note <code>dev/cross-module-wiring.html</code>.</p>
+  </div>
+
+  <!-- 5 -->
+  <h2 id="transform">5 · Transform Data</h2>
+  <div class="prose">
+    <p>Transform Data doesn’t transform any data itself. It collects choices from three places, and when the user clicks <strong>Preview Script</strong> or <strong>Download Script</strong>, it passes all of them to <code>gen_script()</code> in one call. Both buttons build the script with identical arguments, so the preview always matches the download.</p>
+  </div>
+
+  <figure>
+    <div class="fig-scroll">
+      <svg viewBox="0 0 1000 330" role="img" aria-label="Sidebar settings, the spell prioritisation order and confirmed additional variables all feed gen_script, whose result goes to the preview modal or the download.">
+        <defs>
+          <marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="head-transform"/></marker>
+        </defs>
+        <rect x="10" y="10" width="340" height="132" rx="10" class="box-input"/>
+        <text x="26" y="36" class="small" font-weight="600">Sidebar</text>
+        <text x="26" y="58" class="tiny">Starting cohort (SC3–SC6) · <tspan class="mono">cohort_data_trans</tspan></text>
+        <text x="26" y="77" class="tiny">Format: harmonized spells or original subspells</text>
+        <text x="26" y="96" class="tiny">Script type: R or Stata · <tspan class="mono">stata_or_r</tspan></text>
+        <text x="26" y="115" class="tiny">Settings and exemplary preparation modules</text>
+        <text x="26" y="134" class="tiny">Local data path · label language</text>
+
+        <rect x="10" y="158" width="340" height="62" rx="10" class="box-input"/>
+        <text x="26" y="184" class="small" font-weight="600">Spell Prioritisation tab</text>
+        <text x="26" y="206" class="tiny">drag-and-drop order · <tspan class="mono">prio_swap_list</tspan></text>
+
+        <rect x="10" y="236" width="340" height="84" rx="10" class="box-input"/>
+        <text x="26" y="262" class="small" font-weight="600">Additional Variables tab</text>
+        <text x="26" y="284" class="tiny mono">varlist$data</text>
+        <text x="26" y="303" class="tiny">filtered by the ticked boxes · <tspan class="mono">included_vars()</tspan></text>
+
+        <rect x="440" y="120" width="220" height="92" rx="12" class="box-transform"/>
+        <text x="550" y="156" text-anchor="middle" class="mono title t-transform">gen_script()</text>
+        <text x="550" y="180" text-anchor="middle" class="tiny muted">returns a character vector</text>
+        <text x="550" y="196" text-anchor="middle" class="tiny muted">one element per line</text>
+
+        <path d="M352,76 C400,76 400,146 436,146" class="ln ln-transform" marker-end="url(#a4)"/>
+        <path d="M352,189 C400,189 400,168 436,168" class="ln ln-transform" marker-end="url(#a4)"/>
+        <path d="M352,278 C400,278 400,190 436,190" class="ln ln-transform" marker-end="url(#a4)"/>
+
+        <rect x="750" y="60" width="240" height="84" rx="10" class="box"/>
+        <text x="766" y="86" class="small" font-weight="600">Preview Script</text>
+        <text x="766" y="108" class="tiny muted">modal, comments highlighted,</text>
+        <text x="766" y="125" class="tiny muted">R syntax via highlight.js</text>
+
+        <rect x="750" y="188" width="240" height="84" rx="10" class="box"/>
+        <text x="766" y="214" class="small" font-weight="600">Download Script</text>
+        <text x="766" y="236" class="tiny muted">data_wrangling_script.R</text>
+        <text x="766" y="253" class="tiny muted">or data_wrangling_script.do</text>
+
+        <path d="M662,150 C710,150 710,102 746,102" class="ln ln-transform" marker-end="url(#a4)"/>
+        <path d="M662,182 C710,182 710,230 746,230" class="ln ln-transform" marker-end="url(#a4)"/>
+      </svg>
+    </div>
+    <figcaption><b>Figure 4.</b> Everything that shapes the script. If the Spell Prioritisation tab was never opened, its input is empty. <code>gen_script()</code> then falls back to the default order from <code>constants.R</code>, which differs for SC5 because of internships (spell type 36).</figcaption>
+  </figure>
+
+  <div class="prose">
+    <h3>Additional Variables in short</h3>
+    <p>The user picks a mergeable dataset, selects variables in the two-column picker and confirms. <code>store_confirmed_vars()</code> then writes the variables with their merge keys into <code>varlist$data</code>, which the script reads, and into <code>all_lists()</code>, which drives the “Selected Variables” summary. Unticking a variable in the summary excludes it from the script without deleting it (<code>included_vars()</code>). Hovering a variable in the picker shows its question text. The server sends those texts with <code>session$sendCustomMessage("variableQuestiontexts", …)</code>, and <code>js_snippets.js</code> attaches them as tooltips.</p>
+  </div>
+
+  <!-- 6 -->
+  <h2 id="script">6 · How a script is assembled</h2>
+  <div class="prose">
+    <p><code>gen_script()</code> contains four complete templates: one for each combination of script type (R, Stata) and format (harmonized spells from the Biography file, or original subspells). Only one runs per call. Every template follows the same idea: the script is a character vector with one element per line, built with <code>c()</code>. Optional parts are written as <code>if (cond) "line"</code>. When the condition is false, that expression is <code>NULL</code>, and <code>c()</code> simply drops it.</p>
+  </div>
+<pre class="code">scripts &lt;- c(
+  "# 1. Base: Biography file ----",
+  "bio &lt;- read_neps(paste0(datapath, '/', sc, '_Biography_D_', suf_version, '.dta'), english = english)",
+  if (work_exp) "# Generate work experience in months",   <span class="cm"># NULL when FALSE, dropped by c()</span>
+  if (length(datalist) &gt; 0) generate_strings(datalist, english, format = "harmonized")
+)
+if (education) {                                           <span class="cm"># optional chapters are appended afterwards</span>
+  chapter &lt;- chapter + 1
+  scripts &lt;- c(scripts, gen_qualification_prep_code_r(english, sc, chapter), "")
+}</pre>
+
+  <figure>
+    <div class="fig-scroll">
+      <svg viewBox="0 0 1000 420" role="img" aria-label="Left: a two by two grid of R or Stata times harmonized or subspell selects one template. Right: the resulting script from top to bottom: header and approach, core steps, optional settings inside the core steps, additional variables, then appended chapters for missing values, education, further training and children.">
+        <!-- selector grid -->
+        <text x="20" y="30" class="band-label">Pick one template</text>
+        <text x="130" y="62" text-anchor="middle" class="small muted">Harmonized</text>
+        <text x="270" y="62" text-anchor="middle" class="small muted">Subspell</text>
+        <text x="40" y="112" text-anchor="middle" class="small muted">R</text>
+        <text x="40" y="192" text-anchor="middle" class="small muted">Stata</text>
+        <rect x="70" y="76" width="120" height="68" rx="8" class="box-transform"/>
+        <text x="130" y="108" text-anchor="middle" class="tiny">6 steps from</text>
+        <text x="130" y="124" text-anchor="middle" class="tiny">Biography</text>
+        <rect x="210" y="76" width="120" height="68" rx="8" class="box"/>
+        <text x="270" y="108" text-anchor="middle" class="tiny">appends original</text>
+        <text x="270" y="124" text-anchor="middle" class="tiny">spell files</text>
+        <rect x="70" y="156" width="120" height="68" rx="8" class="box"/>
+        <text x="130" y="188" text-anchor="middle" class="tiny">6 steps from</text>
+        <text x="130" y="204" text-anchor="middle" class="tiny">Biography</text>
+        <rect x="210" y="156" width="120" height="68" rx="8" class="box"/>
+        <text x="270" y="188" text-anchor="middle" class="tiny">appends original</text>
+        <text x="270" y="204" text-anchor="middle" class="tiny">spell files</text>
+        <text x="20" y="262" class="tiny muted">highlighted: R + harmonized, the</text>
+        <text x="20" y="278" class="tiny muted">recommended default, as an example</text>
+        <path d="M332,110 C380,110 380,40 420,40" class="ln ln-transform dashed"/>
+
+        <!-- script strip -->
+        <text x="440" y="30" class="band-label">Resulting script, top to bottom</text>
+        <rect x="440" y="40" width="210" height="46" rx="6" class="seg-fixed"/>
+        <text x="456" y="68" class="small">Header &amp; approach</text>
+        <rect x="440" y="90" width="210" height="130" rx="6" class="seg-fixed"/>
+        <text x="456" y="114" class="small">Core steps</text>
+        <text x="456" y="134" class="tiny muted">1 Biography base</text>
+        <text x="456" y="150" class="tiny muted">2–3 employment, voc. training</text>
+        <text x="456" y="166" class="tiny muted">4 expand to months</text>
+        <text x="456" y="182" class="tiny muted">5 spell prioritisation</text>
+        <text x="456" y="198" class="tiny muted">6 reduce to interview months</text>
+        <rect x="560" y="122" width="82" height="80" rx="5" class="seg-cond"/>
+        <text x="601" y="146" text-anchor="middle" class="tiny">parallel</text>
+        <text x="601" y="162" text-anchor="middle" class="tiny">spells, work /</text>
+        <text x="601" y="178" text-anchor="middle" class="tiny">unemp. exp.</text>
+        <rect x="440" y="224" width="210" height="46" rx="6" class="seg-vars"/>
+        <text x="456" y="244" class="small">Additional Variables</text>
+        <text x="456" y="261" class="mono tiny muted">generate_strings[_stata]()</text>
+        <rect x="440" y="274" width="210" height="30" rx="6" class="seg-cond"/>
+        <text x="456" y="294" class="tiny">Set missing values</text>
+        <rect x="440" y="308" width="210" height="30" rx="6" class="seg-chapter"/>
+        <text x="456" y="328" class="tiny">Highest education</text>
+        <rect x="440" y="342" width="210" height="30" rx="6" class="seg-chapter"/>
+        <text x="456" y="362" class="tiny">Further training (SC6 only)</text>
+        <rect x="440" y="376" width="210" height="30" rx="6" class="seg-chapter"/>
+        <text x="456" y="396" class="tiny">Children (SC3/4 or SC5/6 variant)</text>
+
+        <!-- legend -->
+        <rect x="700" y="60" width="22" height="16" rx="3" class="seg-fixed"/>
+        <text x="732" y="73" class="small">always included</text>
+        <rect x="700" y="92" width="22" height="16" rx="3" class="seg-cond"/>
+        <text x="732" y="105" class="small">included when a setting is ticked</text>
+        <rect x="700" y="124" width="22" height="16" rx="3" class="seg-vars"/>
+        <text x="732" y="137" class="small">one block per confirmed dataset</text>
+        <rect x="700" y="156" width="22" height="16" rx="3" class="seg-chapter"/>
+        <text x="732" y="169" class="small">appended as a numbered chapter</text>
+        <text x="700" y="210" class="tiny muted">Chapters are numbered on the fly:</text>
+        <text x="700" y="226" class="mono tiny muted">chapter &lt;- 6 + length(datalist)</text>
+        <text x="700" y="242" class="tiny muted">then +1 for each appended chapter.</text>
+        <text x="700" y="282" class="tiny muted">Exemplary modules live in</text>
+        <text x="700" y="298" class="mono tiny muted">script_functions.R</text>
+        <text x="700" y="314" class="tiny muted">with one R and one Stata version each.</text>
+      </svg>
+    </div>
+    <figcaption><b>Figure 5.</b> The harmonized templates, shown here, build the person-year structure from the Biography file in six steps. The subspell templates instead append the original spell datasets, recode them and prioritise directly. The generated R scripts load data with <code>nepstools::read_neps()</code>, from the author’s companion package on GitHub.</figcaption>
+  </figure>
+
+  <div class="prose">
+    <p>The Additional Variables block is the most intricate part. <code>generate_strings()</code> (R) and <code>generate_strings_stata()</code> loop over the confirmed datasets. For each one they pick a merge strategy from its linkage keys. Datasets merged only by <code>ID_t</code> (like Basics) are joined many-to-one. Spell datasets are joined on <code>ID_t</code>, <code>wave</code> and <code>splink</code> after harmonized episodes are dropped. External-exam datasets are reshaped wide first. The comments inside these functions explain each case.</p>
+  </div>
+
+  <!-- 7 -->
+  <h2 id="wiring">7 · Shared state and messages</h2>
+  <div class="prose">
+    <p>Modules are isolated by design, so every place where information crosses a boundary is explicit:</p>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Channel</th><th>From → to</th><th>Carries</th></tr></thead>
+      <tbody>
+        <tr><td><code>settings_reactive()</code></td><td>settings module → <code>app_server</code></td><td>Sidebar width. <code>app_server</code> forwards it to the browser.</td></tr>
+        <tr><td><code>sendCustomMessage("sidebarWidth")</code></td><td>R → JS</td><td>New sidebar width in pixels</td></tr>
+        <tr><td><code>sendCustomMessage("variableQuestiontexts")</code></td><td>R → JS</td><td>Question text per variable, for picker tooltips</td></tr>
+        <tr><td><code>cross_module</code></td><td>Transform Data ⇄ Explore Datasets</td><td>Cohort, mergeable datasets, and add requests. See <code>dev/cross-module-wiring.html</code></td></tr>
+        <tr><td><code>Shiny.setInputValue(…)</code></td><td>JS → R</td><td>“Add Selected to Script” clicks and “Remove this dataset” links, sent as events</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 8 -->
+  <h2 id="quirks">8 · Worth knowing</h2>
+  <ul class="cards">
+    <li class="flag">
+      <b>A closed tab stops the whole app</b>
+      <p><code>app_server()</code> calls <code>shiny::stopApp()</code> when a session ends. That’s handy for local use (closing the browser ends R), but on a server where several users share one R process, one user closing their tab disconnects everyone else on that process.</p>
+    </li>
+    <li class="flag">
+      <b>A leftover write to the global environment</b>
+      <p><code>gen_list_for_picker()</code> also assigns each confirmed dataset’s list into <code>.GlobalEnv</code> under its short name. Nothing reads it, and on a shared process it’s visible to every session, so it could be removed.</p>
+    </li>
+    <li>
+      <b>Each tab has its own language switch</b>
+      <p><code>settings_reactive()</code> also returns <code>language</code>, but the settings module has no such input, so it’s always <code>NULL</code>. Explore and Transform each use their own labels switch.</p>
+    </li>
+    <li>
+      <b>Nothing is cached</b>
+      <p>Metadata is re-read from the <code>.dta</code> files whenever a dataset or language changes. The files have no rows, so this is usually quick. Loading a dataset into the Additional Variables picker shows a short “Loading variables” modal, because large files like pTarget take a moment.</p>
+    </li>
+    <li>
+      <b>Browser caching is handled</b>
+      <p>The CSS and JS links carry <code>?v=</code> plus the file’s modification time (<code>www_version()</code> in <code>app_ui.R</code>), so browsers pick up style changes after every update.</p>
+    </li>
+    <li>
+      <b>Tooltips are Bootstrap 5, not jQuery</b>
+      <p>The bslib theme only loads Bootstrap 5, which has no <code>$.fn.tooltip</code>. <code>window.initAppTooltips()</code> uses <code>bootstrap.Tooltip</code> directly and is re-run after redraws.</p>
+    </li>
+  </ul>
+
+  <!-- 9 -->
+  <h2 id="recipes">9 · Common changes, and where to make them</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>You want to…</th><th>Change</th></tr></thead>
+      <tbody>
+        <tr><td>Update a cohort to a new SUF release</td><td>Replace the files in <code>inst/extdata/scN_semantic_files/</code>. The version is read from the file names, so no code change is needed. Check that <code>linkage_keys.csv</code> still matches the dataset names.</td></tr>
+        <tr><td>Make another dataset available in Additional Variables</td><td>Fill in its <code>Linkage</code> column in <code>linkage_keys.csv</code>, then check that <code>generate_strings()</code> / <code>generate_strings_stata()</code> handle its merge type.</td></tr>
+        <tr><td>Add a script option</td><td>Add a choice to the sidebar checkboxes in <code>mod_data_transformation.R</code>, pass it into both <code>gen_script()</code> calls (preview and download), and add its lines to all four templates.</td></tr>
+        <tr><td>Add an exemplary preparation module</td><td>Write an R and a Stata generator in <code>script_functions.R</code>, add the checkbox, and append it as a chapter in the four templates.</td></tr>
+        <tr><td>Change styling</td><td><code>inst/www/css/styles.css</code>. The cache-busting link means users see it right after the update.</td></tr>
+        <tr><td>Record a release</td><td><code>inst/extdata/CHANGELOG.md</code> (shown under Help → View Changelog), <code>DESCRIPTION</code>, and <code>app_version</code> in <code>app_ui.R</code>.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer>Written for NEPScribe 0.3.4. Companion note: <code>dev/cross-module-wiring.html</code> covers the Explore → Transform link in detail. Function names are the stable anchors; line counts are a snapshot.</footer>
+</div>
+</body>
+</html>
