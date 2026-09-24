@@ -1405,7 +1405,9 @@ generate_strings_stata <- function(data_list, format) {
       # if we have unique identifier in both datasets we can merge 1:1 - this is the case when we have at least 2 merging variables, however if we only merge by ID_t (eg with Basics), we need to merge m:1
       string21 <- if(length(merge_vector) > 1) paste0("merge 1:1 ", merge_vector, " using `data', keep(1 3)  nogen") else if (length(merge_vector)==1) paste0("merge m:1 ", merge_vector, " using `data', keep(1 3) nogen")
       # Concatenate the current strings into the result vector
-      result_vector <- c(result_vector, string0, string1, string2, string3, string4, string5, string6, string_ptarget_sc3_1, string_ptarget_sc3_2, string_ptarget_sc3_3, string7, string8, string9, string10, string11, string12, string13, string14, string15, string16, string17, string18, string19, string20, string21)
+      string_empty1 <- ""
+      result_vector <- c(result_vector, string0, string1, string2, string3, string4, string5, string6, string_ptarget_sc3_1, string_ptarget_sc3_2, string_ptarget_sc3_3, string7, string8, string9, string10, string11, string12, string13, string14, string15, string16, string17, string18, string19, string20, string21, string_empty1)
+
 
       # Create an intermediate vector to accumulate all variables added from spell files,
       # so that filling missing values can be performed once at the end of the variable addition code chunk.
