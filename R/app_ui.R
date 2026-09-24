@@ -7,7 +7,7 @@
 #' @importFrom htmltools tags
 app_ui <- function() {
 
-  app_version <- "v0.3.3"  # define your current app version here
+  app_version <- "v0.3.4"  # define your current app version here
 
   # Make package www resources accessible in Shiny
   shiny::addResourcePath(

@@ -31,7 +31,7 @@ would greatly appreciate it.
 Suggested citation:
 
 Alexander Helbig, Insa Grüttgen (2026). *nepscribe*. Shiny application
-to generate NEPS data preparation scripts in Stata and R. Version 0.3.3
+to generate NEPS data preparation scripts in Stata and R. Version 0.3.4
 \[Computer software\]. <https://github.com/a-helbig/nepscribe>
 
 ## Installation

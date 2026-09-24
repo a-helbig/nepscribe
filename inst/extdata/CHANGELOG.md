@@ -53,7 +53,7 @@ It may be released for other SCs in the future.
 * Resolved two warnings raised during package checks: internal app functions were being exported unintentionally, and non-ASCII characters (ä, ö, ü, ß, etc.) in the source code caused encoding warnings.
 * Fixed a JavaScript error in the 'Explore Datasets' tab that broke the variable tooltips.
 
-## Version 0.3.4 (2026-09-22)
+## Version 0.3.4 (2026-09-24)
 
 * Replaced the "selected variables" dropdown in Additional Variables with an always-visible, collapsible summary of what's been added, grouped by dataset. Individual variables can be unchecked to exclude them from the script without fully removing them, and whole datasets can be removed with one click.
 * Added hover tooltips showing each variable's survey question text directly in the Additional Variables picker, so you no longer need to switch to Explore Datasets to look it up.
