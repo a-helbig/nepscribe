@@ -63,5 +63,6 @@ It may be released for other SCs in the future.
 * Added a note explaining why not every NEPS dataset is available in Additional Variables.
 * Variables can now be added to the script directly from Explore Datasets: variables that can be added are marked with a grey + in the table. Select their rows and click "Add Selected to Script" to send them to Additional Variables in Transform Data. Only variables from datasets that can be merged into a person-year dataset, and from the starting cohort selected in Transform Data, can be added; anything skipped is listed with the reason.
 * In Additional Variables, picking a dataset now pre-selects the variables already added for it, so "Confirm Vars" adds to them instead of replacing them.
+* Additional Variables: the "Reset Everything" button now sits next to "Confirm Vars", and the summary of selected variables is aligned with the variable picker.
 * Explore Datasets: the table buttons and the search field now share one toolbar row, the search field is highlighted, and the buttons are visually separated.
 * Start page: the title is now larger and centered.
