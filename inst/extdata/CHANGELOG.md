@@ -67,3 +67,6 @@ It may be released for other SCs in the future.
 * Explore Datasets: the table buttons and the search field now share one toolbar row, the search field is highlighted, and the buttons are visually separated.
 * Start page: the title is now larger and centered.
 * Closing the app in a browser tab no longer stops it on the server, which could disconnect other users at the same time.
+* Fixed the exemplary highest-education preparation for SC4 in Stata scripts, which left most values missing. R and Stata scripts now classify education the same way.
+* Fixed the SC3/SC4 exemplary children preparation in R and Stata scripts.
+* R scripts in original subspell format now load the janitor package, which the further training example needs.
