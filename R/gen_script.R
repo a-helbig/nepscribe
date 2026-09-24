@@ -323,7 +323,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
                      "rm(list = ls())",
                      "",
                      "# Load necessary libraries",
-                     "list.of.packages <- c('dplyr','haven','lubridate','tidyr','dtplyr', 'remotes', 'stringr')",
+                     "list.of.packages <- c('dplyr','haven','lubridate','tidyr','dtplyr','janitor', 'remotes', 'stringr')",
                      "new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,'Package'])] # check if required packages are in installed packages on this machine",
                      "if(length(new.packages)) install.packages (new.packages) # if new.packages contains sth and thus length is > 0, install those new packages",
                      "",
