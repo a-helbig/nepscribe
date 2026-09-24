@@ -66,3 +66,4 @@ It may be released for other SCs in the future.
 * Additional Variables: the "Reset Everything" button now sits next to "Confirm Vars", and the summary of selected variables is aligned with the variable picker.
 * Explore Datasets: the table buttons and the search field now share one toolbar row, the search field is highlighted, and the buttons are visually separated.
 * Start page: the title is now larger and centered.
+* Closing the app in a browser tab no longer stops it on the server, which could disconnect other users at the same time.
