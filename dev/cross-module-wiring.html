@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Backend notes for the Explore Datasets -> Transform Data feature (v0.3.4).
+     Open this file in a browser; the sequence diagram is rendered by mermaid from a CDN. -->
+<style>body { margin: 0; }</style>
+<title>NEPScribe Cross-Module Wiring</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Fira+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+  :root {
+    --bg: #F4F7F7;
+    --surface: #FFFFFF;
+    --ink: #1C2B2F;
+    --muted: #5A6C71;
+    --line: #D5DFE1;
+    --code-bg: #EAF0F1;
+    --transform: #2F6F9F;
+    --transform-soft: #E4EEF6;
+    --explore: #2E8A6A;
+    --explore-soft: #E2F2EC;
+    --channel: #A86C12;
+    --channel-soft: #FBF1DF;
+    --warn: #B4532A;
+    --warn-soft: #F8E6DD;
+    --font-body: "Fira Sans", "Segoe UI", system-ui, sans-serif;
+    --font-code: "Fira Code", ui-monospace, "Cascadia Code", Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #11181A;
+      --surface: #182225;
+      --ink: #E2EBED;
+      --muted: #93A6AB;
+      --line: #2C3A3E;
+      --code-bg: #1F2B2E;
+      --transform: #7FB6E0;
+      --transform-soft: #1B2D3A;
+      --explore: #6FCBA6;
+      --explore-soft: #16302A;
+      --channel: #E6B35A;
+      --channel-soft: #33291A;
+      --warn: #E58B63;
+      --warn-soft: #3A2319;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #11181A;
+    --surface: #182225;
+    --ink: #E2EBED;
+    --muted: #93A6AB;
+    --line: #2C3A3E;
+    --code-bg: #1F2B2E;
+    --transform: #7FB6E0;
+    --transform-soft: #1B2D3A;
+    --explore: #6FCBA6;
+    --explore-soft: #16302A;
+    --channel: #E6B35A;
+    --channel-soft: #33291A;
+    --warn: #E58B63;
+    --warn-soft: #3A2319;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+  }
+  .page {
+    max-width: 980px;
+    margin: 0 auto;
+    padding-inline: 20px;
+    padding-block: 40px 72px;
+  }
+  .prose { max-width: 68ch; }
+
+  header { display: grid; gap: 10px; margin-bottom: 28px; }
+  .eyebrow {
+    font-family: var(--font-code);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  h1, h2, h3 { font-family: var(--font-code); font-weight: 600; text-wrap: balance; line-height: 1.25; }
+  h1 { font-size: clamp(26px, 4vw, 36px); margin: 0; }
+  h2 { font-size: 22px; margin: 56px 0 12px; }
+  h3 { font-size: 17px; margin: 28px 0 8px; }
+  p { margin: 0 0 14px; }
+  .lede { font-size: 18px; color: var(--muted); margin: 0; }
+
+  code {
+    font-family: var(--font-code);
+    font-size: 0.86em;
+    background: var(--code-bg);
+    padding: 1px 5px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+  .c-explore { color: var(--explore); font-weight: 600; }
+  .c-transform { color: var(--transform); font-weight: 600; }
+  .c-channel { color: var(--channel); font-weight: 600; }
+
+  .tldr {
+    background: var(--channel-soft);
+    border: 1px solid color-mix(in srgb, var(--channel) 35%, transparent);
+    border-radius: 10px;
+    padding: 18px 20px;
+    max-width: 76ch;
+  }
+  .tldr b { font-family: var(--font-code); font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--channel); display: block; margin-bottom: 6px; }
+  .tldr p:last-child { margin-bottom: 0; }
+
+  figure {
+    margin: 22px 0 8px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 18px 18px 14px;
+  }
+  .fig-scroll { overflow-x: auto; }
+  figure svg { display: block; width: 100%; height: auto; }
+  figcaption { font-size: 14px; color: var(--muted); margin-top: 10px; max-width: 80ch; }
+  figcaption b { color: var(--ink); font-weight: 600; }
+
+  /* shared SVG styling, all from tokens so both themes work */
+  svg text { font-family: var(--font-body); fill: var(--ink); }
+  svg .mono { font-family: var(--font-code); }
+  svg .muted { fill: var(--muted); }
+  svg .small { font-size: 12px; }
+  svg .tiny { font-size: 11px; }
+  svg .title { font-size: 16px; font-weight: 600; }
+  svg .box { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+  svg .box-explore { fill: var(--explore-soft); stroke: var(--explore); stroke-width: 1.5; }
+  svg .box-transform { fill: var(--transform-soft); stroke: var(--transform); stroke-width: 1.5; }
+  svg .box-channel { fill: var(--channel-soft); stroke: var(--channel); stroke-width: 1.5; }
+  svg .box-warn { fill: var(--warn-soft); stroke: var(--warn); stroke-width: 1.5; }
+  svg .row { fill: var(--surface); stroke: color-mix(in srgb, var(--channel) 45%, transparent); stroke-width: 1; }
+  svg .t-explore { fill: var(--explore); }
+  svg .t-transform { fill: var(--transform); }
+  svg .t-channel { fill: var(--channel); }
+  svg .t-warn { fill: var(--warn); }
+  svg .ln { fill: none; stroke-width: 2; }
+  svg .ln-explore { stroke: var(--explore); }
+  svg .ln-transform { stroke: var(--transform); }
+  svg .ln-channel { stroke: var(--channel); }
+  svg .ln-muted { stroke: var(--muted); }
+  svg .dashed { stroke-dasharray: 5 5; }
+  svg .head-explore { fill: var(--explore); }
+  svg .head-transform { fill: var(--transform); }
+  svg .head-channel { fill: var(--channel); }
+  svg .head-muted { fill: var(--muted); }
+
+  table { border-collapse: collapse; width: 100%; font-size: 15px; }
+  .table-wrap { overflow-x: auto; margin: 16px 0 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  th { font-family: var(--font-code); font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+  td code { white-space: nowrap; }
+
+  .rules { display: grid; gap: 14px; margin: 16px 0 0; padding: 0; list-style: none; max-width: 80ch; }
+  .rules li {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .rules li b { display: block; font-weight: 600; margin-bottom: 4px; }
+  .rules li p { margin: 0; color: var(--ink); }
+
+  pre.mermaid { background: transparent; margin: 0; }
+
+  footer { margin-top: 56px; font-size: 14px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
+
+  @media (max-width: 600px) {
+    body { font-size: 15px; }
+    h2 { margin-top: 44px; }
+    .fig-scroll svg { min-width: 640px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <header>
+    <div class="eyebrow">NEPScribe · backend notes · v0.3.4</div>
+    <h1>How Explore Datasets talks to Transform Data</h1>
+    <p class="lede">The logic behind the “Add Selected to Script” feature: one shared object, three fields, and a few rules that keep the two tabs in agreement.</p>
+  </header>
+
+  <div class="tldr">
+    <b>In one paragraph</b>
+    <p>Shiny modules are sealed off from each other: <span class="c-explore">Explore Datasets</span> can’t read the inputs of <span class="c-transform">Transform Data</span>, and vice versa. So <code>app_server()</code> creates one shared <code>shiny::reactiveValues()</code> object, <span class="c-channel">cross_module</span>, and hands the <em>same</em> object to both modules. Transform Data writes into it what it can accept (its cohort and its mergeable datasets). Explore Datasets reads that to draw the ＋ markers and to filter a selection, then writes an <code>add_request</code>, which Transform Data picks up and merges into the script.</p>
+  </div>
+
+  <h2>1 · The shared channel</h2>
+  <div class="prose">
+    <p>Think of <span class="c-channel">cross_module</span> as a small noticeboard hanging between the two tabs. Each field on it has exactly one writer, so it’s always clear who is responsible for a value. Because it’s a <code>reactiveValues</code> object, anything that reads a field is automatically re-run when that field changes. That’s what makes the other tab react without any explicit “send” call.</p>
+  </div>
+
+  <figure>
+    <div class="fig-scroll">
+      <svg viewBox="0 0 1000 430" role="img" aria-label="app_server creates cross_module and passes it to both modules. Transform Data writes available_datasets and cohort, which Explore Datasets reads. Explore Datasets writes add_request, which Transform Data reads.">
+        <defs>
+          <marker id="ah-t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="head-transform"/></marker>
+          <marker id="ah-e" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="head-explore"/></marker>
+          <marker id="ah-m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="head-muted"/></marker>
+        </defs>
+
+        <!-- app_server -->
+        <rect x="380" y="14" width="240" height="66" rx="10" class="box"/>
+        <text x="500" y="42" text-anchor="middle" class="mono title">app_server()</text>
+        <text x="500" y="64" text-anchor="middle" class="small muted">runs once per browser session</text>
+
+        <path d="M500,80 V146" class="ln ln-muted" marker-end="url(#ah-m)"/>
+        <text x="510" y="118" class="tiny muted">creates</text>
+        <path d="M380,60 C250,60 145,90 145,146" class="ln ln-muted dashed" marker-end="url(#ah-m)"/>
+        <text x="228" y="80" text-anchor="middle" class="tiny muted">passes it in</text>
+        <path d="M620,60 C750,60 855,90 855,146" class="ln ln-muted dashed" marker-end="url(#ah-m)"/>
+        <text x="772" y="80" text-anchor="middle" class="tiny muted">passes it in</text>
+
+        <!-- Explore module -->
+        <rect x="20" y="150" width="250" height="262" rx="12" class="box-explore"/>
+        <text x="40" y="180" class="title t-explore">Explore Datasets</text>
+        <text x="40" y="200" class="mono tiny muted">dataset_explorer_server()</text>
+        <text x="40" y="238" class="small">draws the ＋ markers</text>
+        <text x="40" y="288" class="small">checks the cohort</text>
+        <text x="40" y="356" class="small">“Add Selected to Script”</text>
+        <text x="40" y="374" class="tiny muted">button click</text>
+
+        <!-- Channel -->
+        <rect x="380" y="150" width="240" height="262" rx="12" class="box-channel"/>
+        <text x="500" y="178" text-anchor="middle" class="mono title t-channel">cross_module</text>
+        <text x="500" y="198" text-anchor="middle" class="mono tiny muted">shiny::reactiveValues()</text>
+        <rect x="396" y="212" width="208" height="42" rx="7" class="row"/>
+        <text x="500" y="230" text-anchor="middle" class="mono small">available_datasets</text>
+        <text x="500" y="246" text-anchor="middle" class="tiny muted">character vector of .dta names</text>
+        <rect x="396" y="262" width="208" height="42" rx="7" class="row"/>
+        <text x="500" y="280" text-anchor="middle" class="mono small">cohort</text>
+        <text x="500" y="296" text-anchor="middle" class="tiny muted">e.g. "SC6"</text>
+        <rect x="396" y="330" width="208" height="42" rx="7" class="row"/>
+        <text x="500" y="348" text-anchor="middle" class="mono small">add_request</text>
+        <text x="500" y="364" text-anchor="middle" class="tiny muted">list(vars, nonce)</text>
+
+        <!-- Transform module -->
+        <rect x="730" y="150" width="250" height="262" rx="12" class="box-transform"/>
+        <text x="750" y="180" class="title t-transform">Transform Data</text>
+        <text x="750" y="200" class="mono tiny muted">data_transformation_server()</text>
+        <text x="750" y="238" class="small">mergeable datasets</text>
+        <text x="750" y="288" class="small">selected starting cohort</text>
+        <text x="750" y="356" class="small">merges into the script</text>
+        <text x="750" y="374" class="tiny muted">Additional Variables</text>
+
+        <!-- Transform -> channel -> Explore (rows 1 and 2) -->
+        <path d="M728,233 H624" class="ln ln-transform" marker-end="url(#ah-t)"/>
+        <text x="676" y="225" text-anchor="middle" class="tiny t-transform">writes</text>
+        <path d="M378,233 H274" class="ln ln-transform" marker-end="url(#ah-t)"/>
+        <text x="326" y="225" text-anchor="middle" class="tiny t-transform">reads</text>
+        <path d="M728,283 H624" class="ln ln-transform" marker-end="url(#ah-t)"/>
+        <text x="676" y="275" text-anchor="middle" class="tiny t-transform">writes</text>
+        <path d="M378,283 H274" class="ln ln-transform" marker-end="url(#ah-t)"/>
+        <text x="326" y="275" text-anchor="middle" class="tiny t-transform">reads</text>
+
+        <!-- Explore -> channel -> Transform (row 3) -->
+        <path d="M272,351 H376" class="ln ln-explore" marker-end="url(#ah-e)"/>
+        <text x="324" y="343" text-anchor="middle" class="tiny t-explore">writes</text>
+        <path d="M622,351 H726" class="ln ln-explore" marker-end="url(#ah-e)"/>
+        <text x="674" y="343" text-anchor="middle" class="tiny t-explore">reads</text>
+      </svg>
+    </div>
+    <figcaption><b>Figure 1.</b> Who writes and who reads each field. Blue arrows start in Transform Data and green arrows start in Explore Datasets. Information flows both ways, but each field has a single writer.</figcaption>
+  </figure>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Field</th><th>Written by</th><th>When</th><th>Read by, and what for</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>available_datasets</code></td>
+          <td class="c-transform">Transform Data</td>
+          <td>Whenever the starting cohort changes (<code>observeEvent(cohort_path())</code>)</td>
+          <td class="">Explore Datasets: which rows get a ＋ marker, and which selected rows may be sent</td>
+        </tr>
+        <tr>
+          <td><code>cohort</code></td>
+          <td class="c-transform">Transform Data</td>
+          <td>Same observer, e.g. <code>"SC6"</code></td>
+          <td>Explore Datasets: detects rows from a different starting cohort, for a clearer warning</td>
+        </tr>
+        <tr>
+          <td><code>add_request</code></td>
+          <td class="c-explore">Explore Datasets</td>
+          <td>On each click of “Add Selected to Script” that has at least one addable row</td>
+          <td>Transform Data: merges the variables into Additional Variables and the script</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="prose">
+    <h3>Where <code>available_datasets</code> comes from</h3>
+    <p>It’s the exact same list that fills the “1. Step: Select Dataset” dropdown, produced by <code>create_dataset_names()</code> in <code>R/utils.R</code>. That function reads <code>inst/extdata/linkage_keys.csv</code>, keeps rows whose <code>Linkage</code> column is non-empty and whose dataset starts with the selected cohort (e.g. <code>SC6</code>), then appends the SUF version (<code>SC6_Basics_S_17-0-0.dta</code>). Datasets like <code>spChild</code> or <code>spFurtherEdu1</code> have no linkage entry, because they need extra preparation before they can be merged into a person-year dataset, so they never appear. Because the dropdown and the channel share one source, they can’t drift apart.</p>
+  </div>
+
+  <h2>2 · One click, start to finish</h2>
+  <div class="prose">
+    <p>The full journey of a selection, including the earlier step where Transform Data publishes what it accepts. Solid arrows are direct calls or input changes, and dashed arrows are Shiny’s reactivity waking an observer up.</p>
+  </div>
+
+  <figure>
+    <div class="fig-scroll">
+<pre class="mermaid">
+sequenceDiagram
+  actor U as User
+  participant B as Browser
+  participant E as Explore server
+  participant C as cross_module
+  participant T as Transform server
+  U->>T: picks a starting cohort in Transform Data
+  T->>C: available_datasets and cohort
+  C-->>E: table re-renders, + markers on mergeable rows
+  U->>B: clicks rows in the Explore table
+  B->>E: input$data_overview_rows_selected (row indices)
+  U->>B: clicks Add Selected to Script
+  B->>E: input$add_to_script = Date.now()
+  E->>E: look up rows, sort into added / wrong cohort / not mergeable
+  E->>C: add_request = list(vars by dataset, nonce)
+  E->>B: clear row selection, show result alert
+  C-->>T: observeEvent(cross_module$add_request) fires
+  T->>T: union with variables already confirmed
+  T->>T: store_confirmed_vars() for each dataset
+  T->>B: summary list updates, picker selection synced
+</pre>
+    </div>
+    <figcaption><b>Figure 2.</b> The Explore server never calls anything inside Transform Data. It only writes <code>add_request</code>, and Shiny’s reactivity does the rest.</figcaption>
+  </figure>
+
+  <h2>3 · Which selected rows get through</h2>
+  <div class="prose">
+    <p>When the button is clicked, the Explore server looks at each selected row’s <code>Dataset</code> and <code>Variable</code> and puts it through two checks. Only rows that pass both end up in <code>add_request</code>. Everything else is listed in the alert, with its reason.</p>
+  </div>
+
+  <figure>
+    <div class="fig-scroll">
+      <svg viewBox="0 0 780 360" role="img" aria-label="Decision flow: if the dataset's cohort prefix differs from cross_module cohort, the row is skipped as a different cohort. Otherwise, if the dataset is not in available_datasets, it is skipped as not mergeable. Otherwise it is added to add_request.">
+        <defs>
+          <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="head-muted"/></marker>
+        </defs>
+        <rect x="240" y="10" width="280" height="48" rx="10" class="box"/>
+        <text x="380" y="31" text-anchor="middle" class="small">each selected row</text>
+        <text x="380" y="49" text-anchor="middle" class="mono tiny muted">(Dataset, Variable)</text>
+
+        <path d="M380,58 V92" class="ln ln-muted" marker-end="url(#ah2)"/>
+
+        <rect x="200" y="94" width="360" height="58" rx="10" class="box-channel"/>
+        <text x="380" y="118" text-anchor="middle" class="small">Is the dataset’s SC prefix the same as</text>
+        <text x="380" y="138" text-anchor="middle" class="mono small">cross_module$cohort ?</text>
+
+        <path d="M560,123 H616" class="ln ln-muted" marker-end="url(#ah2)"/>
+        <text x="588" y="115" text-anchor="middle" class="tiny muted">no</text>
+        <rect x="618" y="98" width="152" height="50" rx="10" class="box-warn"/>
+        <text x="694" y="119" text-anchor="middle" class="small t-warn">Skipped:</text>
+        <text x="694" y="137" text-anchor="middle" class="small">different cohort</text>
+
+        <path d="M380,152 V190" class="ln ln-muted" marker-end="url(#ah2)"/>
+        <text x="390" y="176" class="tiny muted">yes</text>
+
+        <rect x="200" y="192" width="360" height="58" rx="10" class="box-channel"/>
+        <text x="380" y="216" text-anchor="middle" class="small">Is the dataset in</text>
+        <text x="380" y="236" text-anchor="middle" class="mono small">cross_module$available_datasets ?</text>
+
+        <path d="M560,221 H616" class="ln ln-muted" marker-end="url(#ah2)"/>
+        <text x="588" y="213" text-anchor="middle" class="tiny muted">no</text>
+        <rect x="618" y="196" width="152" height="50" rx="10" class="box-warn"/>
+        <text x="694" y="217" text-anchor="middle" class="small t-warn">Skipped:</text>
+        <text x="694" y="235" text-anchor="middle" class="small">not mergeable</text>
+
+        <path d="M380,250 V288" class="ln ln-muted" marker-end="url(#ah2)"/>
+        <text x="390" y="274" class="tiny muted">yes</text>
+
+        <rect x="240" y="290" width="280" height="54" rx="10" class="box-explore"/>
+        <text x="380" y="313" text-anchor="middle" class="small t-explore" font-weight="600">Added to add_request</text>
+        <text x="380" y="332" text-anchor="middle" class="mono tiny muted">split(Variable, Dataset)</text>
+      </svg>
+    </div>
+    <figcaption><b>Figure 3.</b> <code>available_datasets</code> is already limited to one cohort, so the first check isn’t strictly needed to block rows. It’s there so the user gets the specific message “switch the cohort in Transform Data” instead of a generic “can’t be added”. It also covers SC1, SC2 and SC8, which Explore shows but Transform Data doesn’t support.</figcaption>
+  </figure>
+
+  <h2>4 · Inside Transform Data: one funnel, two stores</h2>
+  <div class="prose">
+    <p>Transform Data keeps confirmed variables in two places: <code>varlist$data</code>, which the script generator reads, and <code>all_lists()</code>, which drives the “Selected Variables” summary and the picker. Manual confirmation and requests from Explore go through the same helper, <code>store_confirmed_vars()</code>, so both paths build identical merge information for the script.</p>
+  </div>
+
+  <figure>
+    <div class="fig-scroll">
+      <svg viewBox="0 0 1000 290" role="img" aria-label="The Confirm Vars button and add_request both call store_confirmed_vars, which writes varlist$data for the script and all_lists for the summary and picker. Remove dataset and Reset edit both stores directly.">
+        <defs>
+          <marker id="ah3-t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="head-transform"/></marker>
+          <marker id="ah3-e" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="head-explore"/></marker>
+          <marker id="ah3-m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="head-muted"/></marker>
+        </defs>
+
+        <!-- triggers -->
+        <rect x="20" y="30" width="240" height="56" rx="10" class="box-transform"/>
+        <text x="40" y="54" class="small" font-weight="600">“Confirm Vars” button</text>
+        <text x="40" y="73" class="tiny muted">replaces that dataset’s variables</text>
+
+        <rect x="20" y="118" width="240" height="56" rx="10" class="box-explore"/>
+        <text x="40" y="142" class="mono small" font-weight="600">add_request</text>
+        <text x="40" y="161" class="tiny muted">from Explore Datasets</text>
+
+        <rect x="20" y="212" width="240" height="56" rx="10" class="box"/>
+        <text x="40" y="236" class="small" font-weight="600">Remove dataset / Reset</text>
+        <text x="40" y="255" class="tiny muted">links and buttons in the tab</text>
+
+        <!-- helper -->
+        <rect x="360" y="60" width="250" height="100" rx="12" class="box"/>
+        <text x="485" y="92" text-anchor="middle" class="mono title">store_confirmed_vars()</text>
+        <text x="485" y="116" text-anchor="middle" class="small muted">builds the merge dataframe</text>
+        <text x="485" y="136" text-anchor="middle" class="small muted">joins linkage keys</text>
+
+        <path d="M262,58 C310,58 310,90 356,90" class="ln ln-transform" marker-end="url(#ah3-t)"/>
+        <path d="M262,146 C310,146 310,130 356,130" class="ln ln-explore" marker-end="url(#ah3-e)"/>
+        <text x="300" y="188" text-anchor="middle" class="tiny t-explore">after union with</text>
+        <text x="300" y="202" text-anchor="middle" class="tiny t-explore">confirmed vars</text>
+
+        <!-- stores -->
+        <rect x="690" y="20" width="280" height="84" rx="10" class="box"/>
+        <text x="710" y="46" class="mono small" font-weight="600">varlist$data</text>
+        <text x="710" y="68" class="small muted">→ Preview / Download Script</text>
+        <text x="710" y="88" class="tiny muted">what actually gets merged</text>
+
+        <rect x="690" y="124" width="280" height="96" rx="10" class="box"/>
+        <text x="710" y="150" class="mono small" font-weight="600">all_lists()</text>
+        <text x="710" y="172" class="small muted">→ “Selected Variables” summary</text>
+        <text x="710" y="192" class="small muted">→ picker pre-selection</text>
+        <text x="710" y="210" class="tiny muted">what the user sees</text>
+
+        <path d="M612,94 C650,94 650,62 686,62" class="ln ln-muted" marker-end="url(#ah3-m)"/>
+        <path d="M612,128 C650,128 650,170 686,170" class="ln ln-muted" marker-end="url(#ah3-m)"/>
+
+        <!-- remove/reset edit both directly -->
+        <path d="M262,240 H984 V64" class="ln ln-muted dashed"/>
+        <path d="M984,64 H974" class="ln ln-muted" marker-end="url(#ah3-m)"/>
+        <path d="M984,172 H974" class="ln ln-muted" marker-end="url(#ah3-m)"/>
+        <text x="620" y="258" text-anchor="middle" class="tiny muted">edit both stores directly</text>
+      </svg>
+    </div>
+    <figcaption><b>Figure 4.</b> The difference between the two entry points: “Confirm Vars” <em>replaces</em> a dataset’s variables with what’s selected in the picker. Requests from Explore are first <em>unioned</em> with what’s already confirmed, so several batches add up. The picker pre-selects confirmed variables, so in practice “Confirm Vars” adds to them too.</figcaption>
+  </figure>
+
+  <h2>5 · Details worth knowing</h2>
+  <ul class="rules">
+    <li>
+      <b>Every session gets its own channel</b>
+      <p><code>app_server()</code> runs once per browser session, and <code>cross_module</code> is created inside it. Two people using the live app at the same time never see each other’s requests.</p>
+    </li>
+    <li>
+      <b>The nonce makes repeated requests fire</b>
+      <p><code>reactiveValues</code> ignore an assignment when the new value is identical to the old one, and then no observer re-runs. <code>add_request</code> therefore carries <code>nonce = runif(1)</code>. Without it, sending the same selection twice (e.g. after removing that dataset in Transform Data) would silently do nothing.</p>
+    </li>
+    <li>
+      <b>Row numbers stay correct across pages, sorting and search</b>
+      <p>The Explore table uses server-side processing, so <code>input$data_overview_rows_selected</code> returns row indices into the full <code>data_overview_r()</code> table, not positions on the visible page. That’s why selections made on different pages or after a search can be looked up directly.</p>
+    </li>
+    <li>
+      <b>The button behaves like an event, not a value</b>
+      <p>“Add Selected to Script” is a DataTables toolbar button whose JavaScript action calls <code>Shiny.setInputValue(…add_to_script, Date.now(), {priority: 'event'})</code>. The changing timestamp and the event priority guarantee that every click reaches the server.</p>
+    </li>
+    <li>
+      <b>The ＋ markers follow Transform Data’s cohort</b>
+      <p><code>output$data_overview</code> reads <code>cross_module$available_datasets</code>. When the cohort changes in Transform Data, the Explore table re-renders with updated markers. Current row selections are cleared as a side effect.</p>
+    </li>
+    <li>
+      <b>The picker mirrors what’s confirmed</b>
+      <p>When a dataset is picked, <code>confirmed_selection()</code> pre-selects its confirmed variables, matching on the variable name so it works in both label languages. A separate <code>observeEvent(all_lists())</code> keeps that selection in sync when variables arrive from Explore or a dataset is removed while it’s open.</p>
+    </li>
+    <li>
+      <b>Why not just return a reactive from a module?</b>
+      <p>Returning reactives from a module server is the usual Shiny pattern, but it only works in one direction. Here data flows both ways, and Explore Datasets is created before Transform Data in <code>app_server()</code>. A single shared object avoids a circular dependency and keeps the whole contract visible in one place.</p>
+    </li>
+  </ul>
+
+  <h2>6 · Where it lives</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Piece</th><th>File</th><th>Look for</th></tr></thead>
+      <tbody>
+        <tr><td>Channel created and passed to both modules</td><td><code>R/app_server.R</code></td><td><code>cross_module &lt;- shiny::reactiveValues(…)</code></td></tr>
+        <tr><td>Publishing cohort and mergeable datasets</td><td><code>R/mod_data_transformation.R</code></td><td><code>observeEvent(cohort_path(), …)</code></td></tr>
+        <tr><td>Which datasets are mergeable</td><td><code>R/utils.R</code>, <code>inst/extdata/linkage_keys.csv</code></td><td><code>create_dataset_names()</code></td></tr>
+        <tr><td>＋ marker column, Add button, hover hint</td><td><code>R/mod_data_exploration.R</code></td><td><code>output$data_overview</code></td></tr>
+        <tr><td>Sorting the selection and writing the request</td><td><code>R/mod_data_exploration.R</code></td><td><code>observeEvent(input$add_to_script, …)</code></td></tr>
+        <tr><td>Receiving the request, union and store</td><td><code>R/mod_data_transformation.R</code></td><td><code>observeEvent(cross_module$add_request, …)</code>, <code>store_confirmed_vars()</code></td></tr>
+        <tr><td>Picker pre-selection and sync</td><td><code>R/mod_data_transformation.R</code></td><td><code>confirmed_selection()</code>, <code>observeEvent(all_lists(), …)</code></td></tr>
+        <tr><td>Toolbar, grey icons, search highlight</td><td><code>inst/www/css/styles.css</code></td><td><code>.dt-toolbar</code>, <code>.add-marker-icon</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer>Written for NEPScribe 0.3.4. The function and observer names above are stable anchors; line numbers change too often to be worth listing.</footer>
+</div>
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs";
+  const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  mermaid.initialize({ startOnLoad: true, theme: dark ? "dark" : "default", fontFamily: "Fira Sans, sans-serif" });
+</script>
+</body>
+</html>
