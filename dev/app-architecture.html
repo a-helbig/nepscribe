@@ -617,9 +617,9 @@ if (education) {                                           <span class="cm"># op
   <!-- 8 -->
   <h2 id="quirks">8 · Worth knowing</h2>
   <ul class="cards">
-    <li class="flag">
-      <b>A closed tab stops the whole app</b>
-      <p><code>app_server()</code> calls <code>shiny::stopApp()</code> when a session ends. That’s handy for local use (closing the browser ends R), but on a server where several users share one R process, one user closing their tab disconnects everyone else on that process.</p>
+    <li>
+      <b>Closing the tab ends R only when run locally</b>
+      <p>When the app runs in an interactive R session (e.g. <code>run_app()</code> in RStudio), <code>app_server()</code> calls <code>shiny::stopApp()</code> once the browser tab is closed. On a server, R is never interactive, so this is skipped. Otherwise one user closing their tab would disconnect everyone sharing that R process.</p>
     </li>
     <li>
       <b>Each tab has its own language switch</b>
