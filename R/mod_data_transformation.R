@@ -719,22 +719,12 @@ shiny::observeEvent(input$sub_format_select, {
           children = "Children" %in% input$add_modules
         )
 
-        # Determine language class for formatting
-        lang_class <- if (toupper(input$stata_or_r) == "R") "language-r" else ""
+        # Language class for highlight.js (Stata grammar is loaded separately in app_ui.R)
+        lang_class <- if (toupper(input$stata_or_r) == "R") "language-r" else "language-stata"
 
-        # Wrap comment lines in <span class='hljs-comment'>
-        script_text <- sapply(script_vector, function(line) {
-          if (toupper(input$stata_or_r) == "R" && grepl("^\\s*#", line)) {
-            paste0("<span class='hljs-comment'>", line, "</span>")
-          } else if (toupper(input$stata_or_r) == "STATA" && grepl("^\\s*\\*", line)) {
-            paste0("<span class='hljs-comment'>", line, "</span>")
-          } else {
-            line
-          }
-        })
-
-        # Keep line breaks using \n
-        script_text <- paste(script_text, collapse = "\n")
+        # Escape the script as plain text (e.g. "<" or "&" in conditions) and keep line breaks;
+        # highlight.js then colours comments, commands, strings etc. in the browser
+        script_text <- htmltools::htmlEscape(paste(script_vector, collapse = "\n"))
 
         # Show modal
         shiny::showModal(
@@ -762,19 +752,12 @@ shiny::observeEvent(input$sub_format_select, {
 
             htmltools::tags$script(
               htmltools::HTML(
-                if (toupper(input$stata_or_r) == "R") {
-                  "setTimeout(function() {
-             document.querySelectorAll('code.language-r').forEach(el => {
+                "setTimeout(function() {
+             document.querySelectorAll('code.language-r, code.language-stata').forEach(el => {
+               delete el.dataset.highlighted;
                hljs.highlightElement(el);
-               el.querySelectorAll('.hljs-comment').forEach(c => {
-                 c.style.color = '#2a9d8f';
-                 c.style.fontStyle = 'italic';
-               });
              });
            }, 50);"
-                } else {
-                  ""
-                }
               )
             ),
 

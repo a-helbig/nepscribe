@@ -128,7 +128,9 @@ div.dataTables_wrapper div.dataTables_filter label {
       margin-bottom: 2px; /* Adjust the space below the title */
     }
 
-pre code .hljs-comment {
+/* comments in the script preview (code element with highlight.js classes) */
+pre code .hljs-comment,
+code.hljs .hljs-comment {
   color: #2a9d8f !important;
   font-style: italic !important;
 }

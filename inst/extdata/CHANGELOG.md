@@ -78,3 +78,4 @@ It may be released for other SCs in the future.
 * Original subspell format: spells with missing start or end dates are no longer dropped. The dates are not needed for selecting the spells ongoing at the interview or for the prioritisation, so these spells are now kept (their duration variable is missing).
 * Legal notice and data protection: the Help menu and a footer on every page now link to the corresponding pages of the WZB. The previous Impressum window was removed.
 * The syntax highlighting in the script preview (highlight.js) is now served by the app itself instead of an external CDN, so no visitor data is sent to third-party servers.
+* Script preview in Transform Data: Stata scripts are now syntax-highlighted like R scripts (commands, comments, strings and macros).

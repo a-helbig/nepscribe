@@ -54,6 +54,10 @@ bslib::page_navbar(
     htmltools::tags$script(
       src = www_version("vendor/highlightjs/highlight.min.js")
     ),
+    # Stata is not part of the common highlight.js bundle: official grammar, same version (11.9.0)
+    htmltools::tags$script(
+      src = www_version("vendor/highlightjs/languages/stata.min.js")
+    ),
 
     # Serve JS from package via URL
     htmltools::tags$script(
