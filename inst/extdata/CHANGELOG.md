@@ -72,7 +72,9 @@ It may be released for other SCs in the future.
 * R scripts in original subspell format now load the janitor package, which the further training example needs.
 * R scripts: adding variables from more than one spell dataset no longer leaves duplicate spstat.x / spstat.y columns in the person-year data.
 
-## Version 0.3.5 (2026-10-06)
+## Version 0.3.5 (2026-10-08)
 
 * Spell prioritisation no longer uses the duration of an episode. Among otherwise equal parallel episodes (same spell type, main/side episode and working hours), splink now decides, i.e. the order in which the episodes were reported. Within a spell module, earlier reported episodes usually started earlier, so this favours the episode that has lasted longer at the interview rather than the one with the longer total duration. This applies to both formats, in Stata and R scripts.
 * Original subspell format: spells with missing start or end dates are no longer dropped. The dates are not needed for selecting the spells ongoing at the interview or for the prioritisation, so these spells are now kept (their duration variable is missing).
+* Legal notice and data protection: the Help menu and a footer on every page now link to the corresponding pages of the WZB. The previous Impressum window was removed.
+* The syntax highlighting in the script preview (highlight.js) is now served by the app itself instead of an external CDN, so no visitor data is sent to third-party servers.
