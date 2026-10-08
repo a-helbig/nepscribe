@@ -145,3 +145,29 @@ pre code .hljs-comment {
 body.sidebar-resizing, body.sidebar-resizing * {
   user-select: none !important; cursor: col-resize !important;
 }
+/* Footer with legal links (legal notice / data protection), shown on every page */
+.legal-footer {
+  text-align: center;
+  font-size: 0.8rem;
+  padding: 0.3rem 0;
+  color: #888;
+  background-color: #fff;
+  border-top: 1px solid #e5e5e5;
+  /* pinned to the viewport bottom so it never overlaps or scrolls with page content */
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1020;
+}
+/* keep the last lines of content clear of the fixed footer: the sidebar layout's
+   .main is the element that scrolls. It is a flex container, where padding-bottom
+   doesn't extend the scroll area, so a spacer pseudo-element is used instead */
+.bslib-sidebar-layout > .main::after {
+  content: "";
+  display: block;
+  flex: 0 0 2rem;
+}
+.legal-footer a {
+  color: #888;
+}

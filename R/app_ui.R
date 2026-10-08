@@ -46,12 +46,13 @@ bslib::page_navbar(
     }
   ")),
     # highlight.js (syntax highlighting) for preview in data trans
+    # Served locally (not from a CDN) so no visitor data is sent to third-party servers
     htmltools::tags$link(
       rel = "stylesheet",
-      href = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"
+      href = www_version("vendor/highlightjs/github.min.css")
     ),
     htmltools::tags$script(
-      src = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"
+      src = www_version("vendor/highlightjs/highlight.min.js")
     ),
 
     # Serve JS from package via URL
@@ -60,6 +61,14 @@ bslib::page_navbar(
     )
   ),
   id = "nav",
+  # --- Footer with legal links, visible on every page ---
+  # Links to the WZB pages, so nothing has to be maintained in the app itself
+  footer = htmltools::tags$footer(
+    class = "legal-footer",
+    htmltools::tags$a("Legal notice", href = "https://wzb.eu/en/legal-notice", target = "_blank"),
+    " \u00b7 ",
+    htmltools::tags$a("Data protection", href = "https://wzb.eu/en/data-protection", target = "_blank")
+  ),
   # --- Theme setup ---
   theme = bslib::bs_theme(
     bootswatch = "minty",
@@ -92,7 +101,8 @@ bslib::page_navbar(
   bslib::nav_panel(
     title = "Start",
     htmltools::HTML(
-      "<div style='max-width: 900px; margin: 0 auto;'>
+      "<!-- padding-bottom keeps the last box clear of the fixed footer with the legal links -->
+     <div style='max-width: 900px; margin: 0 auto; padding-bottom: 2.5rem;'>
      <!-- 3 columns so the title sits exactly centered, with the lizard to its left -->
      <div style='display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;'>
        <img src='www/images/lizard_instead_of_neps.jpg' width='200' height='100' style='justify-self: end; margin-right: 10px;' alt=''>
@@ -165,7 +175,9 @@ bslib::page_navbar(
   bslib::nav_menu(
     title = "Help",
     align = "right",
-    bslib::nav_item(shiny::actionLink("show_impressum", "Impressum")),
+    # Legal notice and data protection: links to the WZB pages (also in the footer)
+    bslib::nav_item(htmltools::tags$a("Legal notice", href = "https://wzb.eu/en/legal-notice", target = "_blank")),
+    bslib::nav_item(htmltools::tags$a("Data protection", href = "https://wzb.eu/en/data-protection", target = "_blank")),
     bslib::nav_item(htmltools::tags$a("NEPS Website", href = "https://www.neps-data.de/", target="_blank")),
     bslib::nav_item(htmltools::tags$a("NEPS Documentation", href = "https://www.neps-data.de/Data-Center/Data-and-Documentation", target="_blank")),
     # bslib::nav_item(htmltools::tags$a("SUF-Explorer Documentation", href = "", target="_blank")),
