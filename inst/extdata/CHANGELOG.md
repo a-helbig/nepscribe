@@ -79,3 +79,7 @@ It may be released for other SCs in the future.
 * Legal notice and data protection: the Help menu and a footer on every page now link to the corresponding pages of the WZB. The previous Impressum window was removed.
 * The syntax highlighting in the script preview (highlight.js) is now served by the app itself instead of an external CDN, so no visitor data is sent to third-party servers.
 * Script preview in Transform Data: Stata scripts are now syntax-highlighted like R scripts (commands, comments, strings and macros).
+
+## Version 0.3.6 (2026-10-09)
+
+* Exemplary children preparation in R and Stata scripts: the example person shown for inspection is now selected automatically from the data.
