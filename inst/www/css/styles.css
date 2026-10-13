@@ -173,3 +173,162 @@ body.sidebar-resizing, body.sidebar-resizing * {
 .legal-footer a {
   color: #888;
 }
+
+/* Explore Datasets: button in the second column that opens the codebook frequencies */
+table.dataTable td.dt-info {
+  width: 1.6rem;
+  padding-left: 2px !important;
+  padding-right: 2px !important;
+  text-align: center;
+}
+button.cb-info-btn {
+  border: none;
+  background: none;
+  padding: 0 4px;
+  color: #888;
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+}
+button.cb-info-btn:hover,
+button.cb-info-btn:focus-visible {
+  color: var(--bs-info);
+}
+
+/* Codebook modal */
+.cb-title .cb-varname {
+  font-family: "Fira Code", monospace;
+  font-weight: 600;
+  margin-right: 0.6rem;
+}
+.cb-title .cb-varlabel {
+  font-size: 1.05rem;
+}
+.cb-title .cb-meta {
+  font-size: 0.8rem;
+  color: #888;
+  margin-top: 2px;
+}
+.cb-section {
+  margin-bottom: 1.2rem;
+}
+.cb-section-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 0.4rem;
+}
+.cb-note,
+.cb-footnotes {
+  font-size: 0.85rem;
+  color: #666;
+}
+.cb-footnotes p {
+  margin-bottom: 0.25rem;
+}
+.cb-footnotes .cb-source {
+  color: #999;
+  margin-top: 0.5rem;
+}
+.cb-waves {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.cb-wave {
+  min-width: 2rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 0.8rem;
+  cursor: default;
+}
+.cb-wave.on {
+  background: var(--bs-info);
+  color: #fff;
+  font-weight: 600;
+}
+.cb-wave.off {
+  border: 1px dashed #ccc;
+  color: #aaa;
+}
+.cb-table-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.cb-pct-switch {
+  font-size: 0.85rem;
+  color: #555;
+  cursor: pointer;
+}
+.cb-table-wrap {
+  overflow-x: auto;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+table.cb-table {
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  width: auto;
+}
+table.cb-table th {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  border-bottom: 2px solid #ddd;
+  white-space: nowrap;
+  z-index: 1;
+}
+table.cb-table th,
+table.cb-table td {
+  padding: 3px 8px;
+}
+table.cb-table tbody tr {
+  border-bottom: 1px solid #f0f0f0;
+}
+table.cb-table td.cb-num,
+table.cb-table th.cb-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+table.cb-table td.cb-value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: #555;
+}
+table.cb-table td.cb-label {
+  min-width: 14rem;
+  max-width: 28rem;
+}
+table.cb-table tr.cb-missing td {
+  color: #aaa;
+  font-style: italic;
+}
+table.cb-table .cb-bar-col {
+  min-width: 9rem;
+}
+.cb-bar {
+  position: relative;
+  height: 1.1rem;
+  background: #f3f3f3;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.cb-bar-fill {
+  height: 100%;
+  background: var(--bs-info);
+  opacity: 0.75;
+}
+.cb-bar-text {
+  position: absolute;
+  left: 6px;
+  top: 0;
+  font-size: 0.75rem;
+  line-height: 1.1rem;
+  color: #333;
+}
+/* counts by default; the "Show percentages" switch shows the shares instead */
+.cb-table .cb-p { display: none; }
+.cb-show-pct .cb-table .cb-n { display: none; }
+.cb-show-pct .cb-table .cb-p { display: inline; }

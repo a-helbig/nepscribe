@@ -268,12 +268,24 @@ dataset_explorer_server <- function(id, settings_reactive, cross_module) {
           title = "Can be added to the script"
         ))
         marker <- base::ifelse(data$Dataset %in% cross_module$available_datasets, marker_icon, "")
-        data <- dplyr::mutate(data, ` ` = marker, .before = 1)
 
-        # Export buttons leave out the marker column; plus an "Add Selected to Script" button
-        # in the same toolbar, which triggers input$add_to_script
+        # Second column: a button that opens the codebook frequencies of the variable,
+        # only on rows the codebook data covers
+        esc_attr <- function(x) htmltools::htmlEscape(x, attribute = TRUE)
+        info <- base::ifelse(
+          codebook_available(data$Dataset, data$Variable),
+          base::sprintf(
+            '<button type="button" class="cb-info-btn" data-file="%s" data-var="%s" data-toggle="tooltip" title="Show frequencies from the codebook"><i class="fas fa-chart-column"></i></button>',
+            esc_attr(data$Dataset), esc_attr(data$Variable)
+          ),
+          ""
+        )
+        data <- dplyr::mutate(data, ` ` = marker, `  ` = info, .before = 1)
+
+        # Export buttons leave out the marker and codebook columns; plus an "Add Selected to Script"
+        # button in the same toolbar, which triggers input$add_to_script
         buttons <- c(
-          base::lapply(.buttons, function(b) c(b, list(exportOptions = list(columns = ":not(.dt-marker)")))),
+          base::lapply(.buttons, function(b) c(b, list(exportOptions = list(columns = ":not(.dt-marker):not(.dt-info)")))),
           list(list(
             # DT requires a built-in button type to extend; the custom action replaces copy's
             extend = "copy",
@@ -289,12 +301,32 @@ dataset_explorer_server <- function(id, settings_reactive, cross_module) {
           data,
           extensions = "Buttons",
           selection = list(mode = "multiple", target = 'row'),
-          escape = base::setdiff(base::names(data), " "),
+          escape = base::setdiff(base::names(data), c(" ", "  ")),
           options = list(
             rowCallback = htmlwidgets::JS("customRowCallback"),
             # table pages are fetched separately from Shiny's own update cycle, so the marker
-            # tooltips need initializing after every redraw, not just on shiny:idle
-            drawCallback = htmlwidgets::JS("function() { if (window.initAppTooltips) window.initAppTooltips(); }"),
+            # tooltips need initializing after every redraw, not just on shiny:idle.
+            # The codebook buttons get their click handler here too. DT selects rows on
+            # mousedown, so that is stopped before it reaches the row: opening the modal
+            # doesn't (de)select the row
+            drawCallback = htmlwidgets::JS(base::sprintf(
+              "function() {
+                // a redraw removes buttons whose tooltip may still be showing; drop those leftovers
+                $('body > .tooltip').remove();
+                if (window.initAppTooltips) window.initAppTooltips();
+                var btns = $(this.api().table().body()).find('button.cb-info-btn');
+                btns.off('mousedown.cb').on('mousedown.cb', function(e) { e.stopPropagation(); });
+                btns.off('click.cb').on('click.cb', function(e) {
+                  e.stopPropagation();
+                  // the tooltip shows after a delay, so it could pop up over the modal: keep it off until the modal closes
+                  var tip = window.bootstrap && bootstrap.Tooltip.getInstance(this);
+                  if (tip) { tip.hide(); tip.disable(); $(document).one('hidden.bs.modal', function() { tip.enable(); }); }
+                  $('body > .tooltip').remove();
+                  Shiny.setInputValue('%s', {file: $(this).attr('data-file'), variable: $(this).attr('data-var')}, {priority: 'event'});
+                });
+              }",
+              session$ns("codebook_click")
+            )),
             # a grey + with a small ? next to the buttons, explaining the marker on hover
             initComplete = htmlwidgets::JS(
               "function() {",
@@ -309,7 +341,10 @@ dataset_explorer_server <- function(id, settings_reactive, cross_module) {
               "  if (window.initAppTooltips) window.initAppTooltips();",
               "}"
             ),
-            columnDefs = list(list(targets = 1, className = "dt-marker", orderable = FALSE)),
+            columnDefs = list(
+              list(targets = 1, className = "dt-marker", orderable = FALSE),
+              list(targets = 2, className = "dt-info", orderable = FALSE, searchable = FALSE)
+            ),
             pageLength = 50,
             # buttons, the + hint and the search field share one toolbar row
             dom = 'l<"dt-toolbar"B<"dt-add-hint">f>rtip',
@@ -317,6 +352,13 @@ dataset_explorer_server <- function(id, settings_reactive, cross_module) {
             searchHighlight = TRUE
           )
         )
+      })
+
+      # --- Codebook frequencies of one variable, opened from the button in its row ---
+      shiny::observeEvent(input$codebook_click, {
+        click <- input$codebook_click
+        language <- ifelse(input$language, "en", "de")
+        shiny::showModal(codebook_modal(codebook_entry(click$file, click$variable, language)))
       })
 
       # --- Send selected rows to Transform Data's Additional Variables ---
