@@ -150,7 +150,7 @@ codebook_modal <- function(entry) {
       class = "cb-num", style = style,
       title = if (!is.na(share)) sprintf("%s of valid cases", codebook_pct(share, lang)),
       tags$span(class = "cb-n", codebook_num(n, lang)),
-      tags$span(class = "cb-p", if (is.na(share)) "–" else codebook_pct(share, lang))
+      tags$span(class = "cb-p", if (is.na(share)) "\u2013" else codebook_pct(share, lang))
     )
   }
 
@@ -220,9 +220,15 @@ codebook_modal <- function(entry) {
   shiny::modalDialog(
     title = tags$div(
       class = "cb-title",
+      # enlarges the modal to almost the whole window and back (toggleCodebookModalSize in js_snippets.js)
+      tags$button(
+        type = "button", class = "cb-size-btn", onclick = "toggleCodebookModalSize(this);",
+        `aria-label` = "Enlarge window", title = "Enlarge window",
+        tags$i(class = "fas fa-expand")
+      ),
       tags$span(class = "cb-varname", entry$variable),
       if (!is.na(label) && nzchar(label)) tags$span(class = "cb-varlabel", label),
-      tags$div(class = "cb-meta", sprintf("%s · %s · SUF %s", entry$cohort, entry$dataset, entry$version))
+      tags$div(class = "cb-meta", sprintf("%s \u00b7 %s \u00b7 SUF %s", entry$cohort, entry$dataset, entry$version))
     ),
     tags$div(
       class = "cb-body",

@@ -126,3 +126,21 @@ function customRowCallback(row, data) {
   }
   $(document).on('shiny:connected', initSidebarResize);
 })();
+
+
+// Codebook modal in Explore Datasets: the button in its top right corner switches between the
+// normal size and almost the whole window. The choice is kept while the page is open, so the
+// next variable opens in the same size.
+window.toggleCodebookModalSize = function (btn, enlarge) {
+  var dialog = $(btn).closest('.modal-dialog');
+  if (enlarge === undefined) enlarge = !dialog.hasClass('cb-modal-max');
+  window.codebookModalMax = enlarge;
+  dialog.toggleClass('cb-modal-max', enlarge);
+  var label = enlarge ? 'Restore default size' : 'Enlarge window';
+  $(btn).attr({ title: label, 'aria-label': label })
+    .find('i').toggleClass('fa-expand', !enlarge).toggleClass('fa-compress', enlarge);
+};
+$(document).on('show.bs.modal', function (e) {
+  var btn = $(e.target).find('.cb-size-btn');
+  if (btn.length && window.codebookModalMax) window.toggleCodebookModalSize(btn[0], true);
+});

@@ -345,3 +345,37 @@ button.add-marker-btn:hover i.add-marker-icon,
 button.add-marker-btn:focus-visible i.add-marker-icon {
   color: var(--bs-info) !important;
 }
+
+/* Codebook modal: size toggle in the top right corner of the header */
+.modal-title:has(.cb-title) {
+  flex: 1 1 auto;
+}
+.cb-title {
+  position: relative;
+  padding-right: 2.2rem;
+}
+button.cb-size-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  border: none;
+  background: none;
+  padding: 2px 4px;
+  color: #888;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+button.cb-size-btn:hover,
+button.cb-size-btn:focus-visible {
+  color: var(--bs-info);
+}
+/* enlarged: almost the whole window, and the table uses the extra height */
+.modal-dialog.cb-modal-max {
+  max-width: calc(100vw - 2rem);
+  width: calc(100vw - 2rem);
+  margin: 1rem auto;
+}
+.modal-dialog.cb-modal-max .cb-table-wrap {
+  max-height: calc(100vh - 19rem);
+}

@@ -138,13 +138,14 @@ bslib::page_navbar(
             <br>
             <li>
            <b>Dataset Exploration (SC1-SC8):</b> Browse available meta data in NEPS SUF data to get an overview of datasets and variables.
-           </b>
            <br>
            <br>
            <ul>
            <li>Search for keywords in specific or all datasets.</li>
            <li>Compare items and variables across starting cohorts.</li>
            <li>Check what meta data is available for which variables.</li>
+           <li>See the frequencies of a variable as published in the NEPS codebook, across waves where available, and in which waves it contains valid information.</li>
+           <li>Send single variables or a whole selection directly to the script in Transform Data.</li>
           </ul>
          </li>
        </ul>
@@ -156,6 +157,10 @@ bslib::page_navbar(
               <ul style='margin-left: 20px; line-height: 1.6;'>
                 <li>
                   The app is based on NEPS semantic structure files, which are identical to NEPS SUF data files but have had all observations removed and are therefore publicly available.
+                </li>
+                <br>
+                <li>
+                  The frequencies in Explore Datasets are taken from the public NEPS codebooks (LIfBi, CC BY 4.0). They show the counts as printed in the codebook and are not computed from the data.
                 </li>
                 <br>
                 <li>
