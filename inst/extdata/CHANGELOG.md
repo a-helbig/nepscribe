@@ -83,3 +83,8 @@ It may be released for other SCs in the future.
 ## Version 0.3.6 (2026-10-09)
 
 * Exemplary children preparation in R and Stata scripts: the example person shown for inspection is now selected automatically from the data.
+
+## Version 0.3.7 (unreleased)
+
+* Explore Datasets: a new chart icon next to each variable opens its frequencies from the public NEPS codebook. It shows in which waves the variable has valid answers, the frequency table across waves and each value's share of the valid cases. Labels follow the German/English switch.
+* Explore Datasets: clicking the grey + of a variable now adds just that variable to the script. There is no need to select rows or scroll up to "Add Selected to Script" for a single variable.

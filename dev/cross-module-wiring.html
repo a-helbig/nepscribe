@@ -311,7 +311,7 @@
 
   <h2>2 · One click, start to finish</h2>
   <div class="prose">
-    <p>The full journey of a selection, including the earlier step where Transform Data publishes what it accepts. Solid arrows are direct calls or input changes, and dashed arrows are Shiny’s reactivity waking an observer up.</p>
+    <p>The full journey of a request, including the earlier step where Transform Data publishes what it accepts. Users can send several variables (select rows, then “Add Selected to Script”) or a single one (click the ＋ in its row). Both paths end in the same helper, <code>add_vars_to_script()</code>. Solid arrows are direct calls or input changes, and dashed arrows are Shiny’s reactivity waking an observer up.</p>
   </div>
 
   <figure>
@@ -326,13 +326,18 @@ sequenceDiagram
   U->>T: picks a starting cohort in Transform Data
   T->>C: available_datasets and cohort
   C-->>E: table re-renders, + markers on mergeable rows
-  U->>B: clicks rows in the Explore table
-  B->>E: input$data_overview_rows_selected (row indices)
-  U->>B: clicks Add Selected to Script
-  B->>E: input$add_to_script = Date.now()
-  E->>E: look up rows, sort into added / wrong cohort / not mergeable
+  alt several variables
+    U->>B: clicks rows in the Explore table
+    B->>E: input$data_overview_rows_selected (row indices)
+    U->>B: clicks Add Selected to Script
+    B->>E: input$add_to_script = Date.now()
+  else one variable
+    U->>B: clicks the + in a row
+    B->>E: input$add_single = {file, variable}
+  end
+  E->>E: add_vars_to_script(): sort into added / wrong cohort / not mergeable
   E->>C: add_request = list(vars by dataset, nonce)
-  E->>B: clear row selection, show result alert
+  E->>B: several: clear selection, result alert. One: notification, selection kept
   C-->>T: observeEvent(cross_module$add_request) fires
   T->>T: union with variables already confirmed
   T->>T: store_confirmed_vars() for each dataset
@@ -344,7 +349,7 @@ sequenceDiagram
 
   <h2>3 · Which selected rows get through</h2>
   <div class="prose">
-    <p>When the button is clicked, the Explore server looks at each selected row’s <code>Dataset</code> and <code>Variable</code> and puts it through two checks. Only rows that pass both end up in <code>add_request</code>. Everything else is listed in the alert, with its reason.</p>
+    <p><code>add_vars_to_script()</code> looks at each requested row’s <code>Dataset</code> and <code>Variable</code> and puts it through two checks. Only rows that pass both end up in <code>add_request</code>. Everything else is listed in the alert, with its reason. A ＋ only appears on rows that pass both checks, so a single request normally just succeeds and gets a short notification instead of the alert.</p>
   </div>
 
   <figure>
@@ -471,8 +476,12 @@ sequenceDiagram
       <p>The Explore table uses server-side processing, so <code>input$data_overview_rows_selected</code> returns row indices into the full <code>data_overview_r()</code> table, not positions on the visible page. That’s why selections made on different pages or after a search can be looked up directly.</p>
     </li>
     <li>
-      <b>The button behaves like an event, not a value</b>
-      <p>“Add Selected to Script” is a DataTables toolbar button whose JavaScript action calls <code>Shiny.setInputValue(…add_to_script, Date.now(), {priority: 'event'})</code>. The changing timestamp and the event priority guarantee that every click reaches the server.</p>
+      <b>The buttons behave like events, not values</b>
+      <p>“Add Selected to Script” is a DataTables toolbar button whose JavaScript action calls <code>Shiny.setInputValue(…add_to_script, Date.now(), {priority: 'event'})</code>. The ＋ in a row sends <code>add_single</code> with the row’s dataset and variable, also with event priority. So every click reaches the server, even the same ＋ twice.</p>
+    </li>
+    <li>
+      <b>Clicking the ＋ doesn’t select the row</b>
+      <p>The ＋ is a <code>&lt;button&gt;</code> whose handlers are bound in the table’s <code>drawCallback</code>. DataTables selects rows on <code>mousedown</code>, so the handler stops <code>mousedown</code> and <code>click</code> from reaching the row. A selection the user is building stays as it is. The codebook chart icon works the same way.</p>
     </li>
     <li>
       <b>The ＋ markers follow Transform Data’s cohort</b>
@@ -496,16 +505,16 @@ sequenceDiagram
         <tr><td>Channel created and passed to both modules</td><td><code>R/app_server.R</code></td><td><code>cross_module &lt;- shiny::reactiveValues(…)</code></td></tr>
         <tr><td>Publishing cohort and mergeable datasets</td><td><code>R/mod_data_transformation.R</code></td><td><code>observeEvent(cohort_path(), …)</code></td></tr>
         <tr><td>Which datasets are mergeable</td><td><code>R/utils.R</code>, <code>inst/extdata/linkage_keys.csv</code></td><td><code>create_dataset_names()</code></td></tr>
-        <tr><td>＋ marker column, Add button, hover hint</td><td><code>R/mod_data_exploration.R</code></td><td><code>output$data_overview</code></td></tr>
-        <tr><td>Sorting the selection and writing the request</td><td><code>R/mod_data_exploration.R</code></td><td><code>observeEvent(input$add_to_script, …)</code></td></tr>
+        <tr><td>＋ marker column and its click handler, Add button, hover hint</td><td><code>R/mod_data_exploration.R</code></td><td><code>output$data_overview</code> (handlers in <code>drawCallback</code>)</td></tr>
+        <tr><td>Sorting the request and writing it</td><td><code>R/mod_data_exploration.R</code></td><td><code>add_vars_to_script()</code>, called by <code>observeEvent(input$add_to_script, …)</code> and <code>observeEvent(input$add_single, …)</code></td></tr>
         <tr><td>Receiving the request, union and store</td><td><code>R/mod_data_transformation.R</code></td><td><code>observeEvent(cross_module$add_request, …)</code>, <code>store_confirmed_vars()</code></td></tr>
         <tr><td>Picker pre-selection and sync</td><td><code>R/mod_data_transformation.R</code></td><td><code>confirmed_selection()</code>, <code>observeEvent(all_lists(), …)</code></td></tr>
-        <tr><td>Toolbar, grey icons, search highlight</td><td><code>inst/www/css/styles.css</code></td><td><code>.dt-toolbar</code>, <code>.add-marker-icon</code></td></tr>
+        <tr><td>Toolbar, grey icons, search highlight</td><td><code>inst/www/css/styles.css</code></td><td><code>.dt-toolbar</code>, <code>.add-marker-icon</code>, <code>.add-marker-btn</code></td></tr>
       </tbody>
     </table>
   </div>
 
-  <footer>Written for NEPScribe 0.3.4. The function and observer names above are stable anchors; line numbers change too often to be worth listing.</footer>
+  <footer>Written for NEPScribe 0.3.4, updated for 0.3.7 (clickable ＋). The function and observer names above are stable anchors; line numbers change too often to be worth listing.</footer>
 </div>
 <script type="module">
   import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs";

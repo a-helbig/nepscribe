@@ -330,7 +330,8 @@
         <tr><td><code>R/cards.R</code></td><td>The main-area cards of both tabs (Info text, Spell Prioritisation, Additional Variables, Variable Table)</td><td class="num">206</td></tr>
         <tr><td><code>R/app_server.R</code></td><td>Per-session server: changelog modal, sidebar behaviour, wires up the three modules and <code>cross_module</code></td><td class="num">111</td></tr>
         <tr><td><code>R/mod_settings.R</code></td><td>Settings module (sidebar width slider on the Start page)</td><td class="num">28</td></tr>
-        <tr><td><code>R/mod_data_exploration.R</code></td><td>Explore Datasets module: sidebar UI and server</td><td class="num">387</td></tr>
+        <tr><td><code>R/mod_data_exploration.R</code></td><td>Explore Datasets module: sidebar UI and server</td><td class="num">464</td></tr>
+        <tr><td><code>R/codebook.R</code></td><td>Codebook frequencies: loading the data, matching variables, building the modal</td><td class="num">239</td></tr>
         <tr><td><code>R/mod_data_transformation.R</code></td><td>Transform Data module: sidebar, Additional Variables UI, server, preview and download</td><td class="num">823</td></tr>
         <tr><td><code>R/utils.R</code></td><td>Helpers that read the <code>.dta</code> files and <code>linkage_keys.csv</code>, plus small string/data utilities</td><td class="num">600</td></tr>
         <tr><td><code>R/gen_script.R</code></td><td><code>gen_script()</code>: the four script templates (R/Stata × two formats)</td><td class="num">1191</td></tr>
@@ -338,8 +339,8 @@
         <tr><td><code>R/constants.R</code></td><td>Default spell-priority lists (SC3/4/6 and SC5), DataTables button labels</td><td class="num">39</td></tr>
         <tr><td><code>inst/www/css/styles.css</code></td><td>App-wide styling (DT toolbar, tooltips, sidebar resizer…)</td><td class="num">—</td></tr>
         <tr><td><code>inst/www/js/js_snippets.js</code></td><td>Browser-side helpers: sidebar width, tooltips, question-text hovers, NA display in tables</td><td class="num">—</td></tr>
-        <tr><td><code>inst/extdata/</code></td><td>Semantic structure files per cohort, <code>linkage_keys.csv</code>, <code>CHANGELOG.md</code></td><td class="num">—</td></tr>
-        <tr><td><code>dev/</code></td><td>These notes. Excluded from the package build via <code>.Rbuildignore</code></td><td class="num">—</td></tr>
+        <tr><td><code>inst/extdata/</code></td><td>Semantic structure files per cohort, <code>linkage_keys.csv</code>, <code>CHANGELOG.md</code>, and the codebook frequencies in <code>codebook/</code></td><td class="num">—</td></tr>
+        <tr><td><code>dev/</code></td><td>These notes and <code>build_codebook_data.R</code>, which builds <code>inst/extdata/codebook/</code>. Excluded from the package build via <code>.Rbuildignore</code></td><td class="num">—</td></tr>
       </tbody>
     </table>
   </div>
@@ -441,7 +442,21 @@ SC6_CohortProfile_S_.dta;"""ID_t"" ""wave""";;</pre>
   </figure>
 
   <div class="prose">
-    <p>The table is a DataTables widget in <em>server-side</em> mode, so paging, sorting and searching are handled by R and the browser only ever holds one page. A leading marker column shows a grey ＋ on variables that can be sent to Transform Data. That feature is covered in the separate note <code>dev/cross-module-wiring.html</code>.</p>
+    <p>The table is a DataTables widget in <em>server-side</em> mode, so paging, sorting and searching are handled by R and the browser only ever holds one page. Two narrow columns come before the data:</p>
+    <ul>
+      <li>A grey ＋ on variables that can be sent to Transform Data. Clicking it adds that one variable. Selecting rows and clicking “Add Selected to Script” adds several. Both are covered in the separate note <code>dev/cross-module-wiring.html</code>.</li>
+      <li>A chart icon on variables with codebook frequencies. Clicking it opens the codebook modal described below.</li>
+    </ul>
+    <p>Both icons are buttons whose click handlers are bound in the table’s <code>drawCallback</code>. DataTables selects rows on <code>mousedown</code>, so the handlers stop <code>mousedown</code> and <code>click</code> before they reach the row. Clicking an icon never changes the row selection.</p>
+
+    <h3>Codebook frequencies</h3>
+    <p>The public NEPS codebooks (FDZ-LIfBi, CC BY 4.0) print a frequency table for almost every variable, often broken down by wave. That data ships with the app in <code>inst/extdata/codebook/</code>:</p>
+    <ul>
+      <li><code>codebook_scN_de.rds</code> / <code>_en.rds</code>: per cohort and language, a <code>vars</code> table (label, has a table, broken down by wave, number of values the codebook leaves out, and where the variable’s rows start) and one long <code>freq</code> table (value, label, missing flag, total, one column per wave).</li>
+      <li><code>codebook_index.rds</code>: the keys <code>SC6|17-0-0|Basics|t70000y</code> of all variables with a table. The Explore table shows the chart icon only for these.</li>
+    </ul>
+    <p>The SUF version is part of the key. If the semantic files of a cohort are updated but its codebook data isn’t, the icons for that cohort disappear, so the modal never shows frequencies from another release. <code>codebook_read()</code> loads each file the first time it’s needed and keeps it for the lifetime of the R process (about 0.1 s per cohort). <code>codebook_entry()</code> finds a variable’s rows, and <code>codebook_modal()</code> builds the modal: a strip of wave chips (filled where the variable has valid cases), the frequency table with shares of valid cases, and notes on omitted values, spell datasets and the source.</p>
+    <p>The data is built outside the app. The PDFs are parsed by a Python script (<code>extract_codebook.py</code>, kept with the codebook PDFs outside the repo), and <code>dev/build_codebook_data.R</code> turns its CSV output into the <code>.rds</code> files. See the recipe in section 9.</p>
   </div>
 
   <!-- 5 -->
@@ -609,7 +624,7 @@ if (education) {                                           <span class="cm"># op
         <tr><td><code>sendCustomMessage("sidebarWidth")</code></td><td>R → JS</td><td>New sidebar width in pixels</td></tr>
         <tr><td><code>sendCustomMessage("variableQuestiontexts")</code></td><td>R → JS</td><td>Question text per variable, for picker tooltips</td></tr>
         <tr><td><code>cross_module</code></td><td>Transform Data ⇄ Explore Datasets</td><td>Cohort, mergeable datasets, and add requests. See <code>dev/cross-module-wiring.html</code></td></tr>
-        <tr><td><code>Shiny.setInputValue(…)</code></td><td>JS → R</td><td>“Add Selected to Script” clicks and “Remove this dataset” links, sent as events</td></tr>
+        <tr><td><code>Shiny.setInputValue(…)</code></td><td>JS → R</td><td>“Add Selected to Script” clicks, clicks on a row’s ＋ or chart icon, and “Remove this dataset” links, sent as events</td></tr>
       </tbody>
     </table>
   </div>
@@ -626,8 +641,8 @@ if (education) {                                           <span class="cm"># op
       <p><code>settings_reactive()</code> also returns <code>language</code>, but the settings module has no such input, so it’s always <code>NULL</code>. Explore and Transform each use their own labels switch.</p>
     </li>
     <li>
-      <b>Nothing is cached</b>
-      <p>Metadata is re-read from the <code>.dta</code> files whenever a dataset or language changes. The files have no rows, so this is usually quick. Loading a dataset into the Additional Variables picker shows a short “Loading variables” modal, because large files like pTarget take a moment.</p>
+      <b>Almost nothing is cached</b>
+      <p>Metadata is re-read from the <code>.dta</code> files whenever a dataset or language changes. The only exception is the codebook data, which stays in memory once a cohort has been opened. The files have no rows, so this is usually quick. Loading a dataset into the Additional Variables picker shows a short “Loading variables” modal, because large files like pTarget take a moment.</p>
     </li>
     <li>
       <b>Browser caching is handled</b>
@@ -645,7 +660,7 @@ if (education) {                                           <span class="cm"># op
     <table>
       <thead><tr><th>You want to…</th><th>Change</th></tr></thead>
       <tbody>
-        <tr><td>Update a cohort to a new SUF release</td><td>Replace the files in <code>inst/extdata/scN_semantic_files/</code>. The version is read from the file names, so no code change is needed. Check that <code>linkage_keys.csv</code> still matches the dataset names.</td></tr>
+        <tr><td>Update a cohort to a new SUF release</td><td>Replace the files in <code>inst/extdata/scN_semantic_files/</code>. The version is read from the file names, so no code change is needed. Check that <code>linkage_keys.csv</code> still matches the dataset names. Then rebuild the codebook frequencies: download the new codebook PDFs (de and en), extract them with <code>run_all.ps1</code> and run <code>dev/build_codebook_data.R</code>. The step-by-step guide is <code>release-update-codebook-howto.md</code> in the codebook working folder. Until that’s done, the chart icons of that cohort stay hidden.</td></tr>
         <tr><td>Make another dataset available in Additional Variables</td><td>Fill in its <code>Linkage</code> column in <code>linkage_keys.csv</code>, then check that <code>generate_strings()</code> / <code>generate_strings_stata()</code> handle its merge type.</td></tr>
         <tr><td>Add a script option</td><td>Add a choice to the sidebar checkboxes in <code>mod_data_transformation.R</code>, pass it into both <code>gen_script()</code> calls (preview and download), and add its lines to all four templates.</td></tr>
         <tr><td>Add an exemplary preparation module</td><td>Write an R and a Stata generator in <code>script_functions.R</code>, add the checkbox, and append it as a chapter in the four templates.</td></tr>
@@ -655,7 +670,7 @@ if (education) {                                           <span class="cm"># op
     </table>
   </div>
 
-  <footer>Written for NEPScribe 0.3.4. Companion note: <code>dev/cross-module-wiring.html</code> covers the Explore → Transform link in detail. Function names are the stable anchors; line counts are a snapshot.</footer>
+  <footer>Written for NEPScribe 0.3.4, updated for 0.3.7 (codebook frequencies, clickable ＋). Companion note: <code>dev/cross-module-wiring.html</code> covers the Explore → Transform link in detail. Function names are the stable anchors; line counts are a snapshot.</footer>
 </div>
 </body>
 </html>
