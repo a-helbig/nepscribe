@@ -259,19 +259,23 @@ dataset_explorer_server <- function(id, settings_reactive, cross_module) {
           data <- data |> dplyr::select(Dataset, Variable, dplyr::starts_with("NEPS_varlabel"))
         }
 
-        # Leading marker column: a small icon on rows that can be sent to Transform Data's
-        # Additional Variables (mergeable dataset of the cohort currently selected there)
-        marker_icon <- as.character(shiny::icon(
-          "circle-plus",
-          class = "add-marker-icon",
-          `data-toggle` = "tooltip",
-          title = "Can be added to the script"
-        ))
-        marker <- base::ifelse(data$Dataset %in% cross_module$available_datasets, marker_icon, "")
+        esc_attr <- function(x) htmltools::htmlEscape(x, attribute = TRUE)
+
+        # Leading marker column: a small + on rows that can be sent to Transform Data's
+        # Additional Variables (mergeable dataset of the cohort currently selected there).
+        # Clicking it adds that single variable right away
+        marker_icon <- as.character(shiny::icon("circle-plus", class = "add-marker-icon"))
+        marker <- base::ifelse(
+          data$Dataset %in% cross_module$available_datasets,
+          base::sprintf(
+            '<button type="button" class="add-marker-btn" data-file="%s" data-var="%s" data-toggle="tooltip" title="Add this variable to the script">%s</button>',
+            esc_attr(data$Dataset), esc_attr(data$Variable), marker_icon
+          ),
+          ""
+        )
 
         # Second column: a button that opens the codebook frequencies of the variable,
         # only on rows the codebook data covers
-        esc_attr <- function(x) htmltools::htmlEscape(x, attribute = TRUE)
         info <- base::ifelse(
           codebook_available(data$Dataset, data$Variable),
           base::sprintf(
@@ -306,26 +310,34 @@ dataset_explorer_server <- function(id, settings_reactive, cross_module) {
             rowCallback = htmlwidgets::JS("customRowCallback"),
             # table pages are fetched separately from Shiny's own update cycle, so the marker
             # tooltips need initializing after every redraw, not just on shiny:idle.
-            # The codebook buttons get their click handler here too. DT selects rows on
-            # mousedown, so that is stopped before it reaches the row: opening the modal
+            # The + and codebook buttons get their click handlers here too. DT selects rows
+            # on mousedown, so that is stopped before it reaches the row: clicking a button
             # doesn't (de)select the row
             drawCallback = htmlwidgets::JS(base::sprintf(
               "function() {
                 // a redraw removes buttons whose tooltip may still be showing; drop those leftovers
                 $('body > .tooltip').remove();
                 if (window.initAppTooltips) window.initAppTooltips();
-                var btns = $(this.api().table().body()).find('button.cb-info-btn');
-                btns.off('mousedown.cb').on('mousedown.cb', function(e) { e.stopPropagation(); });
-                btns.off('click.cb').on('click.cb', function(e) {
-                  e.stopPropagation();
-                  // the tooltip shows after a delay, so it could pop up over the modal: keep it off until the modal closes
-                  var tip = window.bootstrap && bootstrap.Tooltip.getInstance(this);
-                  if (tip) { tip.hide(); tip.disable(); $(document).one('hidden.bs.modal', function() { tip.enable(); }); }
-                  $('body > .tooltip').remove();
-                  Shiny.setInputValue('%s', {file: $(this).attr('data-file'), variable: $(this).attr('data-var')}, {priority: 'event'});
-                });
+                var body = $(this.api().table().body());
+                var bind = function(selector, inputId, opensModal) {
+                  var btns = body.find(selector);
+                  btns.off('mousedown.rowbtn').on('mousedown.rowbtn', function(e) { e.stopPropagation(); });
+                  btns.off('click.rowbtn').on('click.rowbtn', function(e) {
+                    e.stopPropagation();
+                    var tip = window.bootstrap && bootstrap.Tooltip.getInstance(this);
+                    if (tip) {
+                      tip.hide();
+                      // the tooltip shows after a delay, so it could pop up over the modal: keep it off until the modal closes
+                      if (opensModal) { tip.disable(); $(document).one('hidden.bs.modal', function() { tip.enable(); }); }
+                    }
+                    $('body > .tooltip').remove();
+                    Shiny.setInputValue(inputId, {file: $(this).attr('data-file'), variable: $(this).attr('data-var')}, {priority: 'event'});
+                  });
+                };
+                bind('button.add-marker-btn', '%s', false);
+                bind('button.cb-info-btn', '%s', true);
               }",
-              session$ns("codebook_click")
+              session$ns("add_single"), session$ns("codebook_click")
             )),
             # a grey + with a small ? next to the buttons, explaining the marker on hover
             initComplete = htmlwidgets::JS(
@@ -334,7 +346,8 @@ dataset_explorer_server <- function(id, settings_reactive, cross_module) {
               "    $('<span>', {'data-toggle': 'tooltip',",
               "      title: 'Marks variables you can add from here directly to the person-year script in Transform Data. ' +",
               "        'However, the selected starting cohorts in both tabs must match. ' +",
-              "        'Click rows to select them and confirm with the \"Add Selected to Script\" button.'})",
+              "        'Click the + of a variable to add it directly, or click rows to select several ' +",
+              "        'and confirm with the \"Add Selected to Script\" button.'})",
               "      .append($('<i>', {'class': 'fas fa-circle-plus add-marker-icon'}))",
               "      .append($('<i>', {'class': 'fas fa-circle-question add-hint-question'}))",
               "  );",
@@ -361,29 +374,22 @@ dataset_explorer_server <- function(id, settings_reactive, cross_module) {
         shiny::showModal(codebook_modal(codebook_entry(click$file, click$variable, language)))
       })
 
-      # --- Send selected rows to Transform Data's Additional Variables ---
-      shiny::observeEvent(input$add_to_script, {
-        rows <- input$data_overview_rows_selected
-        data <- data_overview_r()
+      # --- Send variables to Transform Data's Additional Variables ---
+      alert <- function(text, type) {
+        shinyalert::shinyalert(
+          title = "",
+          text = text,
+          html = TRUE,
+          size = "s",
+          type = type,
+          closeOnClickOutside = TRUE,
+          confirmButtonCol = "#AEDEF4"
+        )
+      }
 
-        alert <- function(text, type) {
-          shinyalert::shinyalert(
-            title = "",
-            text = text,
-            html = TRUE,
-            size = "s",
-            type = type,
-            closeOnClickOutside = TRUE,
-            confirmButtonCol = "#AEDEF4"
-          )
-        }
-
-        if (base::length(rows) == 0 || base::is.null(data)) {
-          alert("Select one or more variables in the table first by clicking on their rows.", "info")
-          return()
-        }
-
-        selected <- data[rows, c("Dataset", "Variable")]
+      # selected: data frame with Dataset and Variable. single = TRUE for the + of one row:
+      # then a short notification instead of a popup, and the row selection stays as it is
+      add_vars_to_script <- function(selected, single = FALSE) {
         trans_cohort <- if (base::is.null(cross_module$cohort)) "" else cross_module$cohort
         row_cohort <- stringr::str_extract(selected$Dataset, "^SC\\d+")
         wrong_cohort <- base::is.na(row_cohort) | row_cohort != trans_cohort
@@ -396,7 +402,19 @@ dataset_explorer_server <- function(id, settings_reactive, cross_module) {
             vars = base::split(to_add$Variable, to_add$Dataset),
             nonce = stats::runif(1)
           )
-          DT::selectRows(DT::dataTableProxy("data_overview"), NULL)
+          if (!single) DT::selectRows(DT::dataTableProxy("data_overview"), NULL)
+        }
+
+        if (single && base::all(addable)) {
+          shiny::showNotification(
+            htmltools::HTML(base::sprintf(
+              "Added <b>%s</b> to the script (Transform Data &rarr; Additional Variables).",
+              htmltools::htmlEscape(selected$Variable)
+            )),
+            type = "message",
+            duration = 4
+          )
+          return(invisible())
         }
 
         esc <- function(x) htmltools::htmlEscape(base::paste(base::unique(x), collapse = ", "))
@@ -422,6 +440,23 @@ dataset_explorer_server <- function(id, settings_reactive, cross_module) {
 
         type <- if (!base::any(addable)) "warning" else if (base::all(addable)) "success" else "info"
         alert(base::paste(msg, collapse = "<br><br>"), type)
+      }
+
+      # "Add Selected to Script" button: all selected rows
+      shiny::observeEvent(input$add_to_script, {
+        rows <- input$data_overview_rows_selected
+        data <- data_overview_r()
+        if (base::length(rows) == 0 || base::is.null(data)) {
+          alert("Select one or more variables in the table first by clicking on their rows.", "info")
+          return()
+        }
+        add_vars_to_script(data[rows, c("Dataset", "Variable")])
+      })
+
+      # the + in a row: just that variable
+      shiny::observeEvent(input$add_single, {
+        click <- input$add_single
+        add_vars_to_script(data.frame(Dataset = click$file, Variable = click$variable), single = TRUE)
       })
 
     }

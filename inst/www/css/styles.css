@@ -332,3 +332,16 @@ table.cb-table .cb-bar-col {
 .cb-table .cb-p { display: none; }
 .cb-show-pct .cb-table .cb-n { display: none; }
 .cb-show-pct .cb-table .cb-p { display: inline; }
+
+/* Explore Datasets: the + marker is a button that adds its variable to the script */
+button.add-marker-btn {
+  border: none;
+  background: none;
+  padding: 0 2px;
+  line-height: 1;
+  cursor: pointer;
+}
+button.add-marker-btn:hover i.add-marker-icon,
+button.add-marker-btn:focus-visible i.add-marker-icon {
+  color: var(--bs-info) !important;
+}
