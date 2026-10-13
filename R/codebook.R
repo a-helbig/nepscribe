@@ -208,7 +208,7 @@ codebook_modal <- function(entry) {
     if (!is.na(v$omitted_values) && v$omitted_values > 0)
       sprintf("The codebook does not list all values: %d further values are left out.", v$omitted_values),
     if (grepl("^sp", entry$dataset))
-      "Counts in spell datasets refer to episodes, not persons."
+      "Spell datasets count rows, not persons. Most include both harmonized episodes and their subspells, so one episode can count several times."
   )
   cohort_no <- sub("^SC", "", entry$cohort)
   source <- sprintf(
