@@ -203,12 +203,13 @@ codebook_modal <- function(entry) {
 
   # --- notes and source ---
   notes <- c(
+    "Note: ",
     if (v$has_table && nrow(fr) > 0)
       "Missing codes (in grey) are left out of the shares.",
     if (!is.na(v$omitted_values) && v$omitted_values > 0)
       sprintf("The codebook does not list all values: %d further values are left out.", v$omitted_values),
     if (grepl("^sp", entry$dataset))
-      "Spell datasets count rows, not persons. Most include both harmonized episodes and their subspells, so one episode can count several times."
+      "The counts are data rows, not persons. Most spell datasets contain both harmonized episodes and their subspells, so one episode can be counted several times."
   )
   cohort_no <- sub("^SC", "", entry$cohort)
   source <- sprintf(
