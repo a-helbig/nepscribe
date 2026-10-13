@@ -86,5 +86,6 @@ It may be released for other SCs in the future.
 
 ## Version 0.4.0 (unreleased)
 
-* Explore Datasets: a new chart icon next to each variable opens its frequencies from the public NEPS codebook. It shows in which waves the variable has valid answers, the frequency table across waves and each value's share of the valid cases. Labels follow the German/English switch.
+* Explore Datasets: a new chart icon next to each variable opens its frequencies from the public NEPS codebook. It shows in which waves the variable has valid answers, the frequency table across waves and each value's share of the valid cases. Labels follow the German/English switch. A button in the top right corner enlarges the window to almost the whole screen, which helps with variables that have many waves or values.
 * Explore Datasets: clicking the grey + of a variable now adds just that variable to the script. There is no need to select rows or scroll up to "Add Selected to Script" for a single variable.
+* Start page: the description of Explore Datasets now mentions the codebook frequencies and sending variables to the script, with a note on where the frequencies come from.
