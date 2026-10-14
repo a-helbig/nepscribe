@@ -190,6 +190,21 @@ capitalize_first_letter <- function(x) {
   base::paste0(base::toupper(base::substring(x, 1, 1)), base::substring(x, 2))
 }
 
+#' Clearer display names for some metadata fields of the semantic files
+#'
+#' Applied after removing the NEPS_ prefix and the language suffix. variablequestion is
+#' the text of one item of a battery or list ("It was too expensive for me."), not only
+#' of multiple choice questions, hence Itemtext
+#' @keywords internal
+#' @noRd
+.meta_display_names <- c(Varlabel = "Variablelabel", Variablequestion = "Itemtext")
+
+rename_meta_fields <- function(x) {
+  hit <- x %in% base::names(.meta_display_names)
+  x[hit] <- .meta_display_names[x[hit]]
+  base::unname(x)
+}
+
 #' helper function to remove neps prefix from variable names in df and capitalize first letter
 #' @keywords internal
 #' @noRd
@@ -199,11 +214,11 @@ remove_prefix_suffix_capitalize_df <- function(df, colnames = TRUE) {
   if(colnames){
     base::colnames(df) <- stringr::str_replace(base::colnames(df), "^NEPS_", "")
     base::colnames(df) <- stringr::str_replace(base::colnames(df), "(_de|_en)$", "")
-    base::colnames(df) <- base::sapply(base::colnames(df), capitalize_first_letter)
+    base::colnames(df) <- rename_meta_fields(base::sapply(base::colnames(df), capitalize_first_letter))
   } else {
     df$type <- stringr::str_replace(df$type, "^NEPS_", "")
     df$type <- stringr::str_replace(df$type, "(_de|_en)$", "")
-    df$type <- capitalize_first_letter(df$type)
+    df$type <- rename_meta_fields(capitalize_first_letter(df$type))
   }
 
   return(df)
@@ -217,7 +232,7 @@ remove_prefix_suffix_capitalize_vec <- function(var_names) {
 
   var_names <- stringr::str_replace(var_names, "(_de|_en)$", "")
   var_names <- stringr::str_replace(var_names, "^NEPS_", "")
-  var_names <- base::sapply(var_names, capitalize_first_letter, USE.NAMES = FALSE)
+  var_names <- rename_meta_fields(base::sapply(var_names, capitalize_first_letter, USE.NAMES = FALSE))
 
   return(var_names)
 }
@@ -244,23 +259,44 @@ process_meta_for_input_list <- function(datapath, dataset){
     base::unique()
 }
 
+# Metadata of the semantic files, read once per R process. The files don't change while
+# the app runs, and reading a large one again (pTarget has ~29,000 fields) blocks the app
+# for seconds, e.g. when a variable is added with the + in Explore Datasets.
+# The key includes size and modification time, so a changed file is read again.
+.exp_fields_cache <- new.env(parent = emptyenv())
+
+#' Cache key of a file
+#' @keywords internal
+#' @noRd
+file_cache_key <- function(datapath, ...) {
+  info <- base::file.info(datapath)
+  base::paste(base::normalizePath(datapath, winslash = "/", mustWork = FALSE),
+              info$size, base::as.numeric(info$mtime), ..., sep = "|")
+}
+
 #' Read expansion fields from a dataset
 #' @keywords internal
 #' @noRd
 read_exp_fields <- function(datapath, cols = NULL, attr_type = NULL, only_value = FALSE) {
-  data <- suppressWarnings(readstata13::read.dta13(datapath, select.cols = "ID_t", select.rows = 1))
-  exp_fields <- base::attr(data, "expansion.fields")
+  key <- file_cache_key(datapath)
+  fields_df <- .exp_fields_cache[[key]]
 
-  if(base::is.null(exp_fields) | base::length(exp_fields) == 0){
-    stop("Cant find attracted meta data in selected dataset. Please ensure you select only NEPS datasets here")
+  if (base::is.null(fields_df)) {
+    data <- suppressWarnings(readstata13::read.dta13(datapath, select.cols = "ID_t", select.rows = 1))
+    exp_fields <- base::attr(data, "expansion.fields")
+
+    if(base::is.null(exp_fields) | base::length(exp_fields) == 0){
+      stop("Cant find attracted meta data in selected dataset. Please ensure you select only NEPS datasets here")
+    }
+
+    fields_df <- base::data.frame(
+      variable = base::sapply(exp_fields, `[[`, 1),
+      type     = base::sapply(exp_fields, `[[`, 2),
+      value    = base::sapply(exp_fields, `[[`, 3),
+      stringsAsFactors = FALSE
+    )
+    .exp_fields_cache[[key]] <- fields_df
   }
-
-  fields_df <- base::data.frame(
-    variable = base::sapply(exp_fields, `[[`, 1),
-    type     = base::sapply(exp_fields, `[[`, 2),
-    value    = base::sapply(exp_fields, `[[`, 3),
-    stringsAsFactors = FALSE
-  )
 
   if (!base::is.null(attr_type) & !base::is.null(cols)) {
     fields_df <- fields_df |> dplyr::filter(variable %in% cols & type == attr_type)
@@ -322,10 +358,16 @@ move_variable_to_position <- function(df, var_to_move, after_var) {
   df[new_order]
 }
 
+# gen_comb_char() results per file and label language, see .exp_fields_cache
+.comb_char_cache <- new.env(parent = emptyenv())
+
 #' Generate char vector of variable labels with dataset
 #' @keywords internal
 #' @noRd
 gen_comb_char <- function(datapath, dataset, language){
+  key <- file_cache_key(base::file.path(datapath, dataset), language)
+  if (!base::is.null(.comb_char_cache[[key]])) return(.comb_char_cache[[key]])
+
   data <- haven::read_dta(base::file.path(datapath,dataset), n_max = 0)
 
   if(language & stringr::str_detect(dataset, "SC.*\\d\\d-\\d-\\d\\.dta$")){
@@ -333,7 +375,9 @@ gen_comb_char <- function(datapath, dataset, language){
     data <- assign_var_labels(data, varlabels_en)
   }
 
-  base::paste(names(data), "-", base::unname(base::sapply(data, base::attr, which = "label")))
+  out <- base::paste(names(data), "-", base::unname(base::sapply(data, base::attr, which = "label")))
+  .comb_char_cache[[key]] <- out
+  out
 }
 
 #' Generate named vector of question texts per variable in a dataset
@@ -383,11 +427,13 @@ gen_data_overview <- function(datapath, dataset, language){
   # remove prefix/suffix and capitalize
   data <- remove_prefix_suffix_capitalize_df(data)
 
-  # move Varlabel and Questiontext to early positions
-  if("Varlabel" %in% base::colnames(data))
-    data <- move_variable_to_position(data, "Varlabel", "Variable")
-  if("Questiontext" %in% base::colnames(data))
-    data <- move_variable_to_position(data, "Questiontext", "Varlabel")
+  # move Variablelabel, Questiontext and Itemtext to early positions
+  if("Variablelabel" %in% base::colnames(data))
+    data <- move_variable_to_position(data, "Variablelabel", "Variable")
+  if(all(c("Questiontext", "Variablelabel") %in% base::colnames(data)))
+    data <- move_variable_to_position(data, "Questiontext", "Variablelabel")
+  if(all(c("Itemtext", "Questiontext") %in% base::colnames(data)))
+    data <- move_variable_to_position(data, "Itemtext", "Questiontext")
 
   return(data)
 }

@@ -179,8 +179,11 @@ dataset_explorer_server <- function(id, settings_reactive, cross_module) {
         meta <- remove_prefix_suffix_capitalize_vec(meta)
 
         # Optional ordering
-        if ("Varlabel" %in% meta) meta <- move_string_to_position(meta, "Varlabel", 1)
+        if ("Variablelabel" %in% meta) meta <- move_string_to_position(meta, "Variablelabel", 1)
         if ("Questiontext" %in% meta) meta <- move_string_to_position(meta, "Questiontext", 2)
+        # the item text of item batteries ("It was too expensive for me."), which the
+        # variable label often doesn't make clear
+        if ("Itemtext" %in% meta) meta <- move_string_to_position(meta, "Itemtext", min(3, length(meta)))
 
         meta
       })
@@ -194,7 +197,7 @@ dataset_explorer_server <- function(id, settings_reactive, cross_module) {
           session = session,
           inputId = "meta_selector",
           choices = meta,
-          selected = intersect(c("Varlabel", "Questiontext"), meta)
+          selected = intersect(c("Variablelabel", "Questiontext", "Itemtext"), meta)
         )
       })
 
@@ -371,11 +374,15 @@ dataset_explorer_server <- function(id, settings_reactive, cross_module) {
       shiny::observeEvent(input$codebook_click, {
         click <- input$codebook_click
         language <- ifelse(input$language, "en", "de")
-        # the question text comes from the semantic files, already loaded for the table
+        # question and item text come from the semantic files, already loaded for the table
         data <- data_overview_r()
         row <- base::which(data$Dataset == click$file & data$Variable == click$variable)
-        questiontext <- if ("Questiontext" %in% base::names(data) && base::length(row) > 0) data$Questiontext[row[1]]
-        shiny::showModal(codebook_modal(codebook_entry(click$file, click$variable, language), questiontext))
+        meta_text <- function(col) if (col %in% base::names(data) && base::length(row) > 0) data[[col]][row[1]]
+        shiny::showModal(codebook_modal(
+          codebook_entry(click$file, click$variable, language),
+          questiontext = meta_text("Questiontext"),
+          itemtext = meta_text("Itemtext")
+        ))
       })
 
       # --- Send variables to Transform Data's Additional Variables ---

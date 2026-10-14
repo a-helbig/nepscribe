@@ -88,4 +88,7 @@ It may be released for other SCs in the future.
 
 * Explore Datasets: a new chart icon next to each variable opens its frequencies from the public NEPS codebook, together with the variable's question text. It shows in which waves the variable has valid answers, the frequency table across waves and each value's share of the valid cases. Labels follow the German/English switch. A button in the top right corner enlarges the window to almost the whole screen, which helps with variables that have many waves or values.
 * Explore Datasets: clicking the grey + of a variable now adds just that variable to the script. There is no need to select rows or scroll up to "Add Selected to Script" for a single variable.
+* Explore Datasets: the item text of a variable is now shown by default in the table (column Itemtext, next to Questiontext) and in the codebook window. For items that share one question, such as a list of reasons or an agreement battery, it says what the variable refers to exactly, e.g. "It was too expensive for me." under a question on reasons for not taking courses.
+* Explore Datasets: the metadata columns Varlabel and Variablequestion are now called Variablelabel and Itemtext.
+* Faster response when adding variables from large datasets like pTarget: the metadata of a dataset is now read only once instead of on every action.
 * Start page: the description of Explore Datasets now mentions the codebook frequencies and sending variables to the script, with a note on where the frequencies come from.

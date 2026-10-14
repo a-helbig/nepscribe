@@ -85,11 +85,14 @@ codebook_pct <- function(x, language) {
 
 #' Modal with the codebook frequencies of one variable
 #'
-#' questiontext: from the semantic files (the Explore table), shown under the title
+#' questiontext, itemtext: from the semantic files (the Explore table), shown under the
+#' title. The item text (NEPS_variablequestion, Itemtext in the table) says which item of a battery the variable
+#' is, e.g. "It was too expensive for me." under a question on reasons for not taking courses
 #' @keywords internal
 #' @noRd
-codebook_modal <- function(entry, questiontext = NULL) {
+codebook_modal <- function(entry, questiontext = NULL, itemtext = NULL) {
   tags <- htmltools::tags
+  has_text <- function(x) length(x) == 1 && !is.na(x) && nzchar(trimws(x)) && x != "NA"
 
   if (is.null(entry)) {
     return(shiny::modalDialog(
@@ -231,8 +234,8 @@ codebook_modal <- function(entry, questiontext = NULL) {
       tags$span(class = "cb-varname", entry$variable),
       if (!is.na(label) && nzchar(label)) tags$span(class = "cb-varlabel", label),
       tags$div(class = "cb-meta", sprintf("%s \u00b7 %s \u00b7 SUF %s", entry$cohort, entry$dataset, entry$version)),
-      if (length(questiontext) == 1 && !is.na(questiontext) && nzchar(trimws(questiontext)) && questiontext != "NA")
-        tags$div(class = "cb-question", questiontext)
+      if (has_text(questiontext)) tags$div(class = "cb-question", questiontext),
+      if (has_text(itemtext)) tags$div(class = "cb-item", tags$span(class = "cb-item-tag", "Item"), itemtext)
     ),
     tags$div(
       class = "cb-body",

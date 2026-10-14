@@ -386,3 +386,22 @@ button.cb-size-btn:focus-visible {
   margin-top: 6px;
   max-width: 60rem;
 }
+
+/* item text of an item battery: what the variable refers to exactly */
+.cb-title .cb-item {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #333;
+  margin-top: 6px;
+  max-width: 60rem;
+  padding-left: 8px;
+  border-left: 3px solid rgba(108, 195, 213, 0.9);
+}
+.cb-title .cb-item-tag {
+  font-size: 0.7rem;
+  font-weight: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #888;
+  margin-right: 6px;
+}
