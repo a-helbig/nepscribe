@@ -71,17 +71,10 @@ cards_data_trans <- function() {
     <h4 style=font-size: 18px; color: #333;>What is this?</h4>
     <br>
     <p style=font-size: 18px; color: #555;>
-        This feature will allow you to create dynamic scripts that will transform NEPS SUF data into a person-year format,
-        where each row in the dataset corresponds to one year in a respondent's life and has a unique life-course status (e.g. employment or vocational training).
+        This feature lets you dynamically create scripts that convert NEPS SUF data into person-year format. Each row represents roughly one year in a respondent’s life and is assigned a single life-course status (e.g., employment or vocational training) corresponding to their status in the interview month. This data structure is essential for various research projects, but implementing it can be challenging without prior experience.
     </p>
     <p style=font-size: 18px; color: #555;>
-        This data structure is essential for various research projects, but implementing it can be challenging without prior experience.
-    </p>
-    <p style=font-size: 18px; color: #555;>
-        The script with basic settings will create a person-year-dataset that only contains very basic spell-related information.
-    </p>
-    <p style=font-size: 18px; color: #555;>
-        You can customize numerous settings to align with the requirements of your research project and enrich the resulting dataset with variables from all datasets.
+        The script with basic settings is creating a person-year-dataset that only contains very basic spell-related information. You can customize numerous settings to align with the requirements of your research project and enrich the resulting dataset with variables from all datasets.
     </p>
         <p style=font-size: 18px; color: #555;>
         Please use the latest SUF version; otherwise, variable names or the data structure may differ from what the script assumes.
@@ -127,7 +120,7 @@ cards_data_trans <- function() {
     </p>
     <ol style=font-size: 18px; color: #555;>
         <li><b>Harmonized Spell Format</b>: This option prepares data based on the edited and cleaned biography file to represent life-course trajectories. It is recommended to use this format. </li>
-        <li><b>Original Subspell Format</b>: This option uses the originally recorded subspell episodes. Please note that data cleaning and smoothing operations performed in the biography are not accounted for in this preparation.</li>
+        <li><b>Original Subspell Format</b>: This option uses the originally recorded subspell episodes. Please note that data cleaning and smoothing operations performed in the biography file are not accounted for in this preparation.</li>
     </ol>
 
     <h5 style=font-size: 16px; color: #007BFF;>Starting cohort</h5>
@@ -147,7 +140,7 @@ cards_data_trans <- function() {
 
     <h5 style=font-size: 16px; color: #007BFF;>Add exemplary data preparation</h5>
     <p style=font-size: 18px; color: #555;>
-        On top of that,  you might add exemplary data preparation of variables from modules that cannot be directly merged with the person-year dataset.
+        On top of that, you might add exemplary data preparation of variables from modules that cannot be directly merged with the person-year dataset.
     </p>
 
         <h5 style=font-size: 16px; color: #007BFF;>Variable labels language</h5>
@@ -172,7 +165,7 @@ cards_data_trans <- function() {
 
         <h5 style=font-size: 16px; color: #007BFF;>Optional: Provide Datapath</h5>
     <p style=font-size: 18px; color: #555;>
-        If you wish, you can provide the local file path to the NEPS SUF data (in .dta format) so it is immediately available in your script. Alternatively, you can insert the path manually.
+        If you wish, you can provide the local file path to the NEPS SUF data (in .dta format) so it is immediately available in your script. Alternatively, you can later insert the path in the script manually.
     </p>
 </div>"
           )
