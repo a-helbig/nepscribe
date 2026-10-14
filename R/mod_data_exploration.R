@@ -371,7 +371,11 @@ dataset_explorer_server <- function(id, settings_reactive, cross_module) {
       shiny::observeEvent(input$codebook_click, {
         click <- input$codebook_click
         language <- ifelse(input$language, "en", "de")
-        shiny::showModal(codebook_modal(codebook_entry(click$file, click$variable, language)))
+        # the question text comes from the semantic files, already loaded for the table
+        data <- data_overview_r()
+        row <- base::which(data$Dataset == click$file & data$Variable == click$variable)
+        questiontext <- if ("Questiontext" %in% base::names(data) && base::length(row) > 0) data$Questiontext[row[1]]
+        shiny::showModal(codebook_modal(codebook_entry(click$file, click$variable, language), questiontext))
       })
 
       # --- Send variables to Transform Data's Additional Variables ---

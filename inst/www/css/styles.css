@@ -379,3 +379,10 @@ button.cb-size-btn:focus-visible {
 .modal-dialog.cb-modal-max .cb-table-wrap {
   max-height: calc(100vh - 19rem);
 }
+.cb-title .cb-question {
+  font-size: 0.85rem;
+  font-weight: normal;
+  color: #666;
+  margin-top: 6px;
+  max-width: 60rem;
+}

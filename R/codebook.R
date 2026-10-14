@@ -84,9 +84,11 @@ codebook_pct <- function(x, language) {
 }
 
 #' Modal with the codebook frequencies of one variable
+#'
+#' questiontext: from the semantic files (the Explore table), shown under the title
 #' @keywords internal
 #' @noRd
-codebook_modal <- function(entry) {
+codebook_modal <- function(entry, questiontext = NULL) {
   tags <- htmltools::tags
 
   if (is.null(entry)) {
@@ -228,7 +230,9 @@ codebook_modal <- function(entry) {
       ),
       tags$span(class = "cb-varname", entry$variable),
       if (!is.na(label) && nzchar(label)) tags$span(class = "cb-varlabel", label),
-      tags$div(class = "cb-meta", sprintf("%s \u00b7 %s \u00b7 SUF %s", entry$cohort, entry$dataset, entry$version))
+      tags$div(class = "cb-meta", sprintf("%s \u00b7 %s \u00b7 SUF %s", entry$cohort, entry$dataset, entry$version)),
+      if (length(questiontext) == 1 && !is.na(questiontext) && nzchar(trimws(questiontext)) && questiontext != "NA")
+        tags$div(class = "cb-question", questiontext)
     ),
     tags$div(
       class = "cb-body",
