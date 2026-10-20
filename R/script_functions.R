@@ -703,8 +703,8 @@ gen_qualification_prep_code_stata <- function(english, sc, chapter) {
     "",
     "lab var casmin \"CASMIN\"",
     "lab var isced \"ISCED-97\"",
-    "lab val casmin de1957",
-    "lab val isced de1980",
+    paste0("lab val casmin ", ifelse(english, "en", "de"), "1957"),
+    paste0("lab val isced ", ifelse(english, "en", "de"), "1980"),
     "",
     "* Gen education groups",
     "gen education = .",
@@ -778,6 +778,10 @@ gen_qualification_prep_code_r <- function(english, SC, chapter) {
     "  filter(!is.na(intdate)) |> ",
     "  select(-c(intm, inty))",
     "",
+    "# Keep the wave labels before the reshape, because the wave column no longer exists afterwards",
+    "wave_var_labels <- attr(intdata$wave, \"label\")",
+    "wave_val_labels <- attr(intdata$wave, \"labels\")",
+    "",
     "# Reshape interview dates to wide format by wave",
     "intdata <- intdata |> ",
     "  pivot_wider(names_from = 'wave', names_prefix = 'intdate', values_from= 'intdate')",
@@ -790,8 +794,6 @@ gen_qualification_prep_code_r <- function(english, SC, chapter) {
     "casmin_val_labels <- attr(edu_data$tx28101, \"labels\")",
     "isced_var_labels <- attr(edu_data$tx28103, \"label\")",
     "isced_val_labels <- attr(edu_data$tx28103, \"labels\")",
-    "wave_var_labels <- attr(intdata$wave, \"label\")",
-    "wave_val_labels <- attr(intdata$wave, \"labels\")",
     "",
     "# Create education date variable 'edud' that holds the date of qualification and keep relevant variables only",
     "edu_data <- edu_data |> ",
@@ -1231,11 +1233,13 @@ generate_strings <- function(data_list, english, format) {
       string1 <- paste0("# ",ifelse(format == "harmonized", 6, 3)+i,".", " Add selected variables from ", dataset_name," -------------")
       string2 <- ""
       # here we replace also _S_ in the dataset name with _D_ because this is pasted in the script but comes from the semantic files
-      string3 <- paste0(dataset_name, " <- read_neps(paste0(datapath, \"/\",\"", stringr::str_replace_all(stringr::str_extract(df[1, "Dataset"], pattern= "SC\\d_.*_S_"), "_S_", "_D_"),"\"", ",suf_version", ",\".dta\"), ", "col_select = c(", merge_vector, ", ", selected_variables, ifelse(stringr::str_detect(df[1, "Dataset"],  external_exam_regex), ", \"exam\"",""), ifelse(stringr::str_detect(df[1, "Dataset"],  "spVocBreaks"), ", \"break\"",""), ifelse(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex),", \"spstat\"",""), "), english = ", english, ")")
+      # SC3 pTarget: NEPS recommends keeping only rows with tx20100 == 1 for linkage, so tx20100 has to be loaded as well
+      ptarget_sc3 <- stringr::str_detect(df[1, "Dataset"],  "SC3.*pTarget")
+      string3 <- paste0(dataset_name, " <- read_neps(paste0(datapath, \"/\",\"", stringr::str_replace_all(stringr::str_extract(df[1, "Dataset"], pattern= "SC\\d_.*_S_"), "_S_", "_D_"),"\"", ",suf_version", ",\".dta\"), ", "col_select = c(", merge_vector, ", ", selected_variables, ifelse(stringr::str_detect(df[1, "Dataset"],  external_exam_regex), ", \"exam\"",""), ifelse(stringr::str_detect(df[1, "Dataset"],  "spVocBreaks"), ", \"break\"",""), ifelse(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex),", \"spstat\"",""), ifelse(ptarget_sc3 && !"tx20100" %in% gsub('"', '', df$variable), ", \"tx20100\"", ""), "), english = ", english, ")")
       string4 <- ""
       string_ptarget_sc3_1 <- if(stringr::str_detect(df[1, "Dataset"],  "SC3.*pTarget")) { "# drop rows that are not recommended by the NEPS for merging" }
       string_ptarget_sc3_2 <- if(stringr::str_detect(df[1, "Dataset"],  "SC3.*pTarget")) { paste0(dataset_name, " <- ", dataset_name, " |> ") }
-      string_ptarget_sc3_3 <- if(stringr::str_detect(df[1, "Dataset"],  "SC3.*pTarget")) { "filter(tx20100 != 0)" }
+      string_ptarget_sc3_3 <- if(ptarget_sc3) { paste0("filter(tx20100 != 0)", if(!"tx20100" %in% gsub('"', '', df$variable)) " |> select(-tx20100) # tx20100 was only needed for this filter") }
       string_ptarget_sc3_4 <- if(stringr::str_detect(df[1, "Dataset"],  "SC3.*pTarget")) { "" }
       # for external exams dataset we need to reshape wide before merging
       string5 <- if(stringr::str_detect(df[1, "Dataset"],  external_exam_regex)) { "# Dataset needs reshaping to wide format before merging it to the person-year-dataset." }
@@ -1274,7 +1278,11 @@ generate_strings <- function(data_list, english, format) {
       string31 <- ""
 
       # Concatenate the current strings into the result vector
-      result_vector <- c(result_vector, string1, string2, string3, string4, string_ptarget_sc3_1, string_ptarget_sc3_2, string_ptarget_sc3_3, string_ptarget_sc3_4, string5, string6, string7, string8, string9, string10, string11, string12, string13, string14,string15, string16, string17, string18, string19, string20, string21, string22, string23, string24, string25, string26, string27, string28, string29, string30, string31)
+      # SC4 pTarget only covers students surveyed in school, whose waves have no person-years in SC4
+      # SC3/SC4 spEmp: reduced employment module for young persons without completed vocational training
+      string_spemp_sc34 <- if(stringr::str_detect(df[1, "Dataset"], "SC[34]_spEmp_S")) { "# Note: in SC3 and SC4, persons under 21 without completed vocational training get a reduced employment module (tf23913 == 1), so many employment items were not asked for them. Add tf23913 to identify these spells." }
+      string_ptarget_sc4 <- if(stringr::str_detect(df[1, "Dataset"], "SC4_pTarget_S")) { "# Note: in SC4, pTarget only contains the questionnaires of students surveyed at NEPS sample schools. These waves have no person-years in SC4, so the variables below will be missing for almost all rows. Some of this information is also available in pTargetCATI or CohortProfile, e.g. gender and date of birth." }
+      result_vector <- c(result_vector, string1, string2, string_ptarget_sc4, string_spemp_sc34, string3, string4, string_ptarget_sc3_1, string_ptarget_sc3_2, string_ptarget_sc3_3, string_ptarget_sc3_4, string5, string6, string7, string8, string9, string10, string11, string12, string13, string14,string15, string16, string17, string18, string19, string20, string21, string22, string23, string24, string25, string26, string27, string28, string29, string30, string31)
 
 
       # If spelldatasets are being joined ---------------------------------------
@@ -1385,11 +1393,13 @@ generate_strings_stata <- function(data_list, format) {
       string2 <- "*******************************************************************************"
       string3 <- ""
       string4 <- "preserve"
-      string5 <- paste0("use ", merge_vector," ", selected_variables, ifelse(stringr::str_detect(df[1, "Dataset"],  external_exam_regex)," exam"," "),  ifelse(stringr::str_detect(df[1, "Dataset"],  "spVocBreaks")," break"," "), ifelse(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)," spstat "," "), "using \"$DATA\\",stringr::str_replace_all(full_dataset_name, "_S_", "_D_"), "$suf.dta\", clear")
+      # SC3 pTarget: NEPS recommends keeping only rows with tx20100 == 1 for linkage, so tx20100 has to be loaded as well
+      ptarget_sc3 <- stringr::str_detect(df[1, "Dataset"],  "SC3.*pTarget")
+      string5 <- paste0("use ", merge_vector," ", selected_variables, ifelse(stringr::str_detect(df[1, "Dataset"],  external_exam_regex)," exam"," "),  ifelse(stringr::str_detect(df[1, "Dataset"],  "spVocBreaks")," break"," "), ifelse(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)," spstat "," "), ifelse(ptarget_sc3 && !"tx20100" %in% gsub('"', '', df$variable), " tx20100 ", " "), "using \"$DATA\\",stringr::str_replace_all(full_dataset_name, "_S_", "_D_"), "$suf.dta\", clear")
       string6 <- ""
       # for pttarget in sc3 we need to delete 2 observations that make ID_t and wave not unique identifiers. NEPS recommends to delete these 2 rows anyway
       string_ptarget_sc3_1 <- if(stringr::str_detect(df[1, "Dataset"],  "SC3.*pTarget")) { "* drop rows that are not recommended by the NEPS for merging" }
-      string_ptarget_sc3_2 <- if(stringr::str_detect(df[1, "Dataset"],  "SC3.*pTarget")) { "drop if tx20100 == 0" }
+      string_ptarget_sc3_2 <- if(ptarget_sc3) { paste0("drop if tx20100 == 0", if(!"tx20100" %in% gsub('"', '', df$variable)) "\ndrop tx20100 // tx20100 was only needed for this filter") }
       string_ptarget_sc3_3 <- if(stringr::str_detect(df[1, "Dataset"],  "SC3.*pTarget")) { "" }
       # for external exams dataset we need to reshape wide before merging
       string7 <- if(stringr::str_detect(df[1, "Dataset"],  external_exam_regex)) { "* Dataset needs reshaping to wide format before merging it to the person-year-dataset." }
@@ -1402,7 +1412,8 @@ generate_strings_stata <- function(data_list, format) {
       string13 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) { "* filter for non-harmonized episodes in order to only merge the wave specific subspell information" }
       # now we filter for spstat < 30 and get rid of those episodes but only when spstat exists and if we have 3 linkage keys
       string14<- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {
-        "keep if spstat < 30"
+        # spstat is dropped again (unless the user selected it), as in the R script
+        paste0("keep if spstat < 30", if(!"spstat" %in% gsub('"', '', df$variable)) "\ndrop spstat // spstat was only needed for this filter")
       }
       string15 <- if(stringr::str_detect(df[1, "Dataset"],  spstat_vars_regex)) {""}
       string16 <- "tempfile data"
@@ -1414,7 +1425,11 @@ generate_strings_stata <- function(data_list, format) {
       string21 <- if(length(merge_vector) > 1) paste0("merge 1:1 ", merge_vector, " using `data', keep(1 3)  nogen") else if (length(merge_vector)==1) paste0("merge m:1 ", merge_vector, " using `data', keep(1 3) nogen")
       # Concatenate the current strings into the result vector
       string_empty1 <- ""
-      result_vector <- c(result_vector, string0, string1, string2, string3, string4, string5, string6, string_ptarget_sc3_1, string_ptarget_sc3_2, string_ptarget_sc3_3, string7, string8, string9, string10, string11, string12, string13, string14, string15, string16, string17, string18, string19, string20, string21, string_empty1)
+      # SC4 pTarget only covers students surveyed in school, whose waves have no person-years in SC4
+      # SC3/SC4 spEmp: reduced employment module for young persons without completed vocational training
+      string_spemp_sc34 <- if(stringr::str_detect(df[1, "Dataset"], "SC[34]_spEmp_S")) { "* Note: in SC3 and SC4, persons under 21 without completed vocational training get a reduced employment module (tf23913 == 1), so many employment items were not asked for them. Add tf23913 to identify these spells." }
+      string_ptarget_sc4 <- if(stringr::str_detect(df[1, "Dataset"], "SC4_pTarget_S")) { "* Note: in SC4, pTarget only contains the questionnaires of students surveyed at NEPS sample schools. These waves have no person-years in SC4, so the variables below will be missing for almost all rows. Some of this information is also available in pTargetCATI or CohortProfile, e.g. gender and date of birth." }
+      result_vector <- c(result_vector, string0, string1, string2, string_ptarget_sc4, string_spemp_sc34, string3, string4, string5, string6, string_ptarget_sc3_1, string_ptarget_sc3_2, string_ptarget_sc3_3, string7, string8, string9, string10, string11, string12, string13, string14, string15, string16, string17, string18, string19, string20, string21, string_empty1)
 
 
       # Create an intermediate vector to accumulate all variables added from spell files,
@@ -1471,3 +1486,126 @@ generate_strings_stata <- function(data_list, format) {
   return(result_vector)
 }
 
+
+
+#' Cohort-specific notes for the header of the generated scripts
+#'
+#' Results from testing the scripts for SC3-SC5 (October 2026): which person-years the two
+#' formats contain, and cohort-specific gaps in the data.
+#' @keywords internal
+#' @noRd
+cohort_notes <- function(sc, comment = "#") {
+  survey_context <- "Survey context: tx80230 in CohortProfile shows in each wave whether a person was surveyed at a NEPS sample school (written questionnaire in class, no life course interview), individually followed up after leaving the NEPS school, e.g. after a school change (as a rule without spell data), or outside the general school system (full life course interview with spell data)."
+  notes <- switch(sc,
+    SC3 = c(
+      "In short: spell data only exist from a person's first interview outside the general school system on. We recommend the harmonized spell format. Use spells_reported == 1 if you add variables from spell datasets or need the same waves as the original subspell format. Person-years from the school phase (spells_reported == 0) are a selective sample.",
+      survey_context,
+      "The first interview outside the general school system records the whole biography retrospectively (from wave 8 on, wave 7 was only a short status interview). From wave 11 on, there are no more school surveys.",
+      "Original subspell format: no person-years in waves 1 to 7. Waves 8 to 10 only contain persons who had already left school.",
+      "Harmonized spell format: person-years from the school phase come from the retrospective biography of a later interview. They only exist for persons who stayed in the panel until then."
+    ),
+    SC4 = c(
+      "In short: only persons surveyed outside the general school system get the life course interview with spell data. We recommend the harmonized spell format. Use spells_reported == 1 if you add variables from spell datasets or need the same waves as the original subspell format. Students surveyed at NEPS sample schools are not covered by either format.",
+      survey_context,
+      "In wave 1 all persons were surveyed at NEPS sample schools, in wave 2 almost all. Waves 4 (spring 2012) and 6 (spring 2013) only include interviews outside the general school system. From wave 9 on, nobody was surveyed at a NEPS sample school.",
+      "Students at NEPS sample schools have no interview date in CohortProfile, so neither format has person-years for them (waves 1 and 2 are empty).",
+      "Individually followed-up students (mainly waves 5, 7 and 8) were interviewed without spell data. They only appear in the harmonized spell format, with spells_reported == 0.",
+      "SC4 was surveyed twice in 2012 and 2013, and there was no wave in 2017/18. For further details, see: https://www.neps-data.de/Portals/0/NEPS/Datenzentrum/Forschungsdaten/SC4/16-0-0/NEPS_SC4_StudyOverview_w1-16_de.pdf"
+    ),
+    SC5 = c(
+      "In short: the online (CAWI) waves collect no spell data. We recommend the harmonized spell format. Drop the person-years with spells_reported == 0 (the online waves) if you need one observation per year or add variables from spell datasets.",
+      "Telephone (CATI) and online (CAWI) waves alternate. The CAWI waves are 2, 4, 6, 8, 11, 14 and 17.",
+      "Original subspell format: no person-years in the CAWI waves.",
+      "Harmonized spell format: person-years in the CAWI waves exist, because the next telephone interview covers them retrospectively. Variables added from spell datasets are missing there, and there can be two person-years per calendar year."
+    ),
+    character(0)
+  )
+  if (length(notes) == 0) return(NULL)
+  disclaimer <- "The scripts for this cohort have been tested, but they may still contain errors and may need adjustments depending on your research question. Please check them line by line."
+  general <- "Variable spells_reported (both formats): 1 if spell data were reported in that wave. Variables added from spell datasets (e.g. spEmp) are only available where it is 1. In the original subspell format it is always 1."
+  c(paste(comment, c(paste0("Notes on ", sc, ":"), disclaimer, notes, general)), "")
+}
+
+#' Note on the licence course recode in the prioritisation
+#' @keywords internal
+#' @noRd
+licence_course_note <- function(sc, comment = "#") {
+  switch(sc,
+    SC3 = paste(comment, "Note: in SC3, licence courses are not recorded in spVocTrain, so the recode below only concerns IHK courses."),
+    SC4 = paste(comment, "Note: from the field year 2018/19 (wave 11) on, licence courses are no longer recorded in spVocTrain, so the recode below only affects earlier waves for them."),
+    SC6 = paste(comment, "Note: from the field year 2018/19 (wave 11) on, licence courses are no longer recorded in spVocTrain, so the recode below only affects earlier waves for them."),
+    NULL
+  )
+}
+
+
+#' Indicator for person-years with spell data reported in this wave. R
+#' @keywords internal
+#' @noRd
+gen_spells_reported_r <- function(sc, format = "harmonized") {
+  if (format == "subspell") {
+    return(c(
+      "# Indicator for person-years with spell data reported in this wave. In the original subspell format, every person-year comes from a spell reported in that wave, so it is always 1. The same variable exists in the harmonized spell format, where it can also be 0.",
+      "bio$spells_reported <- 1",
+      "attr(bio$spells_reported, 'label') <- 'Spell data reported in this wave'",
+      ""
+    ))
+  }
+  files <- c("spSchool", "spVocPrep", "spVocTrain", "spMilitary", "spEmp", "spUnemp", "spParLeave", "spGap", if (sc == "SC5") "spInternship")
+  c(
+    "# Indicator for person-years with spell data reported in this wave. Spell data are not collected in every interview, e.g. not in the online waves of SC5 or for students surveyed in school in SC3/SC4. The harmonized spell format still has a person-year in such waves, because the Biography covers the interview month retrospectively. Variables added from spell datasets are missing for these person-years (spells_reported = 0).",
+    paste0("spell_files <- c(", paste0("'", files, "'", collapse = ", "), ")"),
+    "spell_waves <- bind_rows(lapply(spell_files, function(f) {",
+    "  read_neps(paste0(datapath, '/', sc, '_', f, '_D_', suf_version, '.dta'), col_select = c('ID_t', 'wave', 'spstat'), english = english)",
+    "})) |>",
+    "  filter(spstat < 30) |> # subspells only, i.e. information reported in that wave",
+    "  distinct(ID_t, wave) |>",
+    "  mutate(spells_reported = 1)",
+    "",
+    "bio <- bio |>",
+    "  left_join(spell_waves, by = c('ID_t', 'wave')) |>",
+    "  mutate(spells_reported = if_else(is.na(spells_reported), 0, spells_reported))",
+    "attr(bio$spells_reported, 'label') <- 'Spell data reported in this wave'",
+    "rm(spell_waves, spell_files)",
+    ""
+  )
+}
+
+
+#' Indicator for person-years with spell data reported in this wave. Stata
+#' @keywords internal
+#' @noRd
+gen_spells_reported_stata <- function(sc, format = "harmonized") {
+  if (format == "subspell") {
+    return(c(
+      "* Indicator for person-years with spell data reported in this wave. In the original subspell format, every person-year comes from a spell reported in that wave, so it is always 1. The same variable exists in the harmonized spell format, where it can also be 0.",
+      "gen spells_reported = 1",
+      "label var spells_reported \"Spell data reported in this wave\"",
+      ""
+    ))
+  }
+  files <- c("spSchool", "spVocPrep", "spVocTrain", "spMilitary", "spEmp", "spUnemp", "spParLeave", "spGap", if (sc == "SC5") "spInternship")
+  c(
+    "* Indicator for person-years with spell data reported in this wave. Spell data are not collected in every interview, e.g. not in the online waves of SC5 or for students surveyed in school in SC3/SC4. The harmonized spell format still has a person-year in such waves, because the Biography covers the interview month retrospectively. Variables added from spell datasets are missing for these person-years (spells_reported = 0).",
+    "preserve",
+    "clear",
+    "tempfile spellwaves",
+    "save `spellwaves', emptyok",
+    paste0("foreach f in ", paste(files, collapse = " "), " {"),
+    paste0("  use ID_t wave spstat using \"$DATA\\", sc, "_`f'_D_$suf.dta\", clear"),
+    "  keep if spstat < 30 // subspells only, i.e. information reported in that wave",
+    "  keep ID_t wave",
+    "  append using `spellwaves'",
+    "  save `spellwaves', replace",
+    "}",
+    "duplicates drop ID_t wave, force",
+    "gen spells_reported = 1",
+    "save `spellwaves', replace",
+    "restore",
+    "",
+    "merge 1:1 ID_t wave using `spellwaves', keep(1 3) nogen",
+    "replace spells_reported = 0 if missing(spells_reported)",
+    "label var spells_reported \"Spell data reported in this wave\"",
+    ""
+  )
+}

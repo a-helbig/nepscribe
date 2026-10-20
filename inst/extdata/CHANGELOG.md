@@ -83,3 +83,19 @@ It may be released for other SCs in the future.
 ## Version 0.3.6 (2026-10-09)
 
 * Exemplary children preparation in R and Stata scripts: the example person shown for inspection is now selected automatically from the data.
+
+## Unreleased
+
+* Fixes from testing the scripts for Starting Cohorts 3, 4 and 5:
+* SC3: when variables from pTarget are added, the variable tx20100 (row recommended for linkage) is now loaded as well, so the filter on it no longer stops the R and Stata scripts with an error. It is dropped again after the filter unless it was selected.
+* Harmonized spell format: if a respondent has the same interview month in two waves (e.g. SC5), only the first of these waves is kept, in R and Stata and for all cohorts. Before, R assigned the same spell to both waves while Stata kept only one (SC5 only).
+* Original subspell format, Stata: parallel episodes are now prioritised exactly as in R. Missing codes in the main/side episode marker (spms) are treated as side episodes, and missing working hours and training types are filled completely from later subspells of the same episode (before, only one row was filled).
+* Original subspell format, R: all negative missing codes in the date variables are set to NA, not only -97 and -98. SC5: season codes in the internship dates are now recoded as well (R and Stata).
+* Original subspell format: R and Stata scripts now drop the same helper variables at the end (working hours, training type, ongoing flags, spstat), so both formats and both languages end up with the same variables.
+* Highest education example (R): the wave labels are now taken before the interview dates are reshaped, which removes the warning "Unknown or uninitialised column: wave" and keeps the wave labels.
+* Stata scripts with English labels: every NEPS dataset is now switched to English directly after loading. Before, variables added by a merge lost their value labels, because only the German label sets were carried over. The highest education example now also uses the English label sets for CASMIN and ISCED.
+* New variable spells_reported in both formats and languages: 1 if spell data were reported in that wave. In the harmonized spell format it marks person-years that only exist because the Biography covers them retrospectively (e.g. SC5 online waves, SC3/SC4 school waves), where variables added from spell datasets are missing. In the original subspell format it is always 1.
+* Starting Cohorts 3, 4 and 5: the "not fully tested" warning is replaced by cohort-specific notes: a short recommendation, the survey context (tx80230 in SC3/SC4), which waves the two formats cover and the new variable spells_reported. The same notes are written at the top of the generated scripts.
+* SC3/SC4: adding variables from spEmp (under Additional Variables or from Explore Datasets) shows a notice on the reduced employment module for persons under 21 without completed vocational training (tf23913). The generated script contains the same note.
+* SC4: adding variables from pTarget (under Additional Variables or from Explore Datasets) shows a notice that it only covers students surveyed in school (no person-years in SC4) and points to pTargetCATI / CohortProfile. The generated script contains the same note.
+* Spell prioritisation: a note on the licence course recode explains that licence courses are no longer recorded in spVocTrain from the field year 2018/19 on (SC4, SC6) or at all (SC3).
