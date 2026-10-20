@@ -23,9 +23,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           "# When using the 'Additional variables' function in the NEPScribe app, this procedure is applied automatically. This ensures that time-varying spell information is preserved. However, it requires careful handling of different missing value codes that arise from filtering or data issues.",
           "",
           "",
-          if(sc=="SC4")"# Please note that SC4 was surveyed twice in 2012 and 2013. For further details, see: https://www.neps-data.de/Portals/0/NEPS/Datenzentrum/Forschungsdaten/SC4/16-0-0/NEPS_SC4_StudyOverview_w1-16_de.pdf",
-          if(sc=="SC4")"# Also note, that there was no survey wave 2017/2018.",
-          if(sc=="SC4")"",
+          cohort_notes(sc, "#"), # cohort-specific notes (results from testing SC3-SC5)
           "# Approach:",
           "",
           "# 1. Step: Load the Biography dataset as a base for the person-year-dataset and compile start and end date and generate a duration variable.",
@@ -165,6 +163,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           "# To construct a person-year dataset where each row corresponds to one wave for each individual, a spell prioritisation process is useful for identifying the principal spell in cases where multiple spells occur simultaneously.",
           "",
           paste0("# We  may recode licences courses and ihk courses to value ", ifelse(sc != "SC5", "31", "37"), " to place it behind ", ifelse(sc != "SC5", "xmodule", "internship")," episodes in the prioritisation order, because these types of episodes are typically rather side spells than main spells and thus considered of lesser importance in many research projects with regard to spell prioritisation. You may change that."),
+          licence_course_note(sc, "#"),
           "",
           "bio <- bio |>",
           "  mutate(prio = sptype,",
@@ -248,6 +247,11 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           "filter(tx80220 == 1 & !is.na(month)) |>",
           "select(-tx8600y, -tx8600m, -tx80220)",
           "",
+          "# In rare cases a respondent has the same interview month in two waves (e.g. SC5). Keep only the first of these waves, otherwise the same spell would be assigned to both waves.",
+          "cohort_profile <- cohort_profile |>",
+          "  arrange(ID_t, wave) |>",
+          "  distinct(ID_t, month, .keep_all = TRUE)",
+          "",
           "# Inner join biography to cohort profile in order to keep only matches.",
           "bio <- inner_join(cohort_profile, bio, by=c('ID_t','month'))",
           "rm(cohort_profile)",
@@ -256,6 +260,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           "bio <- bio |> ",
           "select(-worktime, -month, -splast)",
           "",
+          gen_spells_reported_r(sc, format = "harmonized"),
           if(length(datalist)>0) generate_strings(datalist, english, format = "harmonized"), # add variables feature
           if(length(datalist)>0) ""
         )
@@ -306,9 +311,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
                      "# Please carefully check each line and make sense of it. Edits to the script that fit your research project\u2019s needs are probably necessary and recommended.",
                      "# Pay special attention to key variables of interest in the different sub-spells to see how these data have been collected and consider missings in sub-spells. Missings can be dealt with by replacing them with valid values from other sub-spells. Routines for that are partially provided in the script.",
                      "",
-                     if(sc=="SC4")"# Please note that SC4 was surveyed twice in 2012 and 2013. For further details, see: https://www.neps-data.de/Portals/0/NEPS/Datenzentrum/Forschungsdaten/SC4/16-0-0/NEPS_SC4_StudyOverview_w1-16_de.pdf",
-                     if(sc=="SC4")"# Also note, that there was no survey wave 2017/2018.",
-                     if(sc=="SC4")"",
+                     cohort_notes(sc, "#"), # cohort-specific notes (results from testing SC3-SC5)
                      "# Approach:",
                      "",
                      "# 1. Step: Append all spell datasets into one dataset with the original sub-spell information.",
@@ -477,12 +480,15 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
                      "  ungroup() |>",
                      "  as_tibble()",
                      "",
-                     "# Handle missing values (-98 and -97) by setting them to NA.",
+                     "# Set all missing codes (negative values such as -97, -98, -55) in the date variables to NA.",
                      "all_date_vars <- c('ts2911m','ts2311m','ts2111m','ts2711m','ts1511m','ts1111m','ts1311m','ts2511m','ts2312m','ts2912m','ts2112m','ts2712m','ts1512m','ts1112m','ts1312m','ts2512m','ts2911y','ts2311y','ts2111y','ts2711y','ts1511y','ts1111y','ts1311y','ts2511y','ts2312y','ts2912y','ts2112y','ts2712y','ts1512y','ts1112y','ts1312y','ts2512y')",
-                     "bio <- replace_values_with_na(bio, vars=all_date_vars, values_to_replace=c(-97,-98))",
+                     if(sc == "SC5")"all_date_vars <- c(all_date_vars, 'tg3607m', 'tg3607y', 'tg3608m', 'tg3608y') # internship dates",
+                     "bio <- bio |>",
+                     "  mutate(across(all_of(all_date_vars), ~ replace(.x, .x < 0, NA)))",
                      "",
                      "# Recode season codes in date variables",
-                     "bio <- replace_season_codes(bio, vars = c('ts2911m','ts2311m','ts2111m','ts2711m','ts1511m','ts1111m','ts1311m','ts2511m','ts2312m','ts2912m','ts2112m','ts2712m','ts1512m','ts1112m','ts1312m','ts2512m'))",
+                     if(sc != "SC5")"bio <- replace_season_codes(bio, vars = c('ts2911m','ts2311m','ts2111m','ts2711m','ts1511m','ts1111m','ts1311m','ts2511m','ts2312m','ts2912m','ts2112m','ts2712m','ts1512m','ts1112m','ts1312m','ts2512m'))",
+                     if(sc == "SC5")"bio <- replace_season_codes(bio, vars = c('ts2911m','ts2311m','ts2111m','ts2711m','ts1511m','ts1111m','ts1311m','ts2511m','ts2312m','ts2912m','ts2112m','ts2712m','ts1512m','ts1112m','ts1312m','ts2512m','tg3607m','tg3608m'))",
                      "",
                      "# Create start and end variables in terms of months since reference year 1960.",
                      "bio <- bio  |> ",
@@ -542,6 +548,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
                      "",
                      "# prioritization of episode types following the order selected in NEPScribe",
                      paste0("# We  may recode licence courses and ihk courses to value ", ifelse(sc != "SC5", "31", "37"), " to place it behind ", ifelse(sc != "SC5", "xmodule", "internship")," episodes in the prioritisation order, because these types of episodes are typically rather side spells than main spells and thus considered of lesser importance in many research projects with regard to spell prioritisation. You may change that."),
+                     licence_course_note(sc, "#"),
                      "bio <- bio |>",
                      "  mutate(",
                      paste0("  prio = ifelse(vt_typ %in% 13:14, ", ifelse(sc != "SC5", "31", "37"),", sptype),"),
@@ -559,9 +566,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
                      if(sc == "SC5")paste("  prio == ",prio_var[11]," ~ 11,"),
                      "   TRUE ~ NA_real_  # For values not specified, set to NA",
                      "),",
-                     "    spms = if_else(spms == -21, NA, spms),",
-                     "    spms = tidyr::replace_na(spms, 0),",
-                     "    spms = if_else(spms == 2, 0, spms),",
+                     "    spms = if_else(is.na(spms) | spms < 0 | spms == 2, 0, spms), # side episodes and all missing codes are set to 0 (same as in the Stata script)",
                      if(sc =="SC6")"    worktime = tidyr::replace_na(ts23223_g1, 0)",
                      if(sc %in% c("SC3","SC4","SC5"))"    worktime = tidyr::replace_na(ts23223, 0)",
                      "  )  |> ",
@@ -585,8 +590,9 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
                      "",
                      "# Drop unnecessary variables",
                      "bio <- bio  |> ",
-                     "  select(-starts_with('ts'), -prio, -spms, -starts_with('ts15201'), -spgen, -spext, -spstat, -disagint, -disagwave)",
+                     "  select(-starts_with('ts'), -any_of(c('tf1112c', 'tg36109', 'tg3607m', 'tg3607y', 'tg3608m', 'tg3608y')), -prio, -spms, -worktime, -vt_typ, -spgen, -spext, -spstat, -disagint, -disagwave)",
                      "",
+                     gen_spells_reported_r(sc, format = "subspell"),
                      if(length(datalist)>0) generate_strings(datalist, english, format = "subspell"), # add variables feature
                      if(length(datalist)>0) ""
         )
@@ -640,9 +646,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           "********************************************************************************",
           "",
           "",
-          if(sc=="SC4")"* Please note that SC4 was surveyed twice in 2012 and 2013. For further details, see: https://www.neps-data.de/Portals/0/NEPS/Datenzentrum/Forschungsdaten/SC4/16-0-0/NEPS_SC4_StudyOverview_w1-16_de.pdf",
-          if(sc=="SC4")"* Also note, that there was no survey wave 2017/2018.",
-          if(sc=="SC4")"",
+          cohort_notes(sc, "*"), # cohort-specific notes (results from testing SC3-SC5)
           "* Approach:",
           "",
           "* 1. Step: Load the Biography dataset as a base for the person-year-dataset and compile start and end date and generate a duration variable.",
@@ -781,6 +785,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           "clonevar prio = sptype",
           "",
           paste0("* recode licences courses and ihk courses to value ",  ifelse(sc != "SC5", "31", "37"), " to place it behind ", ifelse(sc != "SC5", "xmodule", "internship"), " episodes in the prioritisation order because these types of episodes are considered of minor importance in many research projects in regard to spell prioritisation."),
+          licence_course_note(sc, "*"),
           paste0("recode prio 24 = ", ifelse(sc != "SC5", "31", "37"), " if inrange(vt_typ,13,14)"),
           "",
           if(sc != "SC5")paste0("recode prio ","(",prio_var[1],  " = 1)"," (",prio_var[2]," = 2)"," (",prio_var[3]," = 3)"," (",prio_var[4]," = 4)"," (",prio_var[5]," = 5)"," (",prio_var[6]," = 6)"," (",prio_var[7]," = 7)"," (",prio_var[8]," = 8)"," (",prio_var[9]," = 9)"," (",prio_var[10]," = 10)"),
@@ -834,11 +839,9 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           "* Drop non-participants",
           "drop if tx80220 != 1 | missing(month)",
           "",
-          if(sc == "SC5") "*Drop wave duplicates in order to be able to merge it to the biography data from before",
-          if(sc == "SC5") "bys ID_t month: gen n = _n",
-          if(sc == "SC5") "drop if n > 1",
-          if(sc == "SC5") "drop n",
-          if(sc == "SC5") "",
+          "* In rare cases a respondent has the same interview month in two waves (e.g. SC5). Keep only the first of these waves, otherwise the merge with the biography data below fails.",
+          "bys ID_t month (wave): keep if _n == 1",
+          "",
           if(sc %in% c("SC3", "SC6"))"drop tx8601y tx8601m tx80220",
           if(sc %in% c("SC4", "SC5"))"drop tx8600y tx8600m tx80220",
           "",
@@ -852,6 +855,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           "* Drop unnecessary variables",
           "drop month splast",
           "",
+          gen_spells_reported_stata(sc, format = "harmonized"),
           if(length(datalist)>0) generate_strings_stata(datalist, format = "harmonized"), # add variables feature
           if(length(datalist)>0) ""
         )
@@ -927,9 +931,7 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           "* Please carefully check each line and make sense of it. Edits to the script that fit your research project\u2019s needs are probably necessary and recommended.",
           "* Pay special attention to key variables of interest in the different sub-spells to see how these data have been collected and consider missings in sub-spells. Missings can be dealt with by replacing them with valid values from other sub-spells. Routines for that are partially provided in the script.",
           "",
-          if(sc=="SC4")"* Please note that SC4 was surveyed twice in 2012 and 2013. For further details, see: https://www.neps-data.de/Portals/0/NEPS/Datenzentrum/Forschungsdaten/SC4/16-0-0/NEPS_SC4_StudyOverview_w1-16_de.pdf",
-          if(sc=="SC4")"* Also note, that there was no survey wave 2017/2018.",
-          if(sc=="SC4")"",
+          cohort_notes(sc, "*"), # cohort-specific notes (results from testing SC3-SC5)
           "********************************************************************************",
           "* Approach:",
           "",
@@ -1026,12 +1028,15 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           "",
           "foreach var of varlist $spell_vars  {",
           "  bys ID_t splink (subspell): replace `var' = `var'[_n-1] if missing(`var') & !missing(`var'[_n-1]) //fill missings from preceding rows",
-          "  bys ID_t splink (subspell): replace `var' = `var'[_n+1] if missing(`var') & !missing(`var'[_n+1]) //fill missings from subsequent rows",
+          "  gsort ID_t splink -subspell // reverse order, so that the next line fills all preceding rows, not only the one directly before a valid value",
+          "  by ID_t splink: replace `var' = `var'[_n-1] if missing(`var') & !missing(`var'[_n-1]) //fill missings from subsequent rows",
           "}",
+          "sort ID_t splink subspell",
           "",
           "* Generate date variable from actual respondent information (_g date variables have problems)",
           "* First, recode season codes in date variables",
-          "foreach var of varlist ts2311m ts2312m ts2911m ts2912m ts2111m ts2112m ts2711m ts2712m ts1511m ts1512m ts1111m ts1112m ts1311m ts1312m ts2511m ts2512m {",
+          if(sc != "SC5")"foreach var of varlist ts2311m ts2312m ts2911m ts2912m ts2111m ts2112m ts2711m ts2712m ts1511m ts1512m ts1111m ts1112m ts1311m ts1312m ts2511m ts2512m {",
+          if(sc == "SC5")"foreach var of varlist ts2311m ts2312m ts2911m ts2912m ts2111m ts2112m ts2711m ts2712m ts1511m ts1512m ts1111m ts1112m ts1311m ts1312m ts2511m ts2512m tg3607m tg3608m {",
           "	recode `var' (21=1) (24=4) (27=7) (30=10) (32=12)",
           "}",
           "",
@@ -1094,13 +1099,14 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           "clonevar prio = sptype",
           "",
           paste0("* recode licences courses and ihk courses to value ",  ifelse(sc != "SC5", "31", "37"), " to place it behind ", ifelse(sc != "SC5", "xmodule", "internship"), " episodes in the prioritisation order because these types of episodes are considered of minor importance in many research projects in regard to spell prioritisation."),
+          licence_course_note(sc, "*"),
           paste0("recode prio 24 = ", ifelse(sc != "SC5", "31", "37"), " if inrange(vt_typ,13,14)"),
           "",
           "* Prioritization of episodes following the order selected in NEPScribe",
           if(sc != "SC5")paste0("recode prio ","(",prio_var[1],  " = 1)"," (",prio_var[2]," = 2)"," (",prio_var[3]," = 3)"," (",prio_var[4]," = 4)"," (",prio_var[5]," = 5)"," (",prio_var[6]," = 6)"," (",prio_var[7]," = 7)"," (",prio_var[8]," = 8)"," (",prio_var[9]," = 9)"," (",prio_var[10]," = 10)"),
           if(sc == "SC5")paste0("recode prio ","(",prio_var[1],  " = 1)"," (",prio_var[2]," = 2)"," (",prio_var[3]," = 3)"," (",prio_var[4]," = 4)"," (",prio_var[5]," = 5)"," (",prio_var[6]," = 6)"," (",prio_var[7]," = 7)"," (",prio_var[8]," = 8)"," (",prio_var[9]," = 9)"," (",prio_var[10]," = 10)"," (",prio_var[11]," = 11)"),
           "* For sorting set side episodes and missings to 0",
-          "recode spms (1 = 1) (2 . = 0)",
+          "replace spms = 0 if spms == 2 | missing(spms) // missing() also catches extended missings (.a, .x, ...) from nepsmiss",
           "",
           if(sc=="SC6")"clonevar worktime = ts23223_g1",
           if(sc=="SC6")"replace worktime = 0 if missing(ts23223_g1) //recode missings to 0 for gsorting",
@@ -1118,10 +1124,11 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
           "isid ID_t wave",
           "",
           "*drop vars that are not required anymore.",
-          if(sc %in% c("SC3","SC4"))"drop ts1111m ts1111y ts1112m ts1112y tf1112c ts1311m ts1311y ts1312m ts1312y ts1312c ts1511m ts1511y ts1512m ts1512y ts1512c ts2111m ts2111y ts2112m ts2112y ts2112c ts2311m ts2311y ts2312m ts2312y ts2312c ts2511m ts2511y ts2512m ts2512y ts2512c ts2711m ts2711y ts2712m ts2712y ts2712c ts2911m ts2911y ts2912m ts2912y ts2912c prio worktime spgen spext spstat disagint disagwave spms",
-          if(sc %in% c("SC6"))"drop ts1111m ts1111y ts1112m ts1112y ts1112c ts1311m ts1311y ts1312m ts1312y ts1312c ts1511m ts1511y ts1512m ts1512y ts1512c ts2111m ts2111y ts2112m ts2112y ts2112c ts2311m ts2311y ts2312m ts2312y ts2312c ts2511m ts2511y ts2512m ts2512y ts2512c ts2711m ts2711y ts2712m ts2712y ts2712c ts2911m ts2911y ts2912m ts2912y ts2912c prio worktime spgen spext spstat disagint disagwave spms",
-          if(sc %in% c("SC5"))"drop ts1111m ts1111y ts1112m ts1112y ts1112c ts1311m ts1311y ts1312m ts1312y ts1312c ts1511m ts1511y ts1512m ts1512y ts1512c ts2111m ts2111y ts2112m ts2112y ts2112c ts2311m ts2311y ts2312m ts2312y ts2312c ts2511m ts2511y ts2512m ts2512y ts2512c ts2711m ts2711y ts2712m ts2712y ts2712c ts2911m ts2911y ts2912m ts2912y ts2912c tg3607m tg3607y tg3608m tg3608y tg36109 prio worktime spgen spext spstat disagint disagwave spms ",
+          if(sc %in% c("SC3","SC4"))"drop ts1111m ts1111y ts1112m ts1112y tf1112c ts1311m ts1311y ts1312m ts1312y ts1312c ts1511m ts1511y ts1512m ts1512y ts1512c ts2111m ts2111y ts2112m ts2112y ts2112c ts2311m ts2311y ts2312m ts2312y ts2312c ts2511m ts2511y ts2512m ts2512y ts2512c ts2711m ts2711y ts2712m ts2712y ts2712c ts2911m ts2911y ts2912m ts2912y ts2912c ts23223 vt_typ prio worktime spgen spext spstat disagint disagwave spms",
+          if(sc %in% c("SC6"))"drop ts1111m ts1111y ts1112m ts1112y ts1112c ts1311m ts1311y ts1312m ts1312y ts1312c ts1511m ts1511y ts1512m ts1512y ts1512c ts2111m ts2111y ts2112m ts2112y ts2112c ts2311m ts2311y ts2312m ts2312y ts2312c ts2511m ts2511y ts2512m ts2512y ts2512c ts2711m ts2711y ts2712m ts2712y ts2712c ts2911m ts2911y ts2912m ts2912y ts2912c ts23223_g1 vt_typ prio worktime spgen spext spstat disagint disagwave spms",
+          if(sc %in% c("SC5"))"drop ts1111m ts1111y ts1112m ts1112y ts1112c ts1311m ts1311y ts1312m ts1312y ts1312c ts1511m ts1511y ts1512m ts1512y ts1512c ts2111m ts2111y ts2112m ts2112y ts2112c ts2311m ts2311y ts2312m ts2312y ts2312c ts2511m ts2511y ts2512m ts2512y ts2512c ts2711m ts2711y ts2712m ts2712y ts2712c ts2911m ts2911y ts2912m ts2912y ts2912c tg3607m tg3607y tg3608m tg3608y tg36109 ts23223 vt_typ prio worktime spgen spext spstat disagint disagwave spms",
           "",
+          gen_spells_reported_stata(sc, format = "subspell"),
           if(length(datalist)>0) generate_strings_stata(datalist, format = "subspell"), # add variables feature
           if(length(datalist)>0)""
         )
@@ -1184,6 +1191,17 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
         }
 
       }
+
+      # Stata with English labels: NEPS datasets open with German labels, and merge only copies the value label sets
+      # of the active language. Therefore every NEPS dataset is switched to English directly after loading it,
+      # otherwise merged variables point to English label sets that do not exist in the final dataset.
+      if (dataformat == "STATA" && english) {
+        is_use <- grepl("^\\s*use .*\\$DATA.*,\\s*clear", scripts)
+        scripts <- unlist(lapply(seq_along(scripts), function(i) {
+          if (is_use[i]) c(scripts[i], paste0(sub("^(\\s*).*", "\\1", scripts[i]), "label language en")) else scripts[i]
+        }))
+      }
+
       return(scripts)
     }
 
