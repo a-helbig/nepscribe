@@ -51,8 +51,8 @@ data_transformation_sidebar_ui <- function(id) {
   shiny::tagList(
     shiny::selectizeInput(
       ns("sub_format_select"),
-      tt("Person-Year-Data: Format", "Harmonized Format: The data preparation of life-course trajectories is based on the edited and cleaned biography file.<br><br>Subspell Format: The data preparation of life-course trajectories is based on the originally recorded subspell episodes.", bold = TRUE),
-      choices = c("Harmonized Spell Format", "Original Subspell Format"),
+      tt("Person-Year-Data: Format", "Biography-based Format: The data preparation of life-course trajectories is based on the edited and cleaned biography file.<br><br>Subspell-based Format: The data preparation of life-course trajectories is based on the originally recorded subspell episodes.", bold = TRUE),
+      choices = c("Biography-based Format" = "Harmonized Spell Format", "Subspell-based Format" = "Original Subspell Format"), # displayed names = internal values
       multiple = TRUE,
       selected = "Harmonized Spell Format",
       options = list(maxItems = 1)
@@ -333,39 +333,39 @@ data_transformation_server <- function(id, settings_reactive, cross_module) {
         notes <- switch(sc,
           sc3_semantic_files = list(
             title = "Notes on Starting Cohort 3",
-            short = "Spell data only exist from a person's first interview outside the general school system on. We recommend the harmonized spell format. Use <code>spells_reported == 1</code> if you add variables from spell datasets or need the same waves as the original subspell format. Person-years from the school phase (<code>spells_reported == 0</code>) are a selective sample.",
+            short = "Spell data only exist from a person's first interview outside the general school system on. We recommend the biography-based format. Use <code>spells_reported == 1</code> if you add variables from spell datasets or need the same waves as the subspell-based format. Person-years from the school phase (<code>spells_reported == 0</code>) are a selective sample.",
             details = c(
               survey_context,
               "The first interview outside the general school system records the whole biography retrospectively (from wave 8 on, wave 7 was only a short status interview). From wave 11 on, there are no more school surveys.",
-              "<b>Original subspell format:</b> no person-years in waves 1 to 7. Waves 8 to 10 only contain persons who had already left school.",
-              "<b>Harmonized spell format:</b> person-years from the school phase come from the retrospective biography of a later interview. They only exist for persons who stayed in the panel until then."
+              "<b>Subspell-based format:</b> no person-years in waves 1 to 7. Waves 8 to 10 only contain persons who had already left school.",
+              "<b>Biography-based format:</b> person-years from the school phase come from the retrospective biography of a later interview. They only exist for persons who stayed in the panel until then."
             )
           ),
           sc4_semantic_files = list(
             title = "Notes on Starting Cohort 4",
-            short = "Only persons surveyed outside the general school system get the life course interview with spell data. We recommend the harmonized spell format. Use <code>spells_reported == 1</code> if you add variables from spell datasets or need the same waves as the original subspell format. Students surveyed at NEPS sample schools are not covered by either format.",
+            short = "Only persons surveyed outside the general school system get the life course interview with spell data. We recommend the biography-based format. Use <code>spells_reported == 1</code> if you add variables from spell datasets or need the same waves as the subspell-based format. Students surveyed at NEPS sample schools are not covered by either format.",
             details = c(
               survey_context,
               "In wave 1 all persons were surveyed at NEPS sample schools, in wave 2 almost all. Waves 4 (spring 2012) and 6 (spring 2013) only include interviews outside the general school system. From wave 9 on, nobody was surveyed at a NEPS sample school.",
               "<b>Students at NEPS sample schools</b> have no interview date in CohortProfile, so neither format has person-years for them (waves 1 and 2 are empty).",
-              "<b>Individually followed-up students</b> (mainly waves 5, 7 and 8) were interviewed without spell data. They only appear in the harmonized spell format, with <code>spells_reported == 0</code>.",
+              "<b>Individually followed-up students</b> (mainly waves 5, 7 and 8) were interviewed without spell data. They only appear in the biography-based format, with <code>spells_reported == 0</code>.",
               "SC4 was surveyed twice in 2012 and 2013, and there was no wave in 2017/18."
             )
           ),
           sc5_semantic_files = list(
             title = "Notes on Starting Cohort 5",
-            short = "The online (CAWI) waves collect no spell data. We recommend the harmonized spell format. Drop the person-years with <code>spells_reported == 0</code> (the online waves) if you need one observation per year or add variables from spell datasets.",
+            short = "The online (CAWI) waves collect no spell data. We recommend the biography-based format. Drop the person-years with <code>spells_reported == 0</code> (the online waves) if you need one observation per year or add variables from spell datasets.",
             details = c(
               "<b>Telephone (CATI) and online (CAWI) waves alternate.</b> The CAWI waves are 2, 4, 6, 8, 11, 14 and 17.",
-              "<b>Original subspell format:</b> no person-years in the CAWI waves.",
-              "<b>Harmonized spell format:</b> person-years in the CAWI waves exist, because the next telephone interview covers them retrospectively. Variables added from spell datasets are missing there, and there can be two person-years per calendar year."
+              "<b>Subspell-based format:</b> no person-years in the CAWI waves.",
+              "<b>Biography-based format:</b> person-years in the CAWI waves exist, because the next telephone interview covers them retrospectively. Variables added from spell datasets are missing there, and there can be two person-years per calendar year."
             )
           )
         )
 
         details <- c(
           notes$details,
-          "<b>Variable <code>spells_reported</code></b> (both formats): 1 if spell data were reported in that wave. Variables added from spell datasets (e.g. spEmp) are only available where it is 1. In the original subspell format it is always 1."
+          "<b>Variable <code>spells_reported</code></b> (both formats): 1 if spell data were reported in that wave. Variables added from spell datasets (e.g. spEmp) are only available where it is 1. In the subspell-based format it is always 1."
         )
 
         shiny::showModal(
@@ -552,17 +552,15 @@ shiny::observeEvent(input$sub_format_select, {
       # Store one dataset's confirmed variables (given as "varname - label" strings) for the
       # script, replacing whatever was stored for that dataset before. Shared by the
       # "Confirm Vars" button and by variables sent over from Explore Datasets.
-      # Notes on datasets with known gaps, shown once per dataset when variables from it are added
-      # to the script - via "Confirm Vars" or from Explore Datasets (both end in store_confirmed_vars)
-      notified_datasets <- shiny::reactiveVal(character(0))
+      # Notes on datasets with known gaps, shown every time variables from it are added to the
+      # script - via "Confirm Vars" or from Explore Datasets (both end in store_confirmed_vars)
       show_dataset_notice <- function(dataset) {
         note <- if (stringr::str_detect(dataset, "^SC[34]_spEmp_S")) {
           "<b>Note on spEmp in SC3/SC4:</b> persons under 21 without completed vocational training get a reduced employment module, so many employment items were not asked for them. Add <code>tf23913</code> to identify these spells."
         } else if (stringr::str_detect(dataset, "^SC4_pTarget_S")) {
           "<b>Note on SC4 pTarget:</b> this dataset only contains the questionnaires of students surveyed at NEPS sample schools. These waves have no person-years in SC4, so its variables will be missing for almost all rows. Some of this information is also available in pTargetCATI or CohortProfile, e.g. gender and date of birth."
         }
-        if (is.null(note) || dataset %in% shiny::isolate(notified_datasets())) return(invisible())
-        notified_datasets(c(shiny::isolate(notified_datasets()), dataset))
+        if (is.null(note)) return(invisible())
         shiny::showNotification(shiny::HTML(note), type = "warning", duration = 30)
       }
 

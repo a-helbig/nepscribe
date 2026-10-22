@@ -511,7 +511,8 @@ gen_parallel_spells_stata <- function(format="harmonized") {
     "",
     "* Because multiple spells can occur at the same time, several columns (variables) are generated for parallel spells for each variable.",
     "",
-    "* Group by ID_t and month and keep the sorting from above. Then generate a month counter per ID_t and month",
+    if(format=="harmonized") "* Within each person and month, keep the sorting from above and number the parallel spells (n == 1 is the prioritized spell).",
+    if(format=="subspell") "* Within each person and wave, keep the sorting from above and number the parallel spells (n == 1 is the prioritized spell).",
     if(format=="harmonized") "by ID_t month: gen n = _n",
     if(format=="subspell") "by ID_t wave: gen n = _n",
     "",
@@ -529,7 +530,8 @@ gen_parallel_spells_stata <- function(format="harmonized") {
     "  gen sidespell`i'_start = .",
     "  gen sidespell`i'_end = .",
     "",
-    "* Group by ID_t and month and put sptype, splink, startdate and enddate from next month in generated wide-format-variable",
+    if(format=="harmonized") "* Within each person and month, copy sptype, splink, start and end date of the i-th next parallel spell into the row of the prioritized spell.",
+    if(format=="subspell") "* Within each person and wave, copy sptype, splink, start and end date of the i-th next parallel spell into the row of the prioritized spell.",
     if(format=="harmonized") "  bys ID_t month (n): replace sidespell`i'_sptype = sptype[_n+`i'] if n == 1",
     if(format=="harmonized") "  bys ID_t month (n): replace sidespell`i'_splink = splink[_n+`i'] if n == 1",
     if(format=="harmonized") "  bys ID_t month (n): replace sidespell`i'_start = start[_n+`i'] if n == 1",
@@ -555,8 +557,8 @@ gen_parallel_spells_r <- function(format="harmonized") {
     "",
     "# Because multiple spells can occur at the same time, several columns (variables) are generated for parallel spells for each variable.",
     "",
-    if(format=="harmonized")"    # group by ID_t and month and keep the sorting from above. Then generate a month counter per ID_t and month",
-    if(format=="subspell")"    # group by ID_t and wave and keep the sorting from above. Then generate a wave counter per ID_t and wave",
+    if(format=="harmonized")"    # Within each person and month, keep the sorting from above and number the parallel spells (n == 1 is the prioritized spell).",
+    if(format=="subspell")"    # Within each person and wave, keep the sorting from above and number the parallel spells (n == 1 is the prioritized spell).",
     "    bio <- bio |>",
     "      lazy_dt() |> # use this function from dtplyr for faster processing",
     if(format=="harmonized")"      group_by(ID_t, month) |> ",
@@ -1498,31 +1500,31 @@ cohort_notes <- function(sc, comment = "#") {
   survey_context <- "Survey context: tx80230 in CohortProfile shows in each wave whether a person was surveyed at a NEPS sample school (written questionnaire in class, no life course interview), individually followed up after leaving the NEPS school, e.g. after a school change (as a rule without spell data), or outside the general school system (full life course interview with spell data)."
   notes <- switch(sc,
     SC3 = c(
-      "In short: spell data only exist from a person's first interview outside the general school system on. We recommend the harmonized spell format. Use spells_reported == 1 if you add variables from spell datasets or need the same waves as the original subspell format. Person-years from the school phase (spells_reported == 0) are a selective sample.",
+      "In short: spell data only exist from a person's first interview outside the general school system on. We recommend the biography-based format. Use spells_reported == 1 if you add variables from spell datasets or need the same waves as the subspell-based format. Person-years from the school phase (spells_reported == 0) are a selective sample.",
       survey_context,
       "The first interview outside the general school system records the whole biography retrospectively (from wave 8 on, wave 7 was only a short status interview). From wave 11 on, there are no more school surveys.",
-      "Original subspell format: no person-years in waves 1 to 7. Waves 8 to 10 only contain persons who had already left school.",
-      "Harmonized spell format: person-years from the school phase come from the retrospective biography of a later interview. They only exist for persons who stayed in the panel until then."
+      "Subspell-based format: no person-years in waves 1 to 7. Waves 8 to 10 only contain persons who had already left school.",
+      "Biography-based format: person-years from the school phase come from the retrospective biography of a later interview. They only exist for persons who stayed in the panel until then."
     ),
     SC4 = c(
-      "In short: only persons surveyed outside the general school system get the life course interview with spell data. We recommend the harmonized spell format. Use spells_reported == 1 if you add variables from spell datasets or need the same waves as the original subspell format. Students surveyed at NEPS sample schools are not covered by either format.",
+      "In short: only persons surveyed outside the general school system get the life course interview with spell data. We recommend the biography-based format. Use spells_reported == 1 if you add variables from spell datasets or need the same waves as the subspell-based format. Students surveyed at NEPS sample schools are not covered by either format.",
       survey_context,
       "In wave 1 all persons were surveyed at NEPS sample schools, in wave 2 almost all. Waves 4 (spring 2012) and 6 (spring 2013) only include interviews outside the general school system. From wave 9 on, nobody was surveyed at a NEPS sample school.",
       "Students at NEPS sample schools have no interview date in CohortProfile, so neither format has person-years for them (waves 1 and 2 are empty).",
-      "Individually followed-up students (mainly waves 5, 7 and 8) were interviewed without spell data. They only appear in the harmonized spell format, with spells_reported == 0.",
+      "Individually followed-up students (mainly waves 5, 7 and 8) were interviewed without spell data. They only appear in the biography-based format, with spells_reported == 0.",
       "SC4 was surveyed twice in 2012 and 2013, and there was no wave in 2017/18. For further details, see: https://www.neps-data.de/Portals/0/NEPS/Datenzentrum/Forschungsdaten/SC4/16-0-0/NEPS_SC4_StudyOverview_w1-16_de.pdf"
     ),
     SC5 = c(
-      "In short: the online (CAWI) waves collect no spell data. We recommend the harmonized spell format. Drop the person-years with spells_reported == 0 (the online waves) if you need one observation per year or add variables from spell datasets.",
+      "In short: the online (CAWI) waves collect no spell data. We recommend the biography-based format. Drop the person-years with spells_reported == 0 (the online waves) if you need one observation per year or add variables from spell datasets.",
       "Telephone (CATI) and online (CAWI) waves alternate. The CAWI waves are 2, 4, 6, 8, 11, 14 and 17.",
-      "Original subspell format: no person-years in the CAWI waves.",
-      "Harmonized spell format: person-years in the CAWI waves exist, because the next telephone interview covers them retrospectively. Variables added from spell datasets are missing there, and there can be two person-years per calendar year."
+      "Subspell-based format: no person-years in the CAWI waves.",
+      "Biography-based format: person-years in the CAWI waves exist, because the next telephone interview covers them retrospectively. Variables added from spell datasets are missing there, and there can be two person-years per calendar year."
     ),
     character(0)
   )
   if (length(notes) == 0) return(NULL)
   disclaimer <- "The scripts for this cohort have been tested, but they may still contain errors and may need adjustments depending on your research question. Please check them line by line."
-  general <- "Variable spells_reported (both formats): 1 if spell data were reported in that wave. Variables added from spell datasets (e.g. spEmp) are only available where it is 1. In the original subspell format it is always 1."
+  general <- "Variable spells_reported (both formats): 1 if spell data were reported in that wave. Variables added from spell datasets (e.g. spEmp) are only available where it is 1. In the subspell-based format it is always 1."
   c(paste(comment, c(paste0("Notes on ", sc, ":"), disclaimer, notes, general)), "")
 }
 
@@ -1545,7 +1547,7 @@ licence_course_note <- function(sc, comment = "#") {
 gen_spells_reported_r <- function(sc, format = "harmonized") {
   if (format == "subspell") {
     return(c(
-      "# Indicator for person-years with spell data reported in this wave. In the original subspell format, every person-year comes from a spell reported in that wave, so it is always 1. The same variable exists in the harmonized spell format, where it can also be 0.",
+      "# Indicator for person-years with spell data reported in this wave. In the subspell-based format, every person-year comes from a spell reported in that wave, so it is always 1. The same variable exists in the biography-based format, where it can also be 0.",
       "bio$spells_reported <- 1",
       "attr(bio$spells_reported, 'label') <- 'Spell data reported in this wave'",
       ""
@@ -1553,7 +1555,7 @@ gen_spells_reported_r <- function(sc, format = "harmonized") {
   }
   files <- c("spSchool", "spVocPrep", "spVocTrain", "spMilitary", "spEmp", "spUnemp", "spParLeave", "spGap", if (sc == "SC5") "spInternship")
   c(
-    "# Indicator for person-years with spell data reported in this wave. Spell data are not collected in every interview, e.g. not in the online waves of SC5 or for students surveyed in school in SC3/SC4. The harmonized spell format still has a person-year in such waves, because the Biography covers the interview month retrospectively. Variables added from spell datasets are missing for these person-years (spells_reported = 0).",
+    "# Indicator for person-years with spell data reported in this wave. Spell data are not collected in every interview, e.g. not in the online waves of SC5 or for students surveyed in school in SC3/SC4. The biography-based format still has a person-year in such waves, because the Biography covers the interview month retrospectively. Variables added from spell datasets are missing for these person-years (spells_reported = 0).",
     paste0("spell_files <- c(", paste0("'", files, "'", collapse = ", "), ")"),
     "spell_waves <- bind_rows(lapply(spell_files, function(f) {",
     "  read_neps(paste0(datapath, '/', sc, '_', f, '_D_', suf_version, '.dta'), col_select = c('ID_t', 'wave', 'spstat'), english = english)",
@@ -1578,7 +1580,7 @@ gen_spells_reported_r <- function(sc, format = "harmonized") {
 gen_spells_reported_stata <- function(sc, format = "harmonized") {
   if (format == "subspell") {
     return(c(
-      "* Indicator for person-years with spell data reported in this wave. In the original subspell format, every person-year comes from a spell reported in that wave, so it is always 1. The same variable exists in the harmonized spell format, where it can also be 0.",
+      "* Indicator for person-years with spell data reported in this wave. In the subspell-based format, every person-year comes from a spell reported in that wave, so it is always 1. The same variable exists in the biography-based format, where it can also be 0.",
       "gen spells_reported = 1",
       "label var spells_reported \"Spell data reported in this wave\"",
       ""
@@ -1586,7 +1588,7 @@ gen_spells_reported_stata <- function(sc, format = "harmonized") {
   }
   files <- c("spSchool", "spVocPrep", "spVocTrain", "spMilitary", "spEmp", "spUnemp", "spParLeave", "spGap", if (sc == "SC5") "spInternship")
   c(
-    "* Indicator for person-years with spell data reported in this wave. Spell data are not collected in every interview, e.g. not in the online waves of SC5 or for students surveyed in school in SC3/SC4. The harmonized spell format still has a person-year in such waves, because the Biography covers the interview month retrospectively. Variables added from spell datasets are missing for these person-years (spells_reported = 0).",
+    "* Indicator for person-years with spell data reported in this wave. Spell data are not collected in every interview, e.g. not in the online waves of SC5 or for students surveyed in school in SC3/SC4. The biography-based format still has a person-year in such waves, because the Biography covers the interview month retrospectively. Variables added from spell datasets are missing for these person-years (spells_reported = 0).",
     "preserve",
     "clear",
     "tempfile spellwaves",

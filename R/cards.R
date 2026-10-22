@@ -119,8 +119,8 @@ cards_data_trans <- function() {
         First, you will need to choose between two format options in the sidebar:
     </p>
     <ol style=font-size: 18px; color: #555;>
-        <li><b>Harmonized Spell Format</b>: This option prepares data based on the edited and cleaned biography file to represent life-course trajectories. It is recommended to use this format. </li>
-        <li><b>Original Subspell Format</b>: This option uses the originally recorded subspell episodes. Please note that data cleaning and smoothing operations performed in the biography file are not accounted for in this preparation.</li>
+        <li><b>Biography-based Format</b>: This option prepares data based on the edited and cleaned biography file to represent life-course trajectories. It is recommended to use this format. </li>
+        <li><b>Subspell-based Format</b>: This option uses the originally recorded subspell episodes. Please note that data cleaning and smoothing operations performed in the biography file are not accounted for in this preparation.</li>
     </ol>
 
     <h5 style=font-size: 16px; color: #007BFF;>Starting cohort</h5>
@@ -135,7 +135,7 @@ cards_data_trans <- function() {
 
     <h5 style=font-size: 16px; color: #007BFF;>Settings</h5>
     <p style=font-size: 18px; color: #555;>
-        Additionally, you can select options that add extra code to the script, for example to handle missing values or include indicators on parallel spells. For the harmonized format version, you can also add indicators for retrospective work or unemployment experience.
+        Additionally, you can select options that add extra code to the script, for example to handle missing values or include indicators on parallel spells. For the biography-based format version, you can also add indicators for retrospective work or unemployment experience.
     </p>
 
     <h5 style=font-size: 16px; color: #007BFF;>Add exemplary data preparation</h5>

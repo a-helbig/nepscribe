@@ -405,3 +405,12 @@ button.cb-size-btn:focus-visible {
   color: #888;
   margin-right: 6px;
 }
+
+/* Card tabs with a title (navset_card_tab(title = ...)): keep the tabs right-aligned.
+   Since bslib 0.10.0 the card header is flex and its nav gets flex: 1, which fills
+   the header and puts the tabs right next to the title. Undo the flex: 1 so that
+   margin-left: auto pushes the tabs to the right again (same look as bslib 0.9.0). */
+.bslib-card .card-header.bslib-navs-card-title > .nav {
+  flex: 0 1 auto;
+  margin-left: auto;
+}
