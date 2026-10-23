@@ -84,7 +84,12 @@ It may be released for other SCs in the future.
 
 * Exemplary children preparation in R and Stata scripts: the example person shown for inspection is now selected automatically from the data.
 
-## Version 0.4.0 (unreleased)
+## Version 1.0.0 (unreleased)
+
+First stable release. The scripts are now tested for Starting Cohorts 3 to 6, and the two formats are renamed.
+
+* Start page: "Beta" removed. The version shown is now read from the package description, so it no longer has to be changed by hand.
+* Transform Data, Info tab: the note on testing now covers SC3 to SC6, and the SUF versions the scripts are built on are listed (read from the semantic files).
 
 * Explore Datasets: a new chart icon next to each variable opens its frequencies from the public NEPS codebook, together with the variable's question text. It shows in which waves the variable has valid answers, the frequency table across waves and each value's share of the valid cases. Labels follow the German/English switch. A button in the top right corner enlarges the window to almost the whole screen, which helps with variables that have many waves or values.
 * Explore Datasets: clicking the grey + of a variable now adds just that variable to the script. There is no need to select rows or scroll up to "Add Selected to Script" for a single variable.
@@ -110,3 +115,5 @@ It may be released for other SCs in the future.
 * The two data preparation formats are renamed: "Harmonized Spell Format" is now "Biography-based Format" and "Original Subspell Format" is now "Subspell-based Format". The names now say what each format starts from. The formats themselves are unchanged, apart from the prioritisation changes above.
 * Stata scripts: a note at the top explains that the do-file uses temporary files, which only exist while it runs. To check intermediate results, run it from the top down to the line of interest, or replace the temporary files with permanent files to run single blocks.
 * Biography-based format: if neither work nor unemployment experience is selected, the monthly data are reduced to the interview months before the prioritisation, and the interview wave from CohortProfile is added there. The result is the same, but the script runs considerably faster (SC6 Stata: about 1:50 instead of 3:10 minutes). With work or unemployment experience, all months are still prioritised, because these indicators count all months.
+* Transform Datasets: the downloaded script now has a descriptive name with cohort and format, e.g. nepscribe_SC6_biography-based.do or nepscribe_SC4_subspell-based.R, instead of always data_wrangling_script.do / .R.
+* Generated scripts without a local data path: the SUF version written at the top of the script is now the version of the selected cohort (e.g. 13-1-0 for SC3). Before, every cohort got 17-0-0, the SC6 version, and the Stata script of the subspell-based format left it empty.

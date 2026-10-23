@@ -23,15 +23,51 @@ NEPS.
 Access the live application
 [here](https://shiny2.wzb.eu/ahelbig/nepscribe/).
 
+## Features
+
+**Transform Data (Starting Cohorts 3 to 6)**
+
+- Generates a Stata do-file or an R script that builds a person-year
+  dataset with one row per respondent and wave and one main life-course
+  status (e.g. employment, vocational training).
+- Two formats: the **Biography-based Format** (recommended) starts from
+  the edited Biography file, the **Subspell-based Format** from the
+  originally recorded subspells of the spell files.
+- Adjustable spell prioritisation. Among parallel employment episodes,
+  the main employment selected by the respondent, the main/side episode
+  marker and the working hours reported in that wave decide.
+- Optional settings: missing values, parallel spells, and work and
+  unemployment experience (biography-based format).
+- Additional variables from most NEPS datasets, merged with the correct
+  keys, plus example code for further training, highest education and
+  children.
+- Cohort-specific notes for SC3, SC4 and SC5 in the app and at the top
+  of the generated scripts.
+
+**Explore Datasets (Starting Cohorts 1 to 6 and 8)**
+
+- Search and compare datasets, variables and metadata (variable labels,
+  question and item texts) across cohorts.
+- Frequencies of each variable as published in the NEPS codebooks,
+  across waves where available.
+- Send single variables or a whole selection to the script in Transform
+  Data.
+
+The app contains no NEPS data. It is built on the NEPS semantic
+structure files, which are SUF files with all observations removed. The
+codebook frequencies are taken from the public NEPS codebooks (LIfBi,
+CC BY 4.0). The generated scripts run on your own NEPS data and should
+be reviewed before use.
+
 ## Citation
 
-If you use this package in your research, please consider citing it. We
-would greatly appreciate it.
+If you use this package in your research, please consider citing it.
+We would greatly appreciate it.
 
 Suggested citation:
 
 Alexander Helbig, Insa Grüttgen (2026). *nepscribe*. Shiny application
-to generate NEPS data preparation scripts in Stata and R. Version 0.3.6
+to generate NEPS data preparation scripts in Stata and R. Version 1.0.0
 \[Computer software\]. <https://github.com/a-helbig/nepscribe>
 
 ## Installation
@@ -51,3 +87,9 @@ To start the app after installation, use:
 ``` r
 NEPScribe::run_app()
 ```
+
+## Bugs and questions
+
+Please report problems in the app or in the generated scripts to
+<alexander.helbig@wzb.eu> or open an issue on
+[GitHub](https://github.com/a-helbig/nepscribe/issues).

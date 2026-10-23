@@ -7,7 +7,7 @@
 #' @importFrom htmltools tags
 app_ui <- function() {
 
-  app_version <- "v0.3.6"  # define your current app version here
+  app_version <- paste0("v", utils::packageVersion("NEPScribe"))  # taken from DESCRIPTION
 
   # Make package www resources accessible in Shiny
   shiny::addResourcePath(
@@ -111,8 +111,7 @@ bslib::page_navbar(
      <div style='display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;'>
        <img src='www/images/lizard_instead_of_neps.jpg' width='200' height='100' style='justify-self: end; margin-right: 10px;' alt=''>
        <div>
-         <p style='font-size:32px; margin: 0;'><b>NEPScribe</b>
-         <span style='font-size:16px; margin-left: 6px;'>Beta</span></p>
+         <p style='font-size:32px; margin: 0;'><b>NEPScribe</b></p>
          <small style='font-size:12px; color:gray;'>Version: ", app_version, "</small>
        </div>
        <div></div>

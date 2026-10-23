@@ -50,6 +50,14 @@ dataset_exploration_card <- function() {
 #' @keywords internal
 #' @noRd
 cards_data_trans <- function() {
+  # SUF versions the scripts are built on, read from the semantic files (e.g. "SC6 17-0-0")
+  suf_versions <- base::paste(
+    base::vapply(3:6, function(i) {
+      base::paste0("SC", i, " ", extract_suf_version(system.file("extdata", base::paste0("sc", i, "_semantic_files"), package = "NEPScribe")))
+    }, character(1)),
+    collapse = ", "
+  )
+
   bslib::navset_card_tab(
     height = 450,
     full_screen = TRUE,
@@ -66,7 +74,7 @@ cards_data_trans <- function() {
           heights_equal = "row",
           bslib::card(
             shiny::div(
-              htmltools::HTML(
+              htmltools::HTML(base::paste0(
                 "<div style=max-width: 800px; margin: 0 auto; font-family: Arial, sans-serif; line-height: 1.6;>
     <h4 style=font-size: 18px; color: #333;>What is this?</h4>
     <br>
@@ -77,14 +85,14 @@ cards_data_trans <- function() {
         The script with basic settings is creating a person-year-dataset that only contains very basic spell-related information. You can customize numerous settings to align with the requirements of your research project and enrich the resulting dataset with variables from all datasets.
     </p>
         <p style=font-size: 18px; color: #555;>
-        Please use the latest SUF version; otherwise, variable names or the data structure may differ from what the script assumes.
+        The scripts are built on these SUF versions: ", suf_versions, ". With other versions, variable names or the data structure may differ from what the script assumes.
     </p>
     <div style=background-color: #f9f9f9; border-left: 4px solid #007BFF; padding: 10px; margin: 20px 0;>
         <strong>Important Note:</strong><br>
-        This feature applies only to Starting Cohorts 3 to 6. However, it has so far only been extensively tested for SC6. Scripts for SC3, SC4 and SC5 may need substantial adjustments.
+        This feature applies only to Starting Cohorts 3 to 6. The scripts were developed for SC6 and have been tested for SC3, SC4 and SC5 as well. These cohorts have survey design specifics that affect which waves end up in the data. The app shows notes on them when one of these cohorts is selected, and the same notes are written at the top of the generated script.
     </div>
 </div>"
-              )
+              ))
             )
           ),
           bslib::card(

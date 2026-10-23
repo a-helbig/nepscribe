@@ -807,11 +807,11 @@ shiny::observeEvent(input$sub_format_select, {
       # Download script
       output$downloadScript <- shiny::downloadHandler(
         filename = function() {
-          if (input$stata_or_r == "R") {
-            "data_wrangling_script.R"
-          } else {
-            "data_wrangling_script.do"
-          }
+          # descriptive default name, e.g. nepscribe_SC6_biography-based.do
+          sc <- toupper(sub("_.*", "", input$cohort_data_trans))
+          format <- if (identical(input$sub_format_select, "Original Subspell Format")) "subspell-based" else "biography-based"
+          ext <- if (input$stata_or_r == "R") "R" else "do"
+          paste0("nepscribe_", sc, "_", format, ".", ext)
         },
         content = function(file) {
           script_harm <- gen_script(
