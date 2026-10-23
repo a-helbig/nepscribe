@@ -505,9 +505,10 @@ gen_parallel_spells_stata <- function(format="harmonized") {
   # Create a character vector to hold the lines of code
   lines_of_code <- c(
     "",
-    "*******************************************************************************",
-    "* Parallel spells data preparation",
-    "*******************************************************************************",
+    if(format=="subspell") "*******************************************************************************",
+    if(format=="subspell") "* Parallel spells data preparation",
+    if(format=="subspell") "*******************************************************************************",
+    if(format=="harmonized") "* -- Parallel spells (optional) --",
     "",
     "* Because multiple spells can occur at the same time, several columns (variables) are generated for parallel spells for each variable.",
     "",
@@ -553,7 +554,8 @@ gen_parallel_spells_stata <- function(format="harmonized") {
 gen_parallel_spells_r <- function(format="harmonized") {
   # Create a character vector to hold the lines of code
   lines_of_code <- c(
-    "# Paralell Spells Data Prep ----------------------------------------",
+    if(format=="subspell") "# Paralell Spells Data Prep ----------------------------------------",
+    if(format=="harmonized") "# -- Parallel spells (optional) --",
     "",
     "# Because multiple spells can occur at the same time, several columns (variables) are generated for parallel spells for each variable.",
     "",
@@ -1199,7 +1201,9 @@ gen_children_example_stata_sc3_4 <- function(english, sc, chapter){
 #'
 #' @keywords internal
 #' @noRd
-generate_strings <- function(data_list, english, format) {
+generate_strings <- function(data_list, english, format, first_chapter = NULL) {
+  # number of the last chapter before the added datasets (biography-based format: 6, or 5 if step 6 is not needed; subspell-based format: 3)
+  offset <- if (!is.null(first_chapter)) first_chapter - 1 else ifelse(format == "harmonized", 6, 3)
   # Initialize an empty character vector to store the results
   result_vector <- character()
   # Initialize an empty character vector to store all variables
@@ -1232,7 +1236,7 @@ generate_strings <- function(data_list, english, format) {
       merge_vector <- unlist(gsub(" ", ", ",df[3][1,])) # take linkage keys from the list and put commas between them
 
       # Create the strings - in the read dta line in string3 we check if its one of the listed spell datasets, if yes, we add also the variable "spstat" because we need it to get rid of harmonized episodes in order to being able to merge it to the person year base file
-      string1 <- paste0("# ",ifelse(format == "harmonized", 6, 3)+i,".", " Add selected variables from ", dataset_name," -------------")
+      string1 <- paste0("# ",offset+i,".", " Add selected variables from ", dataset_name," -------------")
       string2 <- ""
       # here we replace also _S_ in the dataset name with _D_ because this is pasted in the script but comes from the semantic files
       # SC3 pTarget: NEPS recommends keeping only rows with tx20100 == 1 for linkage, so tx20100 has to be loaded as well
@@ -1350,7 +1354,9 @@ generate_strings <- function(data_list, english, format) {
 #'
 #' @keywords internal
 #' @noRd
-generate_strings_stata <- function(data_list, format) {
+generate_strings_stata <- function(data_list, format, first_chapter = NULL) {
+  # number of the last chapter before the added datasets (biography-based format: 6, or 5 if step 6 is not needed; subspell-based format: 3)
+  offset <- if (!is.null(first_chapter)) first_chapter - 1 else ifelse(format == "harmonized", 6, 3)
   # Initialize an empty character vector to store the results
   result_vector <- character()
   # Initialize an empty character vector to store all variables added from spellfiles
@@ -1391,7 +1397,7 @@ generate_strings_stata <- function(data_list, format) {
 
       # Create the strings - in the read dta line in string3 we check if its one of the listed spell datasets, if yes, we add also the variable "spstat" because we need it to get rid of harmonized episodes in order to being able to merge it to the person year base file
       string0 <- "*******************************************************************************"
-      string1 <- paste0("* ",ifelse(format == "harmonized", 6, 3) +i,".", " Add selected variables from ", dataset_name)
+      string1 <- paste0("* ",offset +i,".", " Add selected variables from ", dataset_name)
       string2 <- "*******************************************************************************"
       string3 <- ""
       string4 <- "preserve"
