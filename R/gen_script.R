@@ -1334,10 +1334,25 @@ gen_script <- function(datapath_conv, datapath_local, suf_version, dataformat, s
       # Stata with English labels: NEPS datasets open with German labels, and merge only copies the value label sets
       # of the active language. Therefore every NEPS dataset is switched to English directly after loading it,
       # otherwise merged variables point to English label sets that do not exist in the final dataset.
+      # A dataset loaded with a variable list ("use varlist using file") only contains the German label sets, so
+      # switching to English afterwards leaves the variables without value labels. These datasets are therefore
+      # loaded in full, switched to English and then reduced to the variables ("use file" + "keep varlist").
+      # Exception: loads that only contain keys and helper variables without labels needed in the result.
       if (dataformat == "STATA" && english) {
-        is_use <- grepl("^\\s*use .*\\$DATA.*,\\s*clear", scripts)
-        scripts <- unlist(lapply(seq_along(scripts), function(i) {
-          if (is_use[i]) c(scripts[i], paste0(sub("^(\\s*).*", "\\1", scripts[i]), "label language en")) else scripts[i]
+        no_labels_needed <- c("ID_t", "wave", "splink", "spstat", "th14599_g2")
+        scripts <- unlist(lapply(scripts, function(line) {
+          if (!grepl("^\\s*use .*\\$DATA.*,\\s*clear", line)) return(line)
+          indent <- sub("^(\\s*).*", "\\1", line)
+          m <- regmatches(line, regexec("^\\s*use\\s+(.+?)\\s+using\\s+(\".*\")\\s*,\\s*clear\\s*$", line))[[1]]
+          if (length(m) == 3) {
+            vars <- strsplit(trimws(m[2]), "\\s+")[[1]]
+            if (!all(vars %in% no_labels_needed)) {
+              return(c(paste0(indent, "use ", m[3], ", clear"),
+                       paste0(indent, "label language en"),
+                       paste0(indent, "keep ", paste(vars, collapse = " "))))
+            }
+          }
+          c(line, paste0(indent, "label language en"))
         }))
       }
 
