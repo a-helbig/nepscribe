@@ -763,24 +763,22 @@ shiny::observeEvent(input$sub_format_select, {
         # Show modal
         shiny::showModal(
           shiny::modalDialog(
-            title = "Preview of script",
+            title = htmltools::tags$div(
+              class = "cb-title",
+              # enlarges the modal to almost the whole window and back, as in the codebook modal (toggleModalSize in js_snippets.js)
+              htmltools::tags$button(
+                type = "button", class = "cb-size-btn", `data-size-key` = "preview",
+                onclick = "toggleModalSize(this);",
+                `aria-label` = "Enlarge window", title = "Enlarge window",
+                htmltools::tags$i(class = "fas fa-expand")
+              ),
+              "Preview of script"
+            ),
             size = "l",
 
+            # layout of the code block: class script-preview in styles.css
             htmltools::tags$code(
-              class = lang_class,
-              style = "
-        display: block;
-        max-height: 600px;
-        overflow-y: auto;
-        overflow-x: auto;
-        white-space: pre;
-        margin: 0;
-        background-color: #f7f7f7;
-        padding: 12px;
-        border-radius: 4px;
-        font-family: Consolas, 'Courier New', monospace;
-        font-size: 13px;
-      ",
+              class = paste(lang_class, "script-preview"),
               htmltools::HTML(script_text)
             ),
 

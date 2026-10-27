@@ -1202,8 +1202,8 @@ gen_children_example_stata_sc3_4 <- function(english, sc, chapter){
 #' @keywords internal
 #' @noRd
 generate_strings <- function(data_list, english, format, first_chapter = NULL) {
-  # number of the last chapter before the added datasets (biography-based format: 6, or 5 if step 6 is not needed; subspell-based format: 3)
-  offset <- if (!is.null(first_chapter)) first_chapter - 1 else ifelse(format == "harmonized", 6, 3)
+  # number of the last chapter before the added datasets (biography-based format: 5; subspell-based format: 3)
+  offset <- if (!is.null(first_chapter)) first_chapter - 1 else ifelse(format == "harmonized", 5, 3)
   # Initialize an empty character vector to store the results
   result_vector <- character()
   # Initialize an empty character vector to store all variables
@@ -1355,8 +1355,8 @@ generate_strings <- function(data_list, english, format, first_chapter = NULL) {
 #' @keywords internal
 #' @noRd
 generate_strings_stata <- function(data_list, format, first_chapter = NULL) {
-  # number of the last chapter before the added datasets (biography-based format: 6, or 5 if step 6 is not needed; subspell-based format: 3)
-  offset <- if (!is.null(first_chapter)) first_chapter - 1 else ifelse(format == "harmonized", 6, 3)
+  # number of the last chapter before the added datasets (biography-based format: 5; subspell-based format: 3)
+  offset <- if (!is.null(first_chapter)) first_chapter - 1 else ifelse(format == "harmonized", 5, 3)
   # Initialize an empty character vector to store the results
   result_vector <- character()
   # Initialize an empty character vector to store all variables added from spellfiles

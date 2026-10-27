@@ -414,3 +414,22 @@ button.cb-size-btn:focus-visible {
   flex: 0 1 auto;
   margin-left: auto;
 }
+
+
+/* Script preview in Transform Data (code block in the modal) */
+code.script-preview {
+  display: block;
+  max-height: 600px;
+  overflow: auto;
+  white-space: pre;
+  margin: 0;
+  background-color: #f7f7f7;
+  padding: 12px;
+  border-radius: 4px;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13px;
+}
+/* enlarged preview: the code block uses the extra height */
+.modal-dialog.cb-modal-max code.script-preview {
+  max-height: calc(100vh - 11rem);
+}

@@ -128,19 +128,26 @@ function customRowCallback(row, data) {
 })();
 
 
-// Codebook modal in Explore Datasets: the button in its top right corner switches between the
-// normal size and almost the whole window. The choice is kept while the page is open, so the
-// next variable opens in the same size.
-window.toggleCodebookModalSize = function (btn, enlarge) {
+// Size button in the top right corner of a modal (codebook modal in Explore Datasets, script
+// preview in Transform Data): switches between the normal size and almost the whole window.
+// The choice is kept per kind of modal (data-size-key) while the page is open, so the next
+// codebook window or preview opens in the same size.
+window.modalMax = window.modalMax || {};
+window.toggleModalSize = function (btn, enlarge) {
+  var key = $(btn).data('size-key') || 'codebook';
   var dialog = $(btn).closest('.modal-dialog');
   if (enlarge === undefined) enlarge = !dialog.hasClass('cb-modal-max');
-  window.codebookModalMax = enlarge;
+  window.modalMax[key] = enlarge;
   dialog.toggleClass('cb-modal-max', enlarge);
   var label = enlarge ? 'Restore default size' : 'Enlarge window';
   $(btn).attr({ title: label, 'aria-label': label })
     .find('i').toggleClass('fa-expand', !enlarge).toggleClass('fa-compress', enlarge);
 };
+// old name, used by the codebook modal
+window.toggleCodebookModalSize = window.toggleModalSize;
 $(document).on('show.bs.modal', function (e) {
   var btn = $(e.target).find('.cb-size-btn');
-  if (btn.length && window.codebookModalMax) window.toggleCodebookModalSize(btn[0], true);
+  if (!btn.length) return;
+  var key = btn.data('size-key') || 'codebook';
+  if (window.modalMax[key]) window.toggleModalSize(btn[0], true);
 });
