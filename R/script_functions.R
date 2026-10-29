@@ -1496,42 +1496,66 @@ generate_strings_stata <- function(data_list, format, first_chapter = NULL) {
 
 
 
-#' Cohort-specific notes for the header of the generated scripts
+#' Cohort-specific notes for SC3-SC5
 #'
 #' Results from testing the scripts for SC3-SC5 (October 2026): which person-years the two
-#' formats contain, and cohort-specific gaps in the data.
+#' formats contain, and cohort-specific gaps in the data. One source for the popup in
+#' Transform Data (HTML) and the header of the generated scripts (cohort_notes(), tags removed).
+#' @param sc "SC3", "SC4" or "SC5"; NULL for all other cohorts
+#' @keywords internal
+#' @noRd
+cohort_notes_content <- function(sc) {
+  which_format <- "<b>Which format:</b> the biography-based format takes the main activity from the Biography dataset, which NEPS edits for consistency across all waves, and covers more waves. Where <code>spells_reported == 0</code>, variables added from spell datasets are missing; variables that hardly change within an episode can be filled from other waves of the same episode (<code>splink</code>). If you need spell information reported in each wave, drop these person-years or use the subspell-based format."
+  spells_reported <- "<b><code>spells_reported</code>:</b> 1 if spell data were reported in that wave (always 1 in the subspell-based format)."
+  notes <- switch(sc,
+    SC3 = list(
+      short = "Spell data only exist for respondents who took part in at least one interview after leaving the general school system, because only they get the life course interview. Respondents who drop out of the panel before their first life course interview are not included in the person-year dataset. We recommend the biography-based format, because it also contains person-years for the school waves, which are reported retrospectively in the first life course interview. For analyses of the school phase itself, use pTarget directly instead of NEPScribe. For analyses after school, information from the school phase (e.g. answers from pTarget in a chosen wave or competences from xTargetCompetencies) can be added to all person-years of a respondent via <code>ID_t</code>.",
+      details = c(
+        "<b>Subspell-based format:</b> only contains person-years from waves in which an episode was reported as ongoing at the interview. The school phase, which is only reported retrospectively and has already ended by then, is therefore missing (no person-years in waves 1 to 7).",
+        "<b>Biography-based format:</b> also contains person-years for the school waves in which a respondent took part, with the school episodes from the retrospective biography (<code>spells_reported == 0</code>). These only exist for respondents who later took part in a life course interview.",
+        which_format
+      )
+    ),
+    SC4 = list(
+      short = "Spell data only exist for respondents who took part in at least one interview after leaving the general school system, because only they get the life course interview (from wave 9 on, all respondents get it). Respondents who drop out of the panel before their first life course interview are not included in the person-year dataset. We recommend the biography-based format, because it also contains person-years for some school waves, which are reported retrospectively in the first life course interview. For analyses of the school phase itself, use pTarget directly instead of NEPScribe. For analyses after school, information from the school phase (e.g. answers from pTarget in a chosen wave or competences from xTargetCompetencies) can be added to all person-years of a respondent via <code>ID_t</code>.",
+      details = c(
+        "<b>Subspell-based format:</b> only contains person-years from waves in which an episode was reported as ongoing at the interview. Retrospectively reported school episodes that have already ended are therefore missing.",
+        "<b>Biography-based format:</b> also contains person-years for school waves in which a respondent was interviewed outside class but did not get a life course interview, with the school episode from the retrospective biography (<code>spells_reported == 0</code>). Waves in which a respondent was surveyed in class at a NEPS sample school have no interview date and therefore no person-years in either format.",
+        "<b>Waves:</b> waves 4 and 6 were additional spring waves, so in waves 4 to 7 interviews are about six months apart, with up to three rows per calendar year. There was no wave in 2017/18.",
+        which_format
+      )
+    ),
+    SC5 = list(
+      short = "The telephone (CATI) waves are yearly. The online (CAWI) waves lie between them and collect no spell data, so both formats only use the CATI waves: one person-year per year. We recommend the biography-based format.",
+      details = c(
+        "<b>Who has spell data:</b> the CATI waves, including wave 1 with the retrospective life course interview. The CAWI waves (2, 4, 6, 8, 11, 14, 17) have no spell data. They took place in the autumn of 2011 to 2014, 2016, 2018 and 2020, in addition to the CATI wave of that year.",
+        "<b>CAWI waves:</b> the subspell-based format has no person-years in the CAWI waves anyway. In the biography-based format, a line in the script drops them. Remove it if you need the CAWI waves as separate rows; then there can be two rows per calendar year, and variables added from spell datasets are missing in the CAWI rows (<code>spells_reported == 0</code>). Variables from the CAWI questionnaires can also be merged to the neighbouring CATI person-year.",
+        "<b>Which format:</b> both formats contain the same waves. The biography-based format takes the main activity from the Biography dataset, which NEPS edits for consistency across all waves."
+      )
+    ),
+    NULL
+  )
+  if (is.null(notes)) return(NULL)
+  list(
+    title = paste("Notes on Starting Cohort", sub("SC", "", sc)),
+    disclaimer = "The scripts for this cohort have been tested, but they may still contain errors and may need adjustments depending on your research question. Please check them line by line.",
+    short = notes$short,
+    details = c(notes$details, spells_reported)
+  )
+}
+
+#' Cohort-specific notes for the header of the generated scripts
+#'
+#' Same text as the popup in Transform Data, see cohort_notes_content().
 #' @keywords internal
 #' @noRd
 cohort_notes <- function(sc, comment = "#") {
-  survey_context <- "Survey context: tx80230 in CohortProfile shows in each wave whether a person was surveyed at a NEPS sample school (written questionnaire in class, no life course interview), individually followed up after leaving the NEPS school, e.g. after a school change (as a rule without spell data), or outside the general school system (full life course interview with spell data)."
-  notes <- switch(sc,
-    SC3 = c(
-      "In short: spell data only exist from a person's first interview outside the general school system on. We recommend the biography-based format. Use spells_reported == 1 if you add variables from spell datasets or need the same waves as the subspell-based format. Person-years from the school phase (spells_reported == 0) are a selective sample.",
-      survey_context,
-      "The first interview outside the general school system records the whole biography retrospectively (from wave 8 on, wave 7 was only a short status interview). From wave 11 on, there are no more school surveys.",
-      "Subspell-based format: no person-years in waves 1 to 7. Waves 8 to 10 only contain persons who had already left school.",
-      "Biography-based format: person-years from the school phase come from the retrospective biography of a later interview. They only exist for persons who stayed in the panel until then."
-    ),
-    SC4 = c(
-      "In short: only persons surveyed outside the general school system get the life course interview with spell data. We recommend the biography-based format. Use spells_reported == 1 if you add variables from spell datasets or need the same waves as the subspell-based format. Students surveyed at NEPS sample schools are not covered by either format.",
-      survey_context,
-      "In wave 1 all persons were surveyed at NEPS sample schools, in wave 2 almost all. Waves 4 (spring 2012) and 6 (spring 2013) only include interviews outside the general school system. From wave 9 on, nobody was surveyed at a NEPS sample school.",
-      "Students at NEPS sample schools have no interview date in CohortProfile, so neither format has person-years for them (waves 1 and 2 are empty).",
-      "Individually followed-up students (mainly waves 5, 7 and 8) were interviewed without spell data. They only appear in the biography-based format, with spells_reported == 0.",
-      "SC4 was surveyed twice in 2012 and 2013, and there was no wave in 2017/18. For further details, see: https://www.neps-data.de/Portals/0/NEPS/Datenzentrum/Forschungsdaten/SC4/16-0-0/NEPS_SC4_StudyOverview_w1-16_de.pdf"
-    ),
-    SC5 = c(
-      "In short: the online (CAWI) waves collect no spell data. We recommend the biography-based format. Drop the person-years with spells_reported == 0 (the online waves) if you need one observation per year or add variables from spell datasets.",
-      "Telephone (CATI) and online (CAWI) waves alternate. The CAWI waves are 2, 4, 6, 8, 11, 14 and 17.",
-      "Subspell-based format: no person-years in the CAWI waves.",
-      "Biography-based format: person-years in the CAWI waves exist, because the next telephone interview covers them retrospectively. Variables added from spell datasets are missing there, and there can be two person-years per calendar year."
-    ),
-    character(0)
-  )
-  if (length(notes) == 0) return(NULL)
-  disclaimer <- "The scripts for this cohort have been tested, but they may still contain errors and may need adjustments depending on your research question. Please check them line by line."
-  general <- "Variable spells_reported (both formats): 1 if spell data were reported in that wave. Variables added from spell datasets (e.g. spEmp) are only available where it is 1. In the subspell-based format it is always 1."
-  c(paste(comment, c(paste0("Notes on ", sc, ":"), disclaimer, notes, general)), "")
+  notes <- cohort_notes_content(sc)
+  if (is.null(notes)) return(NULL)
+  strip_tags <- function(x) gsub("<[^>]+>", "", x)
+  lines <- c(paste0("Notes on ", sc, ":"), notes$disclaimer,
+             paste("In short:", strip_tags(notes$short)), strip_tags(notes$details))
+  c(paste(comment, lines), "")
 }
 
 #' Note on the licence course recode in the prioritisation
@@ -1561,7 +1585,7 @@ gen_spells_reported_r <- function(sc, format = "harmonized") {
   }
   files <- c("spSchool", "spVocPrep", "spVocTrain", "spMilitary", "spEmp", "spUnemp", "spParLeave", "spGap", if (sc == "SC5") "spInternship")
   c(
-    "# Indicator for person-years with spell data reported in this wave. Spell data are not collected in every interview, e.g. not in the online waves of SC5 or for students surveyed in school in SC3/SC4. The biography-based format still has a person-year in such waves, because the Biography covers the interview month retrospectively. Variables added from spell datasets are missing for these person-years (spells_reported = 0).",
+    "# Indicator for person-years with spell data reported in this wave. Spell data are not collected in every interview, e.g. not in the online waves of SC5 (if you keep them) or for students surveyed in school in SC3/SC4. The biography-based format still has a person-year in such waves, because the Biography covers the interview month retrospectively. Variables added from spell datasets are missing for these person-years (spells_reported = 0).",
     paste0("spell_files <- c(", paste0("'", files, "'", collapse = ", "), ")"),
     "spell_waves <- bind_rows(lapply(spell_files, function(f) {",
     "  read_neps(paste0(datapath, '/', sc, '_', f, '_D_', suf_version, '.dta'), col_select = c('ID_t', 'wave', 'spstat'), english = english)",
@@ -1594,7 +1618,7 @@ gen_spells_reported_stata <- function(sc, format = "harmonized") {
   }
   files <- c("spSchool", "spVocPrep", "spVocTrain", "spMilitary", "spEmp", "spUnemp", "spParLeave", "spGap", if (sc == "SC5") "spInternship")
   c(
-    "* Indicator for person-years with spell data reported in this wave. Spell data are not collected in every interview, e.g. not in the online waves of SC5 or for students surveyed in school in SC3/SC4. The biography-based format still has a person-year in such waves, because the Biography covers the interview month retrospectively. Variables added from spell datasets are missing for these person-years (spells_reported = 0).",
+    "* Indicator for person-years with spell data reported in this wave. Spell data are not collected in every interview, e.g. not in the online waves of SC5 (if you keep them) or for students surveyed in school in SC3/SC4. The biography-based format still has a person-year in such waves, because the Biography covers the interview month retrospectively. Variables added from spell datasets are missing for these person-years (spells_reported = 0).",
     "preserve",
     "clear",
     "tempfile spellwaves",

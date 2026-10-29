@@ -328,53 +328,16 @@ data_transformation_server <- function(id, settings_reactive, cross_module) {
         sc <- input$cohort_data_trans
         if (!sc %in% c("sc3_semantic_files", "sc4_semantic_files", "sc5_semantic_files")) return()
 
-        survey_context <- "<b>Survey context:</b> <code>tx80230</code> in CohortProfile shows in each wave whether a person was surveyed at a NEPS sample school (written questionnaire in class, no life course interview), individually followed up after leaving the NEPS school, e.g. after a school change (as a rule without spell data), or outside the general school system (full life course interview with spell data)."
-
-        notes <- switch(sc,
-          sc3_semantic_files = list(
-            title = "Notes on Starting Cohort 3",
-            short = "Spell data only exist from a person's first interview outside the general school system on. We recommend the biography-based format. Use <code>spells_reported == 1</code> if you add variables from spell datasets or need the same waves as the subspell-based format. Person-years from the school phase (<code>spells_reported == 0</code>) are a selective sample.",
-            details = c(
-              survey_context,
-              "The first interview outside the general school system records the whole biography retrospectively (from wave 8 on, wave 7 was only a short status interview). From wave 11 on, there are no more school surveys.",
-              "<b>Subspell-based format:</b> no person-years in waves 1 to 7. Waves 8 to 10 only contain persons who had already left school.",
-              "<b>Biography-based format:</b> person-years from the school phase come from the retrospective biography of a later interview. They only exist for persons who stayed in the panel until then."
-            )
-          ),
-          sc4_semantic_files = list(
-            title = "Notes on Starting Cohort 4",
-            short = "Only persons surveyed outside the general school system get the life course interview with spell data. We recommend the biography-based format. Use <code>spells_reported == 1</code> if you add variables from spell datasets or need the same waves as the subspell-based format. Students surveyed at NEPS sample schools are not covered by either format.",
-            details = c(
-              survey_context,
-              "In wave 1 all persons were surveyed at NEPS sample schools, in wave 2 almost all. Waves 4 (spring 2012) and 6 (spring 2013) only include interviews outside the general school system. From wave 9 on, nobody was surveyed at a NEPS sample school.",
-              "<b>Students at NEPS sample schools</b> have no interview date in CohortProfile, so neither format has person-years for them (waves 1 and 2 are empty).",
-              "<b>Individually followed-up students</b> (mainly waves 5, 7 and 8) were interviewed without spell data. They only appear in the biography-based format, with <code>spells_reported == 0</code>.",
-              "SC4 was surveyed twice in 2012 and 2013, and there was no wave in 2017/18."
-            )
-          ),
-          sc5_semantic_files = list(
-            title = "Notes on Starting Cohort 5",
-            short = "The online (CAWI) waves collect no spell data. We recommend the biography-based format. Drop the person-years with <code>spells_reported == 0</code> (the online waves) if you need one observation per year or add variables from spell datasets.",
-            details = c(
-              "<b>Telephone (CATI) and online (CAWI) waves alternate.</b> The CAWI waves are 2, 4, 6, 8, 11, 14 and 17.",
-              "<b>Subspell-based format:</b> no person-years in the CAWI waves.",
-              "<b>Biography-based format:</b> person-years in the CAWI waves exist, because the next telephone interview covers them retrospectively. Variables added from spell datasets are missing there, and there can be two person-years per calendar year."
-            )
-          )
-        )
-
-        details <- c(
-          notes$details,
-          "<b>Variable <code>spells_reported</code></b> (both formats): 1 if spell data were reported in that wave. Variables added from spell datasets (e.g. spEmp) are only available where it is 1. In the subspell-based format it is always 1."
-        )
+        notes <- cohort_notes_content(toupper(sub("_semantic_files", "", sc)))  # R/script_functions.R
+        details <- notes$details
 
         shiny::showModal(
           shiny::modalDialog(
             shiny::HTML(paste0(
               "<div style='line-height: 1.6;'>",
-              "<p style='margin-top: 0;'>⚠️ The scripts for this cohort have been tested, but they may still contain errors and may need adjustments depending on your research question. Please check them line by line.</p>",
+              "<p style='margin-top: 0;'>⚠️ ", notes$disclaimer, "</p>",
               "<p><b>In short:</b> ", notes$short, "</p>",
-              "<details><summary style='cursor: pointer;'><b>More details</b></summary>",
+              "<details><summary style='cursor: pointer;'><b>More information</b></summary>",
               "<ul style='padding-left: 1.2rem; margin-top: 0.5rem;'>", paste0("<li>", details, "</li>", collapse = ""), "</ul>",
               "</details>",
               "<p style='margin-bottom: 0; margin-top: 0.75rem;'>These notes are also written at the top of the generated script.</p>",
