@@ -1,0 +1,4 @@
+*.pdf
+*.csv
+output/
+__pycache__/

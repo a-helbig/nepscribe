@@ -1,6 +1,7 @@
 # Build the codebook frequency data shipped with the app (inst/extdata/codebook).
 #
-# Input: the CSV files written by extract_codebook.py (run_all.ps1), one pair per
+# Input: the CSV files written by extract_codebook.py (run_all.ps1, both in
+# dev/codebook_extract, see the README there), one pair per
 # starting cohort and language:
 #   codebook_vars_<SC>_<version>_<lang>.csv   one row per variable
 #   codebook_freq_<SC>_<version>_<lang>.csv   one row per value of a variable
