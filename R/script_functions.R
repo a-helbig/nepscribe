@@ -1509,7 +1509,11 @@ cohort_notes_content <- function(sc) {
   spells_reported <- "<b><code>spells_reported</code>:</b> 1 if spell data were reported in that wave (always 1 in the subspell-based format)."
   notes <- switch(sc,
     SC3 = list(
-      short = "Spell data only exist for respondents who took part in at least one interview after leaving the general school system, because only they get the life course interview. Respondents who drop out of the panel before their first life course interview are not included in the person-year dataset. We recommend the biography-based format, because it also contains person-years for the school waves, which are reported retrospectively in the first life course interview. For analyses of the school phase itself, use pTarget directly instead of NEPScribe. For analyses after school, information from the school phase (e.g. answers from pTarget in a chosen wave or competences from xTargetCompetencies) can be added to all person-years of a respondent via <code>ID_t</code>.",
+      short = c(
+        "Spell data only exist for respondents who took part in at least one interview after leaving the general school system, because only they get the life course interview. Respondents who drop out of the panel before their first life course interview are not included in the person-year dataset.",
+        "We recommend the biography-based format, because it also contains person-years for the school waves, which are reported retrospectively in the first life course interview.",
+        "For analyses of the school phase itself, rather use pTarget directly instead of the NEPScribe scripts. For analyses after school, information from the school phase (e.g. answers from pTarget in a chosen wave or competences from xTargetCompetencies) can be added to all person-years of a respondent via <code>ID_t</code>."
+      ),
       details = c(
         "<b>Subspell-based format:</b> only contains person-years from waves in which an episode was reported as ongoing at the interview. The school phase, which is only reported retrospectively and has already ended by then, is therefore missing (no person-years in waves 1 to 7).",
         "<b>Biography-based format:</b> also contains person-years for the school waves in which a respondent took part, with the school episodes from the retrospective biography (<code>spells_reported == 0</code>). These only exist for respondents who later took part in a life course interview.",
@@ -1517,16 +1521,20 @@ cohort_notes_content <- function(sc) {
       )
     ),
     SC4 = list(
-      short = "Spell data only exist for respondents who took part in at least one interview after leaving the general school system, because only they get the life course interview (from wave 9 on, all respondents get it). Respondents who drop out of the panel before their first life course interview are not included in the person-year dataset. We recommend the biography-based format, because it also contains person-years for some school waves, which are reported retrospectively in the first life course interview. For analyses of the school phase itself, use pTarget directly instead of NEPScribe. For analyses after school, information from the school phase (e.g. answers from pTarget in a chosen wave or competences from xTargetCompetencies) can be added to all person-years of a respondent via <code>ID_t</code>.",
+      short = c(
+        "Spell data only exist for respondents who took part in at least one interview after leaving the general school system, because only they get the life course interview (from wave 9 on, all respondents get it). Respondents who drop out of the panel before their first life course interview are not included in the person-year dataset.",
+        "We recommend the biography-based format, because it also contains person-years for some school waves, which are reported retrospectively in the first life course interview.",
+        "For analyses of the school phase itself, rather use pTarget directly instead of the NEPScribe scripts. For analyses after school, information from the school phase (e.g. answers from pTarget in a chosen wave or competences from xTargetCompetencies) can be added to all person-years of a respondent via <code>ID_t</code>."
+      ),
       details = c(
         "<b>Subspell-based format:</b> only contains person-years from waves in which an episode was reported as ongoing at the interview. Retrospectively reported school episodes that have already ended are therefore missing.",
-        "<b>Biography-based format:</b> also contains person-years for school waves in which a respondent was interviewed outside class but did not get a life course interview, with the school episode from the retrospective biography (<code>spells_reported == 0</code>). Waves in which a respondent was surveyed in class at a NEPS sample school have no interview date and therefore no person-years in either format.",
+        "<b>Biography-based format:</b> also contains person-years for school waves in which a respondent had already left the NEPS sample school but did not get a life course interview, with the school episode from the retrospective biography (<code>spells_reported == 0</code>). Waves in which a respondent was surveyed in class at a NEPS sample school have no interview date and therefore no person-years in either format.",
         "<b>Waves:</b> waves 4 and 6 were additional spring waves, so in waves 4 to 7 interviews are about six months apart, with up to three rows per calendar year. There was no wave in 2017/18.",
         which_format
       )
     ),
     SC5 = list(
-      short = "The telephone (CATI) waves are yearly. The online (CAWI) waves lie between them and collect no spell data, so both formats only use the CATI waves: one person-year per year. We recommend the biography-based format.",
+      short = "NEPS SC5 has yearly telephone (CATI) surveys, accompanied by online (CAWI) waves in between (yearly until 2014, then roughly every second year). The CAWI waves collect no spell data, so both formats only use the CATI waves: one person-year per year. We recommend the biography-based format.",
       details = c(
         "<b>Who has spell data:</b> the CATI waves, including wave 1 with the retrospective life course interview. The CAWI waves (2, 4, 6, 8, 11, 14, 17) have no spell data. They took place in the autumn of 2011 to 2014, 2016, 2018 and 2020, in addition to the CATI wave of that year.",
         "<b>CAWI waves:</b> the subspell-based format has no person-years in the CAWI waves anyway. In the biography-based format, a line in the script drops them. Remove it if you need the CAWI waves as separate rows; then there can be two rows per calendar year, and variables added from spell datasets are missing in the CAWI rows (<code>spells_reported == 0</code>). Variables from the CAWI questionnaires can also be merged to the neighbouring CATI person-year.",
@@ -1538,7 +1546,7 @@ cohort_notes_content <- function(sc) {
   if (is.null(notes)) return(NULL)
   list(
     title = paste("Notes on Starting Cohort", sub("SC", "", sc)),
-    disclaimer = "The scripts for this cohort have been tested, but they may still contain errors and may need adjustments depending on your research question. Please check them line by line.",
+    disclaimer = "The scripts were originally developed for Starting Cohort 6, but now have been edited and tested for this cohort as well. They may still contain errors and may need adjustments depending on your research question. Please check them line by line.",
     short = notes$short,
     details = c(notes$details, spells_reported)
   )
@@ -1553,8 +1561,9 @@ cohort_notes <- function(sc, comment = "#") {
   notes <- cohort_notes_content(sc)
   if (is.null(notes)) return(NULL)
   strip_tags <- function(x) gsub("<[^>]+>", "", x)
-  lines <- c(paste0("Notes on ", sc, ":"), notes$disclaimer,
-             paste("In short:", strip_tags(notes$short)), strip_tags(notes$details))
+  short <- strip_tags(notes$short)
+  short[1] <- paste("In short:", short[1])
+  lines <- c(paste0("Notes on ", sc, ":"), notes$disclaimer, short, strip_tags(notes$details))
   c(paste(comment, lines), "")
 }
 

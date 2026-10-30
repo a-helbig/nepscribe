@@ -336,7 +336,7 @@ data_transformation_server <- function(id, settings_reactive, cross_module) {
             shiny::HTML(paste0(
               "<div style='line-height: 1.6;'>",
               "<p style='margin-top: 0;'>⚠️ ", notes$disclaimer, "</p>",
-              "<p><b>In short:</b> ", notes$short, "</p>",
+              paste0("<p>", c("<b>In short:</b> ", rep("", length(notes$short) - 1)), notes$short, "</p>", collapse = ""),
               "<details><summary style='cursor: pointer;'><b>More information</b></summary>",
               "<ul style='padding-left: 1.2rem; margin-top: 0.5rem;'>", paste0("<li>", details, "</li>", collapse = ""), "</ul>",
               "</details>",
