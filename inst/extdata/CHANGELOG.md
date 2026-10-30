@@ -84,7 +84,7 @@ It may be released for other SCs in the future.
 
 * Exemplary children preparation in R and Stata scripts: the example person shown for inspection is now selected automatically from the data.
 
-## Version 1.0.0 (unreleased)
+## Version 1.0.0 (2026-10-30)
 
 First stable release. The scripts are now tested for Starting Cohorts 3 to 6, and the two formats are renamed.
 
