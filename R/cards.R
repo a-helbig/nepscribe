@@ -79,7 +79,7 @@ cards_data_trans <- function() {
     <h4 style=font-size: 18px; color: #333;>What is this?</h4>
     <br>
     <p style=font-size: 18px; color: #555;>
-        This feature lets you dynamically create scripts that convert NEPS SUF data into person-year format. Each row represents roughly one year in a respondent’s life and is assigned a single life-course status (e.g., employment or vocational training) corresponding to their status in the interview month. This data structure is essential for various research projects, but implementing it can be challenging without prior experience.
+        This feature lets you dynamically create scripts that convert NEPS SUF data into person-year format. Each row represents roughly one year in a respondent's life and is assigned a single life-course status (e.g., employment or vocational training) corresponding to their status in the interview month. This data structure is essential for various research projects, but implementing it can be challenging without prior experience.
     </p>
     <p style=font-size: 18px; color: #555;>
         The script with basic settings is creating a person-year-dataset that only contains very basic spell-related information. You can customize numerous settings to align with the requirements of your research project and enrich the resulting dataset with variables from all datasets.
